@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iniciar Sesión | Central Santua</title>
+    <style>
+        :root {
+            --primary: #4facfe;
+            --secondary: #00f2fe;
+            --bg-dark: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            background: 
+                radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.1) 0px, transparent 50%),
+                #0a0a0a;
+        }
+
+        .info-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 8%;
+            border-right: 1px solid var(--border);
+        }
+
+        .logo-link {
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        .logo-link h2 {
+            font-size: 2rem;
+            letter-spacing: 3px;
+            color: white;
+            font-weight: 800;
+        }
+
+        .logo-link span { color: var(--primary); }
+
+        .info-section h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 25px;
+            background: linear-gradient(to right, #fff, #bbb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-msg {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #ccc;
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
+            max-width: 550px;
+        }
+
+        .form-section {
+            width: 550px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .mobile-branding {
+            display: none;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .mobile-branding p {
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 15px;
+            font-style: italic;
+            padding: 0 10px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .auth-card h3 { font-size: 1.8rem; margin-bottom: 10px; text-align: center; }
+        .auth-card .subtitle { color: #888; text-align: center; margin-bottom: 30px; }
+
+        .input-box { margin-bottom: 20px; }
+        .input-box label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-box input:focus {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.07);
+        }
+
+        .options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.85rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .forgot-pass {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        @media (max-width: 900px) {
+            .page-wrapper { flex-direction: column; }
+            .info-section { display: none; }
+            .form-section { width: 100%; padding: 40px 15px; }
+            .mobile-branding { display: block; }
+            .auth-card { background: transparent; border: none; padding: 10px; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-wrapper">
+        
+        <section class="info-section">
+            <a href="index.html" class="logo-link">
+                <h2>CENTRAL<span>SANTUA</span></h2>
+            </a>
+            <h1>Conectados para<br>cuidar lo tuyo.</h1>
+            <div class="main-msg">
+                "Tu cuenta es la herramienta para gestionar tus códigos QR. Entrá para verificar tus datos y mantener activa tu red de recuperación."
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="mobile-branding">
+                <a href="index.html" class="logo-link">
+                    <h2>CENTRAL<span>SANTUA</span></h2>
+                </a>
+                <p>Conectados para cuidar lo tuyo.</p>
+                <p>"Tu cuenta es la herramienta para gestionar tus códigos QR. Entrá para verificar tus datos y mantener activa tu red de recuperación."</p>
+            </div>
+
+            <div class="auth-card">
+                <h3>Bienvenido</h3>
+                <p class="subtitle">Ingresá tus datos para continuar.</p>
+
+                <form id="login-form">
+                    <div class="input-box">
+                        <label>Correo Electrónico</label>
+                        <input type="email" placeholder="nombre@correo.com" required>
+                    </div>
+                    <div class="input-box">
+                        <label>Contraseña</label>
+                        <input type="password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="options-row">
+                        <label class="remember-me">
+                            <input type="checkbox"> Recordarme
+                        </label>
+                        <a href="recuperar.html" class="forgot-pass">¿Olvidaste tu clave?</a>
+                    </div>
+
+                    <button type="submit" class="btn-main">Ingresar al Panel</button>
+                </form>
+
+                <div style="text-align: center; margin-top: 30px; font-size: 0.9rem; color: #888;">
+                    ¿Aún no sos parte? <a href="registro.html" style="color: white; text-decoration: none; font-weight: 700;">Registrate ahora</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. CAPTURAMOS LOS DATOS Y NORMALIZAMOS EL EMAIL
+        const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
+        const password = e.target.querySelector('input[type="password"]').value;
+
+        try {
+            // 2. CONEXIÓN AL SERVIDOR
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // 3. GUARDAMOS EN MEMORIA PARA QUE EL INDEX SEPA QUIÉN SOS
+                localStorage.setItem('usuarioNombre', data.username); 
+                localStorage.setItem('estaLogueado', 'true');
+                localStorage.setItem('token', data.token); // Por si usas tokens de seguridad
+
+                // 4. REDIRECCIÓN
+                window.location.href = 'index.html'; 
+            } else {
+                alert("Credenciales incorrectas: " + data.message);
+            }
+        } catch (error) {
+            console.error("Error en el login:", error);
+            alert("No se pudo conectar con el servidor.");
+        }
+    });
+    </script>
+
+</body>
+</html>

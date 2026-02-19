@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
+            --text: #ffffff; --success: #00ff88; --danger: #ff3333; --warning: #ffcc00;
+            --border: rgba(79, 172, 254, 0.3);
+        }
+
+        body {
+            background: url('bandera.jpg') no-repeat center center fixed;
+            background-size: cover; font-family: 'Inter', sans-serif;
+            margin: 0; color: var(--text); overflow-x: hidden;
+        }
+
+        .overlay { background: radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%); min-height: 100vh; padding: 25px; backdrop-filter: blur(8px); }
+
+        /* --- HEADER & TOP BAR --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;
+        }
+
+        .traffic-bar {
+            display: flex; gap: 15px; margin-bottom: 20px; justify-content: flex-end;
+        }
+
+        .mini-stat {
+            background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 4px; font-size: 0.75rem;
+            display: flex; align-items: center; gap: 8px; color: #aaa;
+        }
+        .mini-stat b { color: var(--text); font-size: 0.9rem; }
+
+        .system-status { display: flex; gap: 15px; align-items: center; }
+        .status-pill { 
+            background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 4px; 
+            border: 1px solid var(--border); font-size: 0.8rem;
+        }
+        .dot { height: 7px; width: 7px; background: var(--success); border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 8px var(--success); }
+
+        /* --- DASHBOARD OPERATIVO --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { 
+            background: var(--card); padding: 18px; border: 1px solid var(--border);
+            border-radius: 4px; text-align: center;
+        }
+        .stat-label { font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 5px; }
+        .stat-number { font-size: 2rem; font-weight: 900; color: var(--primary); }
+
+        /* --- COMANDOS --- */
+        .cmd-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; padding: 8px; border-radius: 4px; background: rgba(0,0,0,0.4); }
+        .btn-cmd { 
+            background: transparent; border: 1px solid #444; color: #ccc; 
+            padding: 8px 14px; border-radius: 3px; cursor: pointer; font-size: 0.7rem; 
+            transition: 0.2s; text-transform: uppercase; font-weight: 600;
+        }
+        .btn-cmd:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-cmd.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+        /* --- BUSCADOR --- */
+        .search-container { position: relative; margin-bottom: 25px; }
+        input#bus {
+            width: 100%; padding: 12px 12px 12px 45px; background: #000; 
+            border: 1px solid var(--border); color: var(--success); 
+            font-size: 1rem; border-radius: 4px; outline: none; box-sizing: border-box;
+        }
+        .search-container i { position: absolute; left: 15px; top: 15px; color: var(--primary); }
+
+        /* --- GRID DE DATOS --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .card { background: #0d0d0d; border: 1px solid #222; padding: 15px; border-radius: 6px; }
+        .card.match { border: 2px solid var(--success); background: rgba(0,255,136,0.03); }
+        .nro-id { font-size: 1.2rem; color: var(--primary); font-weight: bold; }
+        
+        .btn-action { 
+            width: 100%; padding: 10px; margin-top: 10px; border: none; 
+            border-radius: 3px; font-weight: bold; cursor: pointer; text-decoration: none;
+            display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.8rem;
+        }
+        .btn-wa { background: #25d366; color: white; }
+        .btn-done { background: var(--primary); color: #000; }
+
+        #protocol-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="overlay">
+    <header>
+        <div>
+            <h1 style="margin:0; letter-spacing:2px; font-size: 1.5rem;">CENTRAL<span style="color:var(--primary)">SANTUA</span></h1>
+            <span style="font-size: 0.6rem; color: #888; text-transform: uppercase;">Administración de Seguridad</span>
+        </div>
+        <div class="system-status">
+            <div class="status-pill"><span class="dot"></span> ONLINE</div>
+            <div class="status-pill" id="clock">00:00:00</div>
+        </div>
+    </header>
+
+    <div class="traffic-bar">
+        <div class="mini-stat">
+            <i class="fas fa-users" style="color:var(--success)"></i> ONLINE: <b id="s-online">0</b>
+        </div>
+        <div class="mini-stat">
+            <i class="fas fa-eye" style="color:var(--primary)"></i> VISITAS TOTALES: <b id="s-visitas">0</b>
+        </div>
+    </div>
+
+    <div class="cmd-bar">
+        <button class="btn-cmd active" id="btn-h" onclick="setView('h')">Hallazgos</button>
+        <button class="btn-cmd" id="btn-b" onclick="setView('b')">Búsquedas</button>
+        <button class="btn-cmd" id="btn-m" onclick="setView('m')" style="border-color:var(--success)">Matches</button>
+        <div style="flex-grow: 1;"></div>
+        <button class="btn-cmd" onclick="exportDB()"><i class="fas fa-file-export"></i></button>
+        <button class="btn-cmd" onclick="toggleProtocol()"><i class="fas fa-info-circle"></i></button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-label">Hallazgos</span>
+            <span class="stat-number" id="s-h">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Búsquedas</span>
+            <span class="stat-number" id="s-b">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Matchs</span>
+            <span class="stat-number" id="s-m" style="color:var(--warning)">0</span>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" id="bus" placeholder="Filtrar registros..." onkeyup="render()">
+    </div>
+
+    <div id="cont" class="grid"></div>
+</div>
+
+<div id="protocol-modal" onclick="toggleProtocol()">
+    <div class="protocol-box" onclick="event.stopPropagation()">
+        <h3 style="color:var(--primary)">Protocolo Operativo</h3>
+        <p style="font-size: 0.85rem; color: #ccc;">
+            - Use <b>tornillos de 13-14cm</b> para fijación de equipos.<br>
+            - Los Matches se cruzan por número de identificación.<br>
+            - Verifique siempre la identidad antes de borrar un registro.
+        </p>
+        <button class="btn-cmd" style="width:100%; margin-top:15px;" onclick="toggleProtocol()">CERRAR</button>
+    </div>
+</div>
+
+<script>
+    let db = { hallazgos: [], busquedas: [] };
+    let currentView = 'h';
+
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('es-AR');
+    }, 1000);
+
+    async function loadData() {
+        // Carga de registros operativos
+        try {
+            const res = await fetch('/api/admin/data');
+            if (res.ok) {
+                db = await res.json();
+                updateStats();
+                render();
+            }
+        } catch(e) { console.error("Error en datos"); }
+
+        // Carga de tráfico (independiente)
+        try {
+            const resStats = await fetch('/api/admin/stats');
+            if (resStats.ok) {
+                const s = await resStats.json();
+                document.getElementById('s-online').innerText = s.online || 0;
+                document.getElementById('s-visitas').innerText = s.visitas || 0;
+            }
+        } catch(e) { }
+    }
+
+    function updateStats() {
+        const h = db.hallazgos ? db.hallazgos.length : 0;
+        const b = db.busquedas ? db.busquedas.length : 0;
+        const m = (db.hallazgos && db.busquedas) ? db.hallazgos.filter(x => db.busquedas.some(y => y.nro === x.nro)).length : 0;
+        
+        document.getElementById('s-h').innerText = h;
+        document.getElementById('s-b').innerText = b;
+        document.getElementById('s-m').innerText = m;
+    }
+
+    function setView(v) {
+        currentView = v;
+        document.querySelectorAll('.btn-cmd').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-'+v).classList.add('active');
+        render();
+    }
+
+    async function borrar(tipo, nro) {
+    // Si es un match, usamos la ruta especial que limpia Hallazgos y Búsquedas
+    const endpoint = tipo === 'match' 
+        ? `/api/admin/borrar/match/${nro}` 
+        : `/api/admin/borrar/${tipo === 'h' ? 'hallazgo' : 'busqueda'}/${nro}`;
+
+    if(!confirm(`¿Confirmar eliminación definitiva del ID ${nro}?`)) return;
+
+    try {
+        const res = await fetch(endpoint, { method: 'DELETE' });
+        if (res.ok) {
+            console.log("Eliminación exitosa");
+            loadData(); // Recarga las estadísticas y la grilla
+        } else {
+            alert("Error al eliminar el registro");
+        }
+    } catch (error) {
+        console.error("Error en la conexión:", error);
+    }
+}
+
+    function render() {
+        const cont = document.getElementById('cont');
+        if (!cont) return;
+        const query = document.getElementById('bus').value.toUpperCase();
+        cont.innerHTML = "";
+
+        if(currentView === 'm') {
+            db.hallazgos.forEach(h => {
+                const b = db.busquedas.find(x => x.nro === h.nro);
+                if(b && h.nro.includes(query)) {
+                    cont.innerHTML += `
+                    <div class="card match">
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="nro-id">${h.nro}</span>
+                            <span style="color:var(--success); font-size:0.7rem; font-weight:bold;">MATCH</span>
+                        </div>
+                        <p style="font-size:0.75rem; color:#888">Poseedor: ${h.contacto} | Reclama: ${b.contacto}</p>
+                        <a href="https://wa.me/${h.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
+                        <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
+                    </div>`;
+                }
+            });
+        } else {
+            const list = currentView === 'h' ? db.hallazgos : db.busquedas;
+            if (list) {
+                list.forEach(item => {
+                    if(item.nro.includes(query) || item.contacto.includes(query)) {
+                        cont.innerHTML += `
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between">
+                                <span class="nro-id">${item.nro}</span>
+                                <i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i>
+                            </div>
+                            <p style="font-size:0.75rem; color:#888">Contacto: ${item.contacto}<br>Cat: ${item.categoria || 'S/D'}</p>
+                            <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">CONTACTAR</a>
+                        </div>`;
+                    }
+                });
+            }
+        }
+    }
+
+    function toggleProtocol() {
+        const m = document.getElementById('protocol-modal');
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function exportDB() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const a = document.createElement('a');
+        a.setAttribute("href", dataStr);
+        a.setAttribute("download", "santua_backup.json");
+        a.click();
+    }
+
+    loadData();
+    setInterval(loadData, 5000);
+</script>
+</body>
+</html>

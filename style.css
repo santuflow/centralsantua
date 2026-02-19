@@ -1,0 +1,744 @@
+/* ============================================================
+   ESTILOS GENERALES Y RESET
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    /* BANDERA NÍTIDA: Sin capas que la tapen */
+    background: url('bandera.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ============================================================
+   NAVBAR Y LOGO
+   ============================================================ */
+.navbar {
+    background-color: rgba(10, 10, 10, 0.95); 
+    padding: 20px 0;
+    text-align: center;
+    border-bottom: 3px solid #cc0000;
+    width: 100%;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+}
+
+.logo {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: #4facfe;
+    font-weight: 400;
+}
+
+/* ============================================================
+   CONTENEDOR Y HERO (BIENVENIDA)
+   ============================================================ */
+.container {
+    width: 100%;
+    max-width: 1000px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.hero-section {
+    text-align: center;
+    margin-bottom: 30px;
+    background: rgba(0, 0, 0, 0.85); /* Fondo oscuro para que el texto resalte */
+    padding: 30px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.hero-badge {
+    background: #4facfe;
+    color: #000;
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 900;
+    margin-bottom: 15px;
+}
+
+.hero-section h2 {
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.hero-section p {
+    color: #ccc;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   ESTILO DEL BOTÓN "CÓMO FUNCIONA" (EL QUE PEDISTE)
+   ============================================================ */
+.btn-info-main {
+    background: rgba(15, 15, 15, 0.95);
+    color: #4facfe;
+    border: 2px solid #4facfe;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 40px;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+}
+
+.btn-info-main:hover {
+    background: #4facfe;
+    color: #000;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(79, 172, 254, 0.6);
+}
+
+/* ============================================================
+   BOTONES PRINCIPALES (PERDÍ / ENCONTRÉ)
+   ============================================================ */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 50px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 900;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-encontre { background: linear-gradient(135deg, #1e7e34, #145a25); }
+.btn-perdi { background: linear-gradient(135deg, #cc0000, #8b0000); }
+
+.btn:hover {
+    transform: translateY(-10px);
+    border-color: #fff;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+}
+
+.btn .icon { font-size: 2.2rem; margin-right: 15px; }
+
+/* ============================================================
+   MODAL DE INFORMACIÓN DETALLADA
+   ============================================================ */
+/* EL FONDO OSCURO */
+/* EL FONDO (Ocupa toda la pantalla, es invisible hasta que abrís el modal) */
+.modal-guia-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9); /* Fondo oscuro transparente */
+    display: none; /* EL JS CAMBIA ESTO A 'FLEX' PARA ABRIR */
+    justify-content: center;
+    align-items: center;
+    z-index: 100000;
+    backdrop-filter: blur(5px);
+}
+
+/* LA CAJA (Lo que tiene el borde azul y el scroll) */
+.modal-guia-content {
+    background: #0d0d0d !important; /* Fondo oscuro de la foto */
+    border: 2px solid #000102 !important; /* Borde azul sólido */
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh; /* Altura máxima para que no se corte */
+    overflow-y: auto; /* ACTIVA EL SCROLL AQUÍ */
+    border-radius: 20px;
+    padding: 30px;
+    position: relative;
+    color: white !important;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+/* Personalización de la barra de scroll (Solo para Chrome/Edge/Safari) */
+.modal-guia-content::-webkit-scrollbar {
+    width: 8px;
+}
+.modal-guia-content::-webkit-scrollbar-thumb {
+    background: #1700e4; 
+    border-radius: 10px;
+}
+.modal-guia-content::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+/* LA CAJA DEL MODAL (IGUAL A TU FOTO) */
+.modal-guia-content {
+    background: #0d0d0d; /* El gris casi negro de la foto */
+    border: 2px solid #000306; /* El borde azul/celeste sólido */
+    max-width: 500px;
+    width: 90%;
+    border-radius: 20px;
+    padding: 35px;
+    position: relative;
+    color: white;
+    text-align: center;
+}
+
+/* TÍTULO */
+.modal-guia-content h2 {
+    color: #4facfe;
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+}
+
+/* LOS PUNTOS DE LOS TÉRMINOS */
+.guia-pasos {
+    text-align: left;
+    color: #ccc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* EL BOTÓN AZUL "ENTENDIDO" (EL QUE TIENE QUE QUEDAR) */
+.btn-cerrar-final {
+    width: 100%;
+    margin-top: 25px;
+    padding: 16px;
+    background: #000000; /* El azul sólido */
+    color: #000; /* Letras negras */
+    border: none;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.modal-header h2 { color: #4facfe; margin-bottom: 5px; text-transform: uppercase; }
+.modal-header p { color: #888; margin-bottom: 30px; font-weight: bold; }
+
+.guia-pasos { display: flex; flex-direction: column; gap: 20px; text-align: left; }
+
+.paso-box {
+    display: flex;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.paso-box .nro {
+    background: #4facfe;
+    color: #000;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.2rem;
+}
+
+.paso-box h4 { color: #fff; margin-bottom: 5px; font-size: 1.1rem; }
+.paso-box p { color: #aaa; font-size: 0.95rem; line-height: 1.5; }
+
+.btn-cerrar-final {
+    width: 100%; margin-top: 30px; padding: 18px;
+    background: #4facfe; color: #000; border: none;
+    border-radius: 12px; font-weight: 900; cursor: pointer;
+}
+
+.cerrar-modal {
+    position: absolute; top: 15px; right: 20px;
+    background: none; border: none; color: #444; font-size: 2.5rem; cursor: pointer;
+}
+
+/* ============================================================
+   EXTRA INFO Y FOOTER
+   ============================================================ */
+.extra-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.info-card {
+    background: rgba(15, 15, 15, 0.9);
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.info-card h3 { color: #4facfe; margin-bottom: 10px; }
+.info-card p { color: #999; font-size: 0.9rem; line-height: 1.6; }
+
+footer {
+    width: 100%;
+    padding: 25px;
+    text-align: center;
+    background: rgba(0,0,0,0.9);
+    color: #555;
+    border-top: 1px solid #222;
+}
+
+/* RESPONSIVO PARA PC */
+@media (min-width: 768px) {
+    .button-group { flex-direction: row; max-width: 800px; }
+    .btn { flex: 1; flex-direction: column; height: 180px; }
+    .btn .icon { margin-bottom: 10px; font-size: 3rem; }
+    .extra-info { grid-template-columns: 1fr 1fr; }
+}
+
+/* =============================================
+   CONTENEDOR DE ESTADÍSTICAS 
+   ============================================= */
+.stats-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0a0a0a; /* Negro profundo profesional */
+    border: 1px solid #1a1a1a; /* Borde sutil */
+    border-radius: 12px;
+    padding: 15px 30px;
+    margin: 25px auto;
+    width: fit-content;
+    gap: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrado horizontal total */
+    justify-content: center;
+    text-align: center;
+    position: relative; /* Necesario para ubicar el "?" */
+    min-width: 120px;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.1;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: #555; /* Gris técnico para las letras */
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 35px;
+    background: #222;
+}
+
+/* =============================================
+   SISTEMA DE TOOLTIP (FLOTANTE PROLIJO)
+   ============================================= */
+.tooltip-container {
+    position: absolute;
+    top: -8px;   /* Ajustado para que no tape el número */
+    right: -5px;
+    display: inline-block;
+}
+
+.help-tooltip {
+    width: 16px;
+    height: 16px;
+    background: #111;
+    color: #00d4ff;
+    border: 1px solid #00d4ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 140px;
+    background-color: #111;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 100;
+    bottom: 150%; 
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    font-size: 10px;
+    line-height: 1.3;
+    border: 1px solid #333;
+    pointer-events: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+}
+
+/* Flechita del tooltip */
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #111 transparent transparent transparent;
+}
+
+/* Mostrar tooltip al pasar mouse o tocar */
+.tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+.help-tooltip:hover {
+    background: #00d4ff;
+    color: #000;
+}
+
+/* =============================================
+   AJUSTES PARA CELULAR (RESPONSIVE)
+   ============================================= */
+@media (max-width: 480px) {
+    .stats-container {
+        gap: 15px;
+        padding: 12px 15px;
+    }
+    .stat-box {
+        min-width: 90px;
+    }
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    .stat-label {
+        font-size: 0.6rem;
+    }
+}
+
+
+/* --- BARRA SUPERIOR TOTAL --- */
+.barra-superior {
+    background-color: #000000; /* Negro puro para máximo contraste */
+    border-bottom: 2px solid #1a1a1a;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    height: 65px; /* Altura fija controlada */
+    display: flex;
+    align-items: center;
+}
+
+.contenedor-nav {
+    display: flex;
+    justify-content: space-between; /* Esto empuja a los extremos */
+    align-items: center;
+    width: 100%;
+    padding: 0 4%; /* Margen mínimo a los costados para que no toquen el borde físico */
+}
+
+/* --- LOGO A LA IZQUIERDA --- */
+.logo-link {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.logo-texto {
+    font-size: 1.4rem; /* Un poco más grande para que se lea claro */
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.logo-texto span {
+    color: #4facfe; /* El celeste característico */
+}
+
+/* --- BOTÓN A LA DERECHA (ESTILO MODERNO) --- */
+.boton-menu {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Alinea las barras a la derecha */
+    gap: 5px;
+    padding: 10px 0; /* Sin padding lateral para pegar al borde */
+}
+
+.barrita {
+    height: 2px; /* Más fina = más elegante */
+    background-color: #ffffff;
+    border-radius: 2px;
+    transition: 0.3s;
+}
+
+/* Diseño de barras asimétricas (muy pro) */
+.barrita:nth-child(1) { width: 28px; }
+.barrita:nth-child(2) { width: 18px; background-color: #4facfe; }
+.barrita:nth-child(3) { width: 24px; }
+
+/* Efecto hover */
+.boton-menu:hover .barrita {
+    width: 28px;
+    background-color: #4facfe;
+}
+
+/* --- MENÚ LATERAL (Side Menu) --- */
+.menu-lateral {
+    height: 100%;
+    width: 0; /* Empieza cerrado */
+    position: fixed;
+    z-index: 10000; /* Por encima del header */
+    top: 0;
+    right: 0; /* Cambiá a 'left' si querés que salga del otro lado */
+    background-color: #0a0a0a; /* Negro pro */
+    overflow-x: hidden;
+    transition: 0.4s; /* Velocidad de apertura */
+    padding-top: 60px;
+    border-left: 1px solid #222;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+}
+
+.menu-lateral a {
+    padding: 15px 30px;
+    text-decoration: none;
+    font-size: 1.1rem;
+    color: #ccc;
+    display: block;
+    transition: 0.3s;
+    border-bottom: 1px solid #151515;
+    font-weight: 500;
+}
+
+.menu-lateral a:hover {
+    color: #4facfe;
+    background-color: #111;
+    padding-left: 40px; /* Efecto de desplazamiento */
+}
+
+/* Botón de cerrar (la X) */
+.menu-lateral .cerrar-btn {
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+    border: none;
+    color: #4facfe;
+}
+
+.menu-lateral .cerrar-btn:hover {
+    color: #fff;
+    background: none;
+}
+
+/* Overlay para oscurecer el fondo cuando el menú está abierto */
+/* (Opcional: requiere un div extra o lógica de JS) */
+
+
+.nav-acciones {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-auth {
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.btn-auth.login {
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-auth.login:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.btn-auth.registro {
+    background: #4facfe;
+    color: black;
+}
+
+.btn-auth.registro:hover {
+    background: #00f2fe;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+}
+
+/* Ajuste para que el botón de menú no mueva todo cuando aparezca */
+.boton-menu {
+    margin-left: 10px;
+}
+
+
+/* ESTILOS ESPECÍFICOS PARA "CREA TU QR" */
+
+.form-section h3 {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+/* Selector de Categoría (Patentes/Objetos) */
+.diseno-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.diseno-btn {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    background: #111;
+    color: #888;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.diseno-btn:hover {
+    border-color: var(--accent);
+    color: white;
+}
+
+.diseno-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0, 242, 254, 0.1);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+}
+
+/* Inputs y Selects */
+.input-pro {
+    width: 100%;
+    background: #151515;
+    border: 1px solid #333;
+    padding: 14px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    transition: 0.3s;
+}
+
+.input-pro:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);
+}
+
+/* Cuadro de Explicación Santua */
+.explicacion-santua {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(0, 242, 254, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.explicacion-santua::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+}
+
+.explicacion-santua h4 {
+    color: var(--accent);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.explicacion-santua p {
+    font-size: 0.8rem;
+    color: #999;
+    line-height: 1.6;
+}
+
+/* Botón Generar (Ajuste) */
+.btn-generate {
+    width: 100%;
+    padding: 18px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+    color: black;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3);
+}

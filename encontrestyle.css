@@ -1,0 +1,245 @@
+/* ============================================================
+   ESTILOS BASE: ENCONTRÉ ALGO (UNIFICADO CON PERDISTYLE)
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Bandera nítida como fondo */
+    background: url('bandera.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================
+   LAYOUT PRINCIPAL 3 COLUMNAS
+   ============================================================ */
+.main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 30px;
+    padding: 40px 5%;
+    max-width: 1450px;
+    margin: 0 auto;
+    align-items: start;
+    flex: 1; /* Empuja el footer hacia abajo */
+}
+
+/* ============================================================
+   SIDEBARS: BLOQUES LATERALES OSCUROS
+   ============================================================ */
+.sidebar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.glass-card {
+    background: rgba(0, 0, 0, 0.95); /* Negro profundo para lectura fácil */
+    border: 1px solid rgba(79, 172, 254, 0.4);
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+}
+
+.glass-card h3 {
+    color: #4facfe;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.glass-card p, .glass-card li {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+.glass-card ol {
+    padding-left: 20px;
+}
+
+/* Caso especial para avisos de seguridad */
+.highlight {
+    border: 2px solid #cc0000;
+    background: rgba(20, 0, 0, 0.95);
+}
+
+/* ============================================================
+   ZONA CENTRAL: REPORTAR HALLAZGO
+   ============================================================ */
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-section {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.hero-section h2 {
+    background: rgba(0, 0, 0, 0.85);
+    display: inline-block;
+    padding: 15px 35px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 2rem;
+}
+
+.hero-section p {
+    color: #4facfe;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+/* GRID DE SELECCIÓN (BOTONES CATEGORÍA) */
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.select-btn {
+    background: #000000; /* Botones oscuros */
+    color: #ffffff;
+    border: 2px solid #333;
+    padding: 30px 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 1rem;
+}
+
+.select-btn:hover {
+    background: #111;
+    border-color: #4facfe;
+    color: #4facfe;
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(79, 172, 254, 0.4);
+}
+
+/* FORMULARIO DE REPORTE */
+.report-form {
+    background: rgba(0, 0, 0, 0.98); /* Casi opaco para resaltar el form */
+    padding: 40px;
+    border-radius: 25px;
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid #4facfe;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    color: #4facfe;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.input-group input, .input-group textarea {
+    width: 100%;
+    padding: 15px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.1rem;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: #4facfe;
+}
+
+/* BANNER DE FILTRO DE SEGURIDAD */
+.verificacion-box {
+    background: rgba(204, 0, 0, 0.1);
+    border: 1px solid #cc0000;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.verificacion-box p {
+    font-size: 0.85rem;
+    color: #ffcccc;
+}
+
+/* BOTÓN FINAL DE CARGA */
+.btn-enviar {
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: black;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.btn-enviar:hover {
+    filter: brightness(1.2);
+    transform: scale(1.02);
+}
+
+/* ============================================================
+   MODALES Y FOOTER
+   ============================================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #111;
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid #25d366;
+    text-align: center;
+    max-width: 450px;
+}
+
+footer {
+    background: rgba(0, 0, 0, 0.95);
+    padding: 25px;
+    text-align: center;
+    border-top: 1px solid #333;
+    width: 100%;
+}
+
+/* RESPONSIVO */
+@media (max-width: 1100px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar-info { order: 2; }
+    .form-container { order: 1; }
+    .selection-grid { grid-template-columns: 1fr; }
+}
+
+input#nro-id { text-transform: uppercase; }

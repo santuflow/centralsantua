@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Santua | Red Oficial de Hallazgos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="barra-superior">
+    <nav class="contenedor-nav">
+        <a href="index.html" class="logo-link">
+            <h1 class="logo-texto">CENTRAL<span>SANTUA</span></h1>
+        </a>
+
+        <div class="nav-acciones">
+            <div id="auth-buttons">
+                <a href="login.html" class="btn-auth login">Ingresar</a>
+                <a href="registro.html" class="btn-auth registro">Registrarse</a>
+            </div>
+
+            <button id="boton-menu-privado" class="boton-menu" onclick="toggleMenu()" style="display: none;" aria-label="Abrir menú">
+                <span class="barrita"></span>
+                <span class="barrita"></span>
+                <span class="barrita"></span>
+            </button>
+        </div>
+    </nav>
+</header>
+
+<div id="side-menu" class="menu-lateral">
+    <a href="javascript:void(0)" class="cerrar-btn" onclick="toggleMenu()">&times;</a>
+    <a href="index.html">Inicio</a>
+    <a href="encontre.html">Encontre algo</a>
+    <a href="perdi.html">Perdi algo</a>
+    <a href="perfil.html">Administrar Codigos QR</a>
+    <a href="tienda.html">Generar Codigo QR</a>
+    <a href="tutorial.html">¿Cómo funciona?</a>
+    <a href="ayuda.html">Ayuda</a>
+    <a href="javascript:void(0)" onclick="abrirModalTerminos(event)">Términos y Condiciones</a>
+    <a href="javascript:void(0)" onclick="cerrarSesion()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
+</div>
+
+    <main class="container">
+        <section class="hero-section">
+            <h2>Red de Hallazgos</h2>
+            <p>El nexo directo para recuperar documentos y patentes extraviadas. Seguridad total y gestión en tiempo real.</p>
+        </section>
+        
+        <div class="stats-container">
+    <div class="stat-box">
+        <span class="stat-number" id="count-hallazgos">0</span>
+        <span class="stat-label">Stock Hallazgos</span>
+        <div class="tooltip-container">
+            <span class="help-tooltip">?</span>
+            <span class="tooltip-text">Objetos encontrados que esperan a su dueño.</span>
+        </div>
+    </div>
+
+    <div class="stat-divider"></div>
+
+    <div class="stat-box">
+        <span class="stat-number" id="count-busquedas">0</span>
+        <span class="stat-label">Alertas Activas</span>
+        <div class="tooltip-container">
+            <span class="help-tooltip">?</span>
+            <span class="tooltip-text">Personas que reportaron una pérdida recientemente.</span>
+        </div>
+    </div>
+</div>
+
+        <button class="btn-info-main" onclick="abrirGuia()">
+            <span class="icon">💡</span> LEER: ¿CÓMO FUNCIONA EL SISTEMA?
+        </button>
+
+        <div class="button-group">
+            <a href="encontre.html" class="btn btn-encontre">
+                <span class="icon">🔍</span>
+                <div class="btn-content">
+                    <span class="text">ENCONTRÉ ALGO</span>
+                </div>
+            </a>
+            <a href="perdi.html" class="btn btn-perdi">
+                <span class="icon">🛡️</span>
+                <div class="btn-content">
+                    <span class="text">PERDÍ ALGO</span>
+                </div>
+            </a>
+        </div>
+
+        <section class="extra-info">
+            <div class="info-card">
+                <h3>Base Activa 24/7</h3>
+                <p>Nuestra base de datos no descansa. Si hoy no hay coincidencia, el sistema sigue rastreando tu objeto hasta encontrarlo.</p>
+            </div>
+            <div class="info-card">
+                <h3>Protocolo Seguro</h3>
+                <p>Validamos cada entrega mediante un sistema de preguntas de seguridad para garantizar que el objeto vuelva a su dueño legítimo.</p>
+            </div>
+            <div class="info-card">
+                <h3>Sin Intermediarios</h3>
+                <p>Facilitamos el nexo directo a través de nuestra central de WhatsApp una vez que el "Match" es confirmado.</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-guia" class="modal-guia-overlay">
+        <div class="modal-guia-content">
+            <button class="cerrar-modal" onclick="cerrarGuia()">×</button>
+            
+            <div class="modal-header">
+                <h2>Guía Operativa Central Santua</h2>
+                <p>Entendé cómo protegemos y recuperamos tus pertenencias</p>
+            </div>
+
+            <div class="guia-pasos">
+                
+                <div class="paso-box especial">
+                    <span class="nro">⚡</span>
+                    <div class="txt">
+                        <h4>Sistema de Memoria Activa</h4>
+                        <p>Esta es nuestra mayor ventaja: **Nada se pierde**. Si reportás algo que perdiste y aún no fue encontrado, tu dato queda en "Guardia Permanente". En el instante en que alguien lo reporte, el sistema los vincula automáticamente. **No necesitás buscar todos los días, nosotros lo hacemos por vos.**</p>
+                    </div>
+                </div>
+
+                <div class="paso-box">
+                    <span class="nro">1</span>
+                    <div class="txt">
+                        <h4>Carga de Datos Estandarizada</h4>
+                        <p>Para evitar errores de lectura, el sistema solo acepta formatos limpios. Ingresá DNI, Patentes o Cédulas **SIN PUNTOS, GUIONES NI ESPACIOS**. Esto permite que el algoritmo compare millones de datos en milisegundos.</p>
+                    </div>
+                </div>
+
+                <div class="paso-box">
+                    <span class="nro">2</span>
+                    <div class="txt">
+                        <h4>Detección de Coincidencias (Match)</h4>
+                        <p>Cuando un número de documento reportado como "Perdido" coincide con uno reportado como "Encontrado", el sistema genera un **Match de Seguridad**. Solo en ese momento se habilitan los canales de contacto.</p>
+                    </div>
+                </div>
+
+                <div class="paso-box">
+                    <span class="nro">3</span>
+                    <div class="txt">
+                        <h4>Contacto vía Central de WhatsApp</h4>
+                        <p>Si hay coincidencia, aparecerá un botón directo a nuestra central. Allí, un operador gestionará el nexo para la devolución. Nunca publicamos tus datos personales ni tu teléfono en la web.</p>
+                    </div>
+                </div>
+
+                <div class="paso-box">
+                    <span class="nro">4</span>
+                    <div class="txt">
+                        <h4>Validación Sin Exponer Tu Privacidad</h4>
+                        <p>Entendemos tu seguridad. En lugar de pedirte fotos de documentos, realizamos un **Cotejo de Información Privada**. Te haremos preguntas sobre datos que figuran en el objeto (como una dirección, un segundo nombre o un detalle específico) para verificar que sos el dueño real sin invadir tu privacidad digital.</p>
+                    </div>
+                </div>
+
+                <div class="paso-box">
+                    <span class="nro">5</span>
+                    <div class="txt">
+                        <h4>Compromiso de Devolución</h4>
+                        <p>Central Santua es una comunidad. Si encontraste algo, tu reporte es la única esperanza de alguien para recuperar su documentación. Fomentamos la honestidad y la rapidez en cada entrega.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-cerrar-final" onclick="cerrarGuia()">ENTENDIDO, VOLVER AL INICIO</button>
+        </div>
+    </div>
+
+    <div id="modal-terminos" class="modal-guia-overlay" style="display: none;">
+    <div class="modal-guia-content">
+        <button class="cerrar-modal" onclick="cerrarModalTerminos()">×</button>
+        <h2 style="color: #4facfe;">Términos y Condiciones</h2>
+        <p style="color: #ccc; margin-top: 20px;"><p><strong>1. Rol de la Plataforma:</strong> Central Santua actúa únicamente como un nexo digital entre hallazgos y búsquedas. No somos responsables por el estado de los objetos ni por las acciones de terceros.</p>
+            
+            <p><strong>2. Veracidad de Datos:</strong> El usuario garantiza que la información proporcionada es veraz. El uso de datos falsos o reportes malintencionados resultará en el bloqueo permanente de acceso.</p>
+            
+            <p><strong>3. Privacidad y Seguridad:</strong> Los números de documento y patentes se procesan solo para detectar coincidencias (Match). Tu WhatsApp no se hace público; solo se utiliza para gestionar la devolución una vez confirmado el Match.</p>
+            
+            <p><strong>4. Devolución Segura:</strong> Recomendamos realizar las entregas en lugares públicos (comisarías, estaciones, plazas). Central Santua no participa en el intercambio físico del objeto.</p>
+            
+            <p><strong>5. Compromiso Social:</strong> Al usar este sistema, te comprometés a actuar de buena fe para que los documentos vuelvan a sus dueños legítimos sin condiciones económicas previas.</p></p>
+        <button class="btn-cerrar-final" onclick="cerrarModalTerminos()">ENTENDIDO</button>
+    </div>
+</div>
+
+    <footer>
+        <p>&copy; 2026 Central Santua - Gestión de Hallazgos con Responsabilidad Social</p>
+    </footer>
+
+    <script>
+        function abrirGuia() {
+            document.getElementById('modal-guia').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Evita scroll atrás
+        }
+
+        function cerrarGuia() {
+            document.getElementById('modal-guia').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('modal-guia');
+            if (event.target == modal) {
+                cerrarGuia();
+            }
+        }
+    </script>
+
+  <script>
+function gestionarInterfaz() {
+    const logueado = localStorage.getItem('estaLogueado');
+    const authContainer = document.getElementById('auth-buttons');
+    const botonMenuPrivado = document.getElementById('boton-menu-privado');
+
+    if (logueado === 'true') {
+        // 1. Ocultamos los botones de auth
+        if (authContainer) {
+            authContainer.style.setProperty('display', 'none', 'important');
+        }
+
+        // 2. Forzamos la aparición del botón de las 3 rayas
+        if (botonMenuPrivado) {
+            botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+            botonMenuPrivado.style.visibility = 'visible';
+            botonMenuPrivado.style.opacity = '1';
+            
+            // Esto asegura que las barritas internas sean blancas y visibles
+            const barritas = botonMenuPrivado.querySelectorAll('.barrita');
+            barritas.forEach(b => {
+                b.style.backgroundColor = 'white';
+                b.style.display = 'block';
+            });
+        }
+    } else {
+        if (authContainer) {
+            authContainer.style.setProperty('display', 'flex', 'important');
+        }
+        if (botonMenuPrivado) {
+            botonMenuPrivado.style.setProperty('display', 'none', 'important');
+        }
+    }
+}
+
+// Ejecución inmediata y al cargar el DOM
+gestionarInterfaz();
+document.addEventListener('DOMContentLoaded', gestionarInterfaz);
+
+// Función para el menú lateral
+function toggleMenu() {
+    const menu = document.getElementById("side-menu");
+    if (menu) {
+        if (menu.style.width === "250px") {
+            menu.style.width = "0";
+        } else {
+            menu.style.width = "250px";
+        }
+    }
+}
+
+function cerrarSesion() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+}
+</script>
+
+    <script src="interfaz.js"></script>
+</body>
+</html>

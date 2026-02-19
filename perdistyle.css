@@ -1,0 +1,410 @@
+/* ============================================================
+   ESTILOS BASE Y RESET
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Bandera nítida como fondo principal */
+    background: url('bandera.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Scrollbar personalizada para mayor profesionalismo */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+    background: #4facfe;
+    border-radius: 10px;
+}
+
+/* ============================================================
+   NAVEGACIÓN (Sincronizada con style.css principal)
+   ============================================================ */
+.navbar {
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 5%;
+    border-bottom: 2px solid #ff0000; /* Franja roja característica */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffffff;
+}
+
+.logo span {
+    color: #4facfe;
+}
+
+/* ============================================================
+   LAYOUT DE 3 COLUMNAS
+   ============================================================ */
+.main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px; /* Columnas laterales fijas, centro flexible */
+    gap: 30px;
+    padding: 40px 5%;
+    max-width: 1450px;
+    margin: 0 auto;
+    align-items: start;
+    flex: 1; /* Empuja el footer hacia abajo */
+}
+
+/* ============================================================
+   BLOQUES LATERALES (SIDEBARS)
+   ============================================================ */
+.sidebar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.glass-card {
+    background: rgba(0, 0, 0, 0.92); /* Negro profundo para contraste */
+    border: 1px solid rgba(79, 172, 254, 0.4);
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    border-color: #4facfe;
+}
+
+.glass-card h3 {
+    color: #4facfe;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+}
+
+.glass-card p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+.glass-card.highlight {
+    border: 2px solid #4facfe;
+    background: rgba(10, 10, 10, 0.95);
+}
+
+.glass-card ul {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.glass-card ul li {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ============================================================
+   ZONA CENTRAL: FORMULARIO Y SELECCIÓN
+   ============================================================ */
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.hero-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.hero-section h2 {
+    font-size: 2.2rem;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    margin-bottom: 15px;
+}
+
+.hero-section p {
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+/* GRID DE BOTONES (PASO 1) */
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+    animation: slideIn 0.5s ease;
+}
+
+.select-btn {
+    background: #000000; /* Fondo oscuro total */
+    color: #ffffff;
+    border: 2px solid #333;
+    padding: 30px 20px;
+    border-radius: 15px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.select-btn:hover {
+    background: #111;
+    border-color: #4facfe;
+    color: #4facfe;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(79, 172, 254, 0.4);
+}
+
+/* FORMULARIO DE BÚSQUEDA (PASO 2) */
+.report-form {
+    background: rgba(0, 0, 0, 0.98); /* Máxima opacidad para los campos */
+    padding: 45px;
+    border-radius: 25px;
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid #4facfe;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    color: #4facfe;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: #4facfe;
+    background: #111;
+    outline: none;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+}
+
+.ayuda-input {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* BANNER DE AVISO PROFESIONAL */
+.verificacion-box {
+    background: rgba(79, 172, 254, 0.05);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    border-left: 5px solid #4facfe;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.verificacion-box p {
+    font-size: 0.9rem;
+    color: #ddd;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* BOTÓN DE ACCIÓN */
+.btn-buscar-final {
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #000;
+    border: none;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-buscar-final:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(79, 172, 254, 0.4);
+}
+
+.btn-regresar {
+    background: none;
+    border: 1px solid #444;
+    color: #777;
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-regresar:hover {
+    color: #fff;
+    border-color: #fff;
+}
+
+/* ============================================================
+   MODALES (RESULTADOS) - CORREGIDO
+   ============================================================ */
+.modal-overlay {
+    position: fixed;        /* IMPORTANTE: Lo fija a la pantalla */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9); /* Fondo oscuro */
+    backdrop-filter: blur(10px);    /* Desenfoque de fondo */
+    display: none;          /* Se activa por JS con 'flex' */
+    justify-content: center; /* Centra horizontal */
+    align-items: center;     /* Centra vertical */
+    z-index: 9999;          /* Por encima de la navbar (que tiene 1000) */
+}
+
+/* Este estado se activa cuando mostrás el modal */
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #0a0a0a;
+    border: 2px solid #4facfe;
+    box-shadow: 0 0 50px rgba(79, 172, 254, 0.5);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    animation: aparecerModal 0.3s ease-out;
+}
+
+@keyframes aparecerModal {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+/* ============================================================
+   FOOTER (FRANJA DE ABAJO)
+   ============================================================ */
+footer {
+    background: rgba(0, 0, 0, 0.95);
+    padding: 25px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    margin-top: 50px;
+}
+
+footer p {
+    font-size: 0.9rem;
+    color: #777;
+}
+
+/* ============================================================
+   ANIMACIONES Y RESPONSIVE
+   ============================================================ */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1100px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+        padding-top: 20px;
+    }
+    
+    .sidebar-info {
+        order: 2;
+    }
+    
+    .form-container {
+        order: 1;
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 600px) {
+    .selection-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-section h2 {
+        font-size: 1.6rem;
+        padding: 10px 20px;
+    }
+    
+    .report-form {
+        padding: 25px;
+    }
+}
+
+/* Forzar mayúsculas en campos de búsqueda */
+input#nro-search {
+    text-transform: uppercase;
+}

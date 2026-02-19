@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control | Central Santua</title>
+    <style>
+        :root {
+            --accent: #00f2fe;
+            --accent-dark: #4facfe;
+            --bg-dark: #0a0a0a;
+            --card-bg: rgba(20, 20, 20, 0.98);
+            --glass: rgba(255, 255, 255, 0.05);
+            --danger: #ff4d4d;
+            --success: #2ecc71;
+        }
+
+        /* RESET Y BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-dark) url('bandera.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .page-overlay {
+            background: radial-gradient(circle at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%);
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        header.barra-superior {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 242, 254, 0.3);
+            padding: 15px 5%;
+            position: fixed;
+            top: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .logo-texto { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
+        .logo-texto span { color: var(--accent); }
+
+        /* CONTENEDOR PRINCIPAL */
+        .perfil-wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 120px 20px 50px 20px;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .perfil-wrapper { grid-template-columns: 1fr; padding-top: 100px; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+        }
+
+        /* FORMULARIO */
+        .field { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.85rem; color: #888; text-transform: uppercase; }
+        
+        input[type="text"], input[type="tel"], .input-pro, select {
+            width: 100%; background: #111; border: 1px solid #333; padding: 14px;
+            border-radius: 12px; color: white; font-size: 1rem; transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); outline: none; }
+
+        .diseno-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .diseno-btn {
+            padding: 12px; border-radius: 12px; border: 1px solid #333; background: #111;
+            color: #888; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .diseno-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,242,254,0.1); }
+
+        .selector-contacto .option {
+            padding: 15px; border-radius: 12px; cursor: pointer; border: 1px solid transparent;
+            background: rgba(255,255,255,0.02); margin-bottom: 10px; transition: 0.2s;
+        }
+        .selector-contacto .option.active { border-color: var(--accent); background: rgba(0,242,254,0.1); }
+
+        .btn-generate {
+            width: 100%; padding: 18px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+            color: black; font-weight: 800; font-size: 1rem; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 10px 20px rgba(0,242,254,0.2);
+        }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(0,242,254,0.3); }
+
+        /* LISTA DE OBJETOS */
+        .object-item {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; position: relative; animation: fadeIn 0.4s ease;
+        }
+        .btn-delete-item {
+            background: rgba(255, 77, 77, 0.1); color: var(--danger); border: 1px solid var(--danger);
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .btn-delete-item:hover { background: var(--danger); color: white; }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.96); z-index: 2000; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px); padding: 15px;
+        }
+        .modal-content {
+            background: #121212; width: 100%; max-width: 850px; border-radius: 30px;
+            border: 1px solid rgba(0,242,254,0.3); padding: 35px; position: relative;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .close-x { position: absolute; top: 20px; right: 25px; font-size: 2.5rem; cursor: pointer; color: #444; z-index: 10; }
+        .close-x:hover { color: var(--danger); }
+
+        .grid-editor { display: grid; grid-template-columns: 320px 1fr; gap: 30px; }
+        
+        @media (max-width: 800px) {
+            .grid-editor { grid-template-columns: 1fr; }
+            .modal-content { padding: 20px; border-radius: 20px; }
+        }
+
+        .info-step { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .info-step h3 { color: var(--accent); margin-bottom: 5px; font-size: 1.1rem; }
+        .info-step p { color: #ccc; font-size: 0.9rem; line-height: 1.4; }
+
+        #toast-msg {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--success); color: white; padding: 15px 30px; border-radius: 50px;
+            display: none; z-index: 3000; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="toast-msg">✅ ¡Operación realizada con éxito!</div>
+
+<div class="page-overlay">
+    <header class="barra-superior">
+        <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
+        <div class="nav-actions">
+            <a href="index.html" class="btn-nav" style="background: rgba(255,255,255,0.05); color:white; padding:10px 20px; text-decoration:none; border-radius:8px; border:1px solid #333;">VOLVER</a>
+        </div>
+    </header>
+
+    <main class="perfil-wrapper">
+        <aside>
+            <div class="card">
+                <h2 style="font-size: 1.6rem; margin-bottom: 5px;">Hola, <span id="user-target" style="color:var(--accent);">Usuario</span></h2>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 25px;">Gestioná tus etiquetas de seguridad.</p>
+
+                <div class="form-section">
+                    <div class="field">
+                        <label>1. Categoría</label>
+                        <div class="diseno-selector">
+                            <button class="diseno-btn active" id="btn-cat-patente" onclick="setCategory('patente')">🆔 PATENTE</button>
+                            <button class="diseno-btn" id="btn-cat-objeto" onclick="setCategory('objeto')">🎒 OBJETO</button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>2. Referencia Personal</label>
+                        <input type="text" id="obj-name" placeholder="Ej: Mi Camioneta / Mochila Negra">
+                    </div>
+
+                    <div class="field">
+                        <label>3. Privacidad de contacto</label>
+                        <div class="selector-contacto">
+                            <div class="option active" id="opt-central" onclick="selectContact('central')">
+                                <strong>Intermediación Santua</strong>
+                                <p style="font-size: 0.75rem; color: #666;">Tus datos nunca se muestran.</p>
+                            </div>
+                            <div class="option" id="opt-direct" onclick="selectContact('direct')">
+                                <strong>Contacto Directo</strong>
+                                <p style="font-size: 0.75rem; color: #666;">Muestra tu WhatsApp al escanear.</p>
+                                <input type="tel" id="input-phone" placeholder="Ej: 11 3868 0830" style="display:none; margin-top:10px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="abrirModalPrecios()" style="width: 100%; background: #2ecc71; color: black; padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; border: none; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);">
+    💰 CARGAR CRÉDITOS (10 QRs x $300)
+</button>
+
+<div class="modal-overlay" id="modal-precios" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px;">
+    <div class="modal-content" style="width: 100%; max-width: 850px; background: #111; border: 1px solid #009ee3; padding: 30px; border-radius: 25px; position: relative; max-height: 90vh; overflow-y: auto;">
+        <span class="close-x" onclick="cerrarModalPrecios()" style="color: #666; font-size: 30px; position: absolute; right: 20px; top: 15px; cursor: pointer;">&times;</span>
+        
+        <div style="text-align: center; margin-bottom: 25px;">
+            <h2 style="color: #fff; font-size: 1.6rem; margin-bottom: 10px;">Impulsá el Proyecto Santua 🇦🇷</h2>
+            <p style="color: #aaa; font-size: 0.9rem; line-height: 1.4;">
+                Cualquier aporte desbloquea <b>10 créditos QR</b>. Elegí el monto para apoyar el desarrollo.
+            </p>
+        </div>
+
+        <div class="planes-container" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 25px;">
+            
+            <div style="flex: 1; min-width: 200px; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center;">
+                <span style="font-size: 0.7rem; color: #009ee3; font-weight: bold;">APOYO BÁSICO</span>
+                <h3 style="font-size: 1.8rem; margin: 10px 0; color: white;">$300</h3>
+                <button onclick="iniciarPago('basico')" style="width: 100%; background: #009ee3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ELEGIR</button>
+            </div>
+
+            <div style="flex: 1; min-width: 200px; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 2px solid #009ee3; text-align: center; position: relative;">
+                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #009ee3; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 5px; font-weight: bold;">MÁS ELEGIDO</div>
+                <span style="font-size: 0.7rem; color: #009ee3; font-weight: bold;">COLABORADOR</span>
+                <h3 style="font-size: 1.8rem; margin: 10px 0; color: white;">$1000</h3>
+                <button onclick="iniciarPago('medio')" style="width: 100%; background: #009ee3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ELEGIR</button>
+            </div>
+
+            <div style="flex: 1; min-width: 200px; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center;">
+                <span style="font-size: 0.7rem; color: #009ee3; font-weight: bold;">FUNDADOR</span>
+                <h3 style="font-size: 1.8rem; margin: 10px 0; color: white;">$5000</h3>
+                <button onclick="iniciarPago('pro')" style="width: 100%; background: #009ee3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ELEGIR</button>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; border-top: 1px solid #333; padding-top: 20px;">
+            <img src="https://imgmp.mlstatic.com/org-img/banners/ar/medios/online/468X60.jpg" alt="Mercado Pago" style="max-width: 100%; height: auto; border-radius: 5px; filter: brightness(0.9);">
+            <p style="color: #555; font-size: 0.75rem; margin-top: 10px;">Pagos procesados de forma segura por Mercado Pago</p>
+        </div>
+    </div>
+</div>
+                    <button id="btnGenerarQR" class="btn-generate" onclick="crearObjeto()" disabled style="opacity: 0.5; cursor: not-allowed;">
+    GENERAR NUEVO CÓDIGO QR (<span id="contadorCreditos">0</span> disponibles)
+</button>
+
+                    <button class="btn-nav" onclick="toggleModalEdu(true)" style="width: 100%; background: rgba(0,242,254,0.1); color: var(--accent); border: 1px solid var(--accent); padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s;">
+                        🔍 ¿PARA QUÉ SIRVEN ESTOS CÓDIGOS?
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <section>
+            <div class="card" style="min-height: 500px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                    <h3 style="font-size: 1.4rem;">Tus QRs Activos</h3>
+                    <span id="obj-count-badge" style="background:var(--accent); color:black; padding:4px 12px; border-radius:20px; font-weight:800; font-size:0.8rem;">0</span>
+                </div>
+                <div id="object-list"></div>
+                <div id="empty-msg" style="text-align:center; padding:50px 20px; color:#444;">
+                    <p style="font-size: 3rem; margin-bottom: 10px;">📦</p>
+                    <p>Aún no has generado códigos QR.<br>Crea uno usando el panel de la izquierda.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modal-edu">
+    <div class="modal-content" style="max-width: 650px;">
+        <span class="close-x" onclick="toggleModalEdu(false)">&times;</span>
+        <h2 style="margin-bottom:25px; color:var(--accent); font-weight: 800; text-align: center;">🚀 GUÍA CENTRAL SANTUA</h2>
+        
+        <div style="background: rgba(0, 242, 254, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 15px; margin-bottom: 25px; font-size: 0.9rem; line-height: 1.5;">
+            <p>💡 <strong>Información Importante:</strong> Nuestra web es <strong>100% gratuita</strong>. Puedes registrar patentes o documentos perdidos en el inicio sin costo. Sin embargo, tener un <strong>Sticker con QR</strong> pegado en tu objeto aumenta un 80% las chances de recuperarlo.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>1. Recuperación de Patentes (Uso Correcto)</h3>
+            <p>Si generas un QR para tu vehículo, debes descargar la imagen y mandarla a imprimir en formato sticker. <strong>¡IMPORTANTE!</strong> El sticker se debe pegar en el <strong>DORSO (atrás) de la chapa patente</strong>. De esta manera, si la patente se desprende y alguien la encuentra tirada, al darla vuelta verá el código para avisarte al instante.</p>
+            
+            <div style="background: rgba(255, 77, 77, 0.1); border-left: 4px solid var(--danger); padding: 10px; margin-top: 10px; border-radius: 5px;">
+                <p style="color: #ffb3b3; font-size: 0.85rem;">⚠️ <strong>RECOMENDACIÓN LEGAL:</strong> Si perdés tu patente y no recibís reportes en las primeras horas, te aconsejamos hacer la <strong>denuncia de extravío</strong> y el trámite de duplicado para circular tranquilo.</p>
+            </div>
+        </div>
+
+        <div class="info-step">
+            <h3>2. Objetos con QR</h3>
+            <p>Para mochilas, llaves o notebooks, pega el sticker en un lugar visible. Al descargar la imagen y mandarla a imprimir, conviertes cualquier objeto en algo recuperable por la comunidad.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>3. Descarga e Imprime tus Stickers</h3>
+            <p>El sistema te permite <strong>descargar la imagen en alta calidad</strong>. Ese archivo es el que tenés que enviar a una imprenta o gráfica para que te hagan los stickers adhesivos resistentes al agua.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>4. Red de Imprentas Amigas</h3>
+            <p>📍 <strong>¡Recordá!</strong> En nuestra web tenemos una sección de <strong>Imprentas Gráficas</strong>. Fijate si hay alguna registrada cerca de tu zona para mandarles el archivo directamente y pasar a retirar tus stickers.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>5. Colaboración para la App</h3>
+            <p>Para generar un pack de 10 códigos QR, pedimos una <strong>colaboración mínima de $300 pesos</strong>. Todo lo recaudado se usa para terminar de desarrollar la <strong>App Santua</strong> para teléfonos.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>6. El Plan para Argentina</h3>
+            <p>Queremos que todos los argentinos tengan la App instalada. Así, cuando alguien encuentre algo con un QR de Santua, devolverlo será cuestión de segundos.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>7. Privacidad Total</h3>
+            <p>Con el modo "Intermediación", el que escanea habla con nosotros y nosotros te avisamos a vos. Tu número de WhatsApp nunca queda expuesto a desconocidos.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>8. Sin Vueltas para el que Encuentra</h3>
+            <p>La persona que encuentra tu objeto no necesita descargar nada. Escanea con su cámara común y el sistema lo guía para mandarte el aviso de hallazgo.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>9. Datos Actualizables</h3>
+            <p>Si cambias tu número de teléfono, lo corregís acá en el panel y listo. No hace falta volver a imprimir el sticker, el QR ya pegado se actualiza solo.</p>
+        </div>
+
+        <div class="info-step">
+            <h3>10. Comunidad de Honestidad</h3>
+            <p>Gracias por sumarte a Central Santua. Juntos estamos haciendo que las cosas que se pierden en Argentina vuelvan a sus dueños.</p>
+        </div>
+
+        <button class="btn-generate" onclick="toggleModalEdu(false)" style="margin-top: 20px;">¡ENTENDIDO, VAMOS A GENERAR!</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-diseno">
+    <div class="modal-content">
+        <span class="close-x" onclick="cerrarEditor()">&times;</span>
+        <h2 style="margin-bottom:25px; color:var(--accent); font-weight: 800;">🎨 ESTUDIO DE DISEÑO</h2>
+        
+        <div class="grid-editor">
+            <div style="background: white; padding: 20px; border-radius: 20px; text-align: center; color: black; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div id="sticker-frame" style="border: 2px solid black; padding: 20px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div id="emoji-render" style="font-size: 80px; margin-bottom: 5px;">🆔</div>
+                    <div id="qr-real" style="margin: 10px auto;"></div>
+                    <p id="phrase-render" style="font-weight: 900; font-size: 14px; text-transform: uppercase; margin: 10px 0; line-height: 1.2;"></p>
+                    <small id="id-render" style="font-family: monospace; font-weight: bold; border-top: 1px solid #ddd; padding-top: 5px; width: 100%;">ID: CS-000000</small>
+                    <small style="font-weight: bold; font-size: 10px; color: #333; margin-top: 2px;">www.centralsantua.com.ar</small>
+                </div>
+            </div>
+
+            <div class="controles">
+                <div class="field">
+                    <label>Elegir Icono</label>
+                    <select id="edit-emoji" onchange="actualizarSticker()">
+                        <optgroup label="Oficial">
+                            <option value="🆔">🆔 Logotipo Patente</option>
+                            <option value="🛡️">🛡️ Escudo de Seguridad</option>
+                        </optgroup>
+                        <optgroup label="Transporte">
+                            <option value="🚗">🚗 Automóvil</option>
+                            <option value="🏍️">🏍️ Motocicleta</option>
+                            <option value="🚲">🚲 Bicicleta</option>
+                            <option value="🚐">🚐 Camioneta</option>
+                        </optgroup>
+                        <optgroup label="Uso Diario">
+                            <option value="🎒">🎒 Mochila / Bolso</option>
+                            <option value="💻">💻 Notebook / Tablet</option>
+                            <option value="🔑">🔑 Llaves</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Mensaje Personalizado</label>
+                    <input type="text" id="edit-custom-phrase" placeholder="Escribí aquí el texto..." oninput="actualizarSticker()">
+                </div>
+
+                <div class="field">
+                    <label>Frases Sugeridas</label>
+                    <select id="edit-phrase-select" onchange="copiarFraseRapida()">
+                        <option value="">-- Seleccionar sugerencia --</option>
+                        <option value="SI ENCONTRÁS ESTA PATENTE, ESCANEÁ EL CÓDIGO">⚠️ Clásico Patente</option>
+                        <option value="PROPIEDAD PROTEGIDA POR SANTUA. ESCANEÁ PARA DEVOLVER">🛡️ Protección Santua</option>
+                        <option value="¡HOLA! SI ME ENCONTRASTE, ESCANEÁ EL QR">👋 Mensaje Amigable</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button class="btn-generate" onclick="descargarStickerCompleto()">DESCARGAR IMAGEN PARA IMPRIMIR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    let totalItems = 0;
+    let selectedCategory = 'patente';
+    let database = JSON.parse(localStorage.getItem('objetosSantua')) || [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const nombre = localStorage.getItem('usuarioNombre') || "Santua";
+        document.getElementById('user-target').textContent = nombre;
+        cargarDesdeMemoria();
+    });
+
+    function setCategory(cat) {
+        selectedCategory = cat;
+        document.getElementById('btn-cat-patente').classList.toggle('active', cat === 'patente');
+        document.getElementById('btn-cat-objeto').classList.toggle('active', cat === 'objeto');
+    }
+
+    function selectContact(type) {
+        document.getElementById('opt-central').classList.toggle('active', type === 'central');
+        document.getElementById('opt-direct').classList.toggle('active', type === 'direct');
+        document.getElementById('input-phone').style.display = (type === 'direct') ? 'block' : 'none';
+    }
+
+    function toggleModalEdu(show) {
+        document.getElementById('modal-edu').style.display = show ? 'flex' : 'none';
+    }
+
+    // 1. Esto va al principio de tu script.js (usa localStorage para que no se pierdan al recargar)
+let creditosDisponibles = parseInt(localStorage.getItem('creditosSantua')) || 0;
+
+// 2. Esta función debe ejecutarse al cargar la página para reflejar los créditos
+window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const estadoPago = urlParams.get('pago');
+    
+    if (estadoPago === 'exitoso') {
+        creditosDisponibles += 10; // Sumamos 10 a lo que ya tenga
+        localStorage.setItem('creditosSantua', creditosDisponibles);
+        alert("¡Gracias por tu apoyo! Se han habilitado 10 códigos QR.");
+        // Limpiamos la URL para que no sume 10 cada vez que recarga
+        window.history.replaceState({}, document.title, "/perfil.html");
+    }
+    actualizarInterfazBoton(); // Llamamos para que el botón se bloquee o desbloquee
+});
+
+// Agrega esto debajo de actualizarInterfazBoton()
+function abrirModalAporte() {
+    // Aquí puedes mostrar el modal que creamos antes
+    // Por ahora, para probar, lanzamos el prompt:
+    if(confirm("No tenés créditos. ¿Querés colaborar con $300 para obtener 10 QRs?")) {
+        iniciarPago('basico');
+    }
+}
+
+async function iniciarPago(nivel) {
+    try {
+        const response = await fetch('/crear-preferencia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: nivel })
+        });
+
+        const data = await response.json();
+        const mp = new MercadoPago('APP_USR-19876c24-5921-4ef8-aae3-10eecca1d947'); // Poné tu Public Key real
+        mp.checkout({
+            preference: { id: data.id },
+            autoOpen: true
+        });
+    } catch (err) {
+        mostrarToast("❌ Error al conectar con Mercado Pago");
+    }
+}
+
+// 3. Tu función crearObjeto mejorada
+function crearObjeto() {
+    // --- VALIDACIÓN DE CRÉDITOS ---
+    if (creditosDisponibles <= 0) {
+        mostrarToast("❌ No tenés créditos. Hacé un aporte para generar QRs.");
+        abrirModalAporte(); // Si tenés la función del modal, lo abre automáticamente
+        return;
+    }
+
+    const nameInput = document.getElementById('obj-name');
+    const name = nameInput.value.trim();
+    if (!name) return alert("Por favor, ingresá una referencia para tu objeto.");
+
+    // --- LÓGICA DE GENERACIÓN (Tu código original) ---
+    const idRandom = Math.floor(100000 + Math.random() * 900000);
+    const prefijo = selectedCategory === 'patente' ? 'PT' : 'OBJ';
+    const finalID = `${prefijo}-${idRandom}`;
+    
+    const nuevoObjeto = { id: finalID, nombre: name.toUpperCase(), categoria: selectedCategory };
+    database.push(nuevoObjeto);
+    guardarEnMemoria();
+    renderizarItem(nuevoObjeto);
+    
+    totalItems++;
+    actualizarInterfaz();
+    nameInput.value = "";
+
+    // --- DESCUENTO DE CRÉDITO ---
+    creditosDisponibles--;
+    localStorage.setItem('creditosSantua', creditosDisponibles);
+    actualizarInterfazBoton();
+
+    mostrarToast(`✅ ¡Código generado! Te quedan ${creditosDisponibles} créditos.`);
+}
+
+// 4. Función auxiliar para el botón
+function actualizarInterfazBoton() {
+    const btn = document.getElementById('btnGenerarQR');
+    const span = document.getElementById('contadorCreditos');
+    
+    if (span) span.innerText = creditosDisponibles;
+    if (btn) {
+        if (creditosDisponibles > 0) {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
+        }
+    }
+}
+
+    function renderizarItem(obj) {
+        document.getElementById('empty-msg').style.display = 'none';
+        const div = document.createElement('div');
+        div.className = 'object-item';
+        div.id = `item-${obj.id}`;
+        div.innerHTML = `
+            <div style="flex-grow: 1;">
+                <small style="color:var(--accent); font-weight:bold; letter-spacing:1px;">ID: ${obj.id}</small>
+                <h4 style="margin-top: 3px;">${obj.nombre}</h4>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="diseno-btn active" style="padding:8px 15px;" onclick="abrirEditorPro('${obj.id}', '${obj.categoria}')">VER / EDITAR</button>
+                <button class="btn-delete-item" onclick="eliminarObjeto('${obj.id}')">✕</button>
+            </div>
+        `;
+        document.getElementById('object-list').prepend(div);
+    }
+
+    function eliminarObjeto(id) {
+        if(confirm(`⚠️ ¿Estás seguro que quieres borrar el QR ID: ${id}?`)) {
+            database = database.filter(o => o.id !== id);
+            guardarEnMemoria();
+            document.getElementById(`item-${id}`).remove();
+            totalItems--;
+            actualizarInterfaz();
+            if(totalItems === 0) document.getElementById('empty-msg').style.display = 'block';
+            mostrarToast("🗑️ Objeto eliminado.");
+        }
+    }
+
+    function guardarEnMemoria() { localStorage.setItem('objetosSantua', JSON.stringify(database)); }
+    function cargarDesdeMemoria() {
+        if(database.length > 0) {
+            database.forEach(obj => renderizarItem(obj));
+            totalItems = database.length;
+            actualizarInterfaz();
+        }
+    }
+
+    function actualizarInterfaz() { document.getElementById('obj-count-badge').innerText = totalItems; }
+
+    function abrirEditorPro(id, categoria) {
+        document.getElementById('modal-diseno').style.display = 'flex';
+        document.getElementById('id-render').innerText = "ID: " + id;
+        
+        const isDirect = document.getElementById('opt-direct').classList.contains('active');
+        let rawPhone = document.getElementById('input-phone').value.trim();
+        let cleanPhone = rawPhone.replace(/\D/g, '');
+
+        if (isDirect && cleanPhone !== "") {
+            if (cleanPhone.startsWith('11') || cleanPhone.startsWith('15')) cleanPhone = '549' + cleanPhone;
+        }
+
+        const phraseInput = document.getElementById('edit-custom-phrase');
+        if(categoria === 'patente') {
+            document.getElementById('edit-emoji').value = "🆔";
+            phraseInput.value = "SI ENCONTRÁS ESTA PATENTE, ESCANEÁ EL CÓDIGO";
+        } else {
+            document.getElementById('edit-emoji').value = "🛡️";
+            phraseInput.value = "PROPIEDAD PROTEGIDA. ESCANEÁ PARA DEVOLVER";
+        }
+
+        // --- URL CORREGIDA CON TU IP PARA RED LOCAL ---
+        let urlDestino = `http://192.168.1.104:3000/recuperar.html?id=${id}`;
+        if(isDirect && cleanPhone !== "") urlDestino += `&tel=${cleanPhone}`;
+
+        const qrBox = document.getElementById('qr-real');
+        qrBox.innerHTML = "";
+        new QRCode(qrBox, {
+            text: urlDestino,
+            width: 180, height: 180,
+            colorDark : "#000000", colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        actualizarSticker();
+    }
+
+    function actualizarSticker() {
+        document.getElementById('emoji-render').innerText = document.getElementById('edit-emoji').value;
+        document.getElementById('phrase-render').innerText = document.getElementById('edit-custom-phrase').value;
+    }
+
+    function copiarFraseRapida() {
+        const s = document.getElementById('edit-phrase-select');
+        if(s.value) {
+            document.getElementById('edit-custom-phrase').value = s.value;
+            actualizarSticker();
+        }
+    }
+
+    function cerrarEditor() { document.getElementById('modal-diseno').style.display = 'none'; }
+
+    function mostrarToast(msg) {
+        const t = document.getElementById('toast-msg');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function descargarStickerCompleto() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 600; canvas.height = 850;
+        ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "black"; ctx.lineWidth = 8; ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+        ctx.font = "120px Arial"; ctx.textAlign = "center";
+        ctx.fillText(document.getElementById('emoji-render').innerText, 300, 180);
+
+        const qrCanvas = document.querySelector('#qr-real canvas');
+        if(qrCanvas) ctx.drawImage(qrCanvas, 125, 230, 350, 350);
+
+        ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
+        const text = document.getElementById('edit-custom-phrase').value.toUpperCase();
+        ctx.fillText(text, 300, 650);
+
+        ctx.font = "bold 22px monospace"; ctx.fillStyle = "#444";
+        ctx.fillText(document.getElementById('id-render').innerText, 300, 775);
+
+        const link = document.createElement('a');
+        link.download = `SANTUA-STICKER-${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
+
+    function abrirModalPrecios() {
+    document.getElementById('modal-precios').style.display = 'flex';
+}
+
+function cerrarModalPrecios() {
+    document.getElementById('modal-precios').style.display = 'none';
+}
+
+async function iniciarPago(plan) {
+    mostrarToast("⏳ Conectando con Mercado Pago...");
+    try {
+        const response = await fetch('/crear-preferencia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: plan })
+        });
+
+        // 1. Verificamos si la respuesta del servidor es válida
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error en el servidor");
+        }
+
+        const data = await response.json();
+        
+        // 2. Verificamos que realmente recibimos el link de pago
+        if (data && data.init_point) {
+            console.log("Redirigiendo a:", data.init_point);
+            window.location.href = data.init_point; 
+        } else {
+            // Si el servidor respondió pero no mandó el link
+            console.error("Respuesta inesperada:", data);
+            alert("No se pudo generar el link de pago. Revisá la consola del servidor.");
+        }
+
+    } catch (err) {
+        console.error("Error detallado:", err);
+        alert("Error al iniciar el pago: " + err.message);
+    }
+}
+
+</script>
+</body>
+</html>

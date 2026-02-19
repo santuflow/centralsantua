@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro | Central Santua</title>
+    <style>
+        :root {
+            --primary: #4facfe;
+            --secondary: #00f2fe;
+            --bg-dark: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            background: 
+                radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.1) 0px, transparent 50%),
+                #0a0a0a;
+        }
+
+        /* --- SECCIÓN IZQUIERDA: PC --- */
+        .info-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 8%;
+            border-right: 1px solid var(--border);
+        }
+
+        .logo-link {
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        .logo-link:hover { transform: scale(1.02); }
+
+        .logo-link h2 {
+            font-size: 2rem;
+            letter-spacing: 3px;
+            color: white;
+            font-weight: 800;
+        }
+
+        .logo-link span { color: var(--primary); }
+
+        .info-section h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 25px;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-msg {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #ccc;
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
+        }
+
+        /* --- SECCIÓN DERECHA: FORMULARIO --- */
+        .form-section {
+            width: 550px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .mobile-branding {
+            display: none;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .mobile-branding p {
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 10px;
+            padding: 0 10px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .auth-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .auth-card .subtitle {
+            color: #888;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .input-box { margin-bottom: 20px; }
+
+        .input-box label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-box input:focus {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.07);
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .switch-page {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .switch-page a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            .page-wrapper { flex-direction: column; }
+            .info-section { display: none; }
+            .form-section { width: 100%; padding: 40px 15px; }
+            .mobile-branding { display: block; }
+            .auth-card { 
+                background: transparent; 
+                border: none; 
+                padding: 10px;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-wrapper">
+        
+        <section class="info-section">
+            <a href="index.html" class="logo-link">
+                <h2>CENTRAL<span>SANTUA</span></h2>
+            </a>
+            <h1>Lo tuyo tiene<br>un camino de vuelta.</h1>
+            <div class="main-msg">
+                "Tu tranquilidad no debería depender del azar. Sumate a la red de protección inteligente que conecta tus pertenencias con la solidaridad de todo un país."
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="mobile-branding">
+                <a href="index.html" class="logo-link">
+                    <h2>CENTRAL<span>SANTUA</span></h2>
+                </a>
+                <p>Lo tuyo tiene un camino de vuelta.</p>
+                <p>"Tu tranquilidad no debería depender del azar. Sumate a la red de protección inteligente que conecta tus pertenencias con la solidaridad de todo un país."</p>
+            </div>
+
+            <div class="auth-card">
+                <h3>Crear Cuenta</h3>
+                <p class="subtitle">Registrate para empezar a proteger tus cosas.</p>
+
+                <form id="registro-form">
+                    <div class="input-box">
+                        <label>Usuario</label>
+                        <input type="text" id="username" placeholder="Tu nombre de usuario" required>
+                        <span id="error-msg" style="color: #ff4d4d; font-size: 12px; display: none; margin-top: 5px;">Este nombre ya está en uso</span>
+                    </div>
+                    <div class="input-box">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="email" placeholder="ejemplo@correo.com" required>
+                    </div>
+                    <div class="input-box">
+                        <label>Contraseña</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="input-box">
+                        <label>Confirmar Contraseña</label>
+                        <input type="password" id="confirmPassword" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-main">Unirme a la red</button>
+                </form>
+
+                <div class="switch-page">
+                    ¿Ya tenés cuenta? <a href="login.html">Iniciá Sesión</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Lista temporal para evitar duplicados (Esto luego lo validará tu servidor)
+        const usuariosExistentes = ["rodrigo", "santua", "admin"];
+        
+        const inputUsuario = document.getElementById('username');
+        const mensajeError = document.getElementById('error-msg');
+        const btnMain = document.querySelector('.btn-main');
+
+        // Validación en tiempo real para el nombre de usuario único
+        inputUsuario.addEventListener('input', () => {
+            const valor = inputUsuario.value.toLowerCase().trim();
+            if (usuariosExistentes.includes(valor)) {
+                mensajeError.style.display = 'block';
+                inputUsuario.style.borderColor = '#ff4d4d';
+                btnMain.disabled = true;
+                btnMain.style.opacity = '0.5';
+            } else {
+                mensajeError.style.display = 'none';
+                inputUsuario.style.borderColor = '';
+                btnMain.disabled = false;
+                btnMain.style.opacity = '1';
+            }
+        });
+
+        document.getElementById('registro-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = inputUsuario.value.trim();
+            const email = document.getElementById('email').value.toLowerCase().trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validación de contraseña
+            if(password !== confirmPassword) {
+                alert("Las contraseñas no coinciden");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("¡Usuario creado con éxito! Ahora podés iniciar sesión.");
+                    window.location.href = 'login.html';
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (error) {
+                console.error("Error al conectar con el servidor:", error);
+                alert("Hubo un problema con la conexión al servidor. Asegurate que esté encendido.");
+            }
+        });
+    </script>
+</body>
+</html>
