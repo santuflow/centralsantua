@@ -273,19 +273,23 @@ const client = new MercadoPagoConfig({
 
 app.post("/crear-preferencia", async (req, res) => {
     try {
+        // 1. Verificamos que llegue el cuerpo del mensaje
         const { tipo } = req.body;
-        let precio = 300;
-        if (tipo === 'medio') precio = 1000;
-        if (tipo === 'pro') precio = 5000;
+        console.log("Plan solicitado:", tipo);
+
+        // 2. Forzamos el precio a número decimal (Mercado Pago lo prefiere así)
+        let precio = 2.00;
+        if (tipo === 'medio') precio = 1000.00;
+        if (tipo === 'pro') precio = 5000.00;
 
         const preference = new Preference(client);
         
         const response = await preference.create({
             body: {
                 items: [{
-                    title: "Pack Créditos Santua",
+                    title: `Pack Créditos Santua - ${(tipo || 'Básico').toUpperCase()}`,
                     quantity: 1,
-                    unit_price: Number(precio),
+                    unit_price: Number(precio), // Forzamos que sea un número
                     currency_id: "ARS"
                 }],
                 back_urls: {
@@ -297,15 +301,20 @@ app.post("/crear-preferencia", async (req, res) => {
             }
         });
 
-        // Enviamos el ID de la preferencia al frontend
+        console.log("✅ Preferencia creada con ID:", response.id);
         res.json({ id: response.id });
 
     } catch (error) {
-        console.error("❌ Error al crear preferencia:", error);
-        res.status(500).json({ error: "Error interno al procesar el pago" });
+        // ESTO ES CLAVE: Si falla, esto nos dirá EXACTAMENTE qué dijo Mercado Pago
+        console.error("❌ ERROR DETALLADO DE MERCADO PAGO:");
+        if (error.response) {
+            console.error(JSON.stringify(error.response, null, 2));
+        } else {
+            console.error(error);
+        }
+        res.status(500).json({ error: "Error interno del servidor", detalle: error.message });
     }
-});
-
+}); 
 
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
