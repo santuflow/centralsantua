@@ -408,6 +408,7 @@
         const nombre = localStorage.getItem('usuarioNombre') || "Santua";
         document.getElementById('user-target').textContent = nombre;
         cargarDesdeMemoria();
+        actualizarInterfazBoton();
     });
 
     function setCategory(cat) {
@@ -432,9 +433,9 @@ let creditosDisponibles = parseInt(localStorage.getItem('creditosSantua')) || 0;
 // 2. Esta función debe ejecutarse al cargar la página para reflejar los créditos
 window.addEventListener('load', function() {
     const urlParams = new URLSearchParams(window.location.search);
-    const estadoPago = urlParams.get('pago');
+    const estadoPago = urlParams.get('status');
     
-    if (estadoPago === 'exitoso') {
+    if (estadoPago === 'approved') {
         creditosDisponibles += 10; // Sumamos 10 a lo que ya tenga
         localStorage.setItem('creditosSantua', creditosDisponibles);
         alert("¡Gracias por tu apoyo! Se han habilitado 10 códigos QR.");
@@ -513,6 +514,7 @@ function actualizarInterfazBoton() {
     const span = document.getElementById('contadorCreditos');
     
     if (span) span.innerText = creditosDisponibles;
+    if (btn) btn.innerHTML = `GENERAR NUEVO CÓDIGO QR (<span id="contadorCreditos">${creditosDisponibles}</span> disponibles)`;
     if (btn) {
         if (creditosDisponibles > 0) {
             btn.disabled = false;
@@ -565,7 +567,14 @@ function actualizarInterfazBoton() {
         }
     }
 
-    function actualizarInterfaz() { document.getElementById('obj-count-badge').innerText = totalItems; }
+    function actualizarInterfaz() {
+    // Esto actualiza el circulito con el número total de QRs creados
+    document.getElementById('obj-count-badge').innerText = totalItems;
+    
+    // AGREGÁ ESTA LÍNEA AQUÍ:
+    // Esto actualiza el texto del botón grande con los créditos que compraste
+    actualizarInterfazBoton(); 
+}
 
     function abrirEditorPro(id, categoria) {
         document.getElementById('modal-diseno').style.display = 'flex';
