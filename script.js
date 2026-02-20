@@ -1,5 +1,5 @@
 // 1. CONFIGURACIÓN CENTRAL
-const serverURL = "https://centralsantua.com.ar";
+const serverURL = window.location.origin; 
 const MI_WHATSAPP = "5491151436396";
 
 // Variable global para capturar la categoría seleccionada en la UI
@@ -246,5 +246,32 @@ window.onclick = function(event) {
     let modal = document.getElementById('modal-terminos');
     if (event.target == modal) {
         cerrarModalTerminos();
+    }
+}
+
+
+async function pagar(tipoPlan) {
+    try {
+        console.log("Enviando pedido de pago...");
+        const res = await fetch(`${serverURL}/crear-preferencia`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: tipoPlan })
+        });
+
+        const data = await res.json();
+        console.log("Respuesta recibida:", data);
+
+        // CAMBIO AQUÍ: Si recibimos un ID, redirigimos sin preguntar nada más
+        if (data && data.id) {
+            console.log("Redirigiendo a Mercado Pago...");
+            window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+        } else {
+            // Si no hay ID, mostramos el error que mandó el servidor
+            alert("Error del servidor: " + (data.error || "No se obtuvo ID"));
+        }
+    } catch (error) {
+        console.error("Error en fetch:", error);
+        alert("No se pudo conectar con el servidor.");
     }
 }

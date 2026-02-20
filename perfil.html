@@ -668,7 +668,6 @@ async function iniciarPago(plan) {
             body: JSON.stringify({ tipo: plan })
         });
 
-        // 1. Verificamos si la respuesta del servidor es válida
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || "Error en el servidor");
@@ -676,14 +675,14 @@ async function iniciarPago(plan) {
 
         const data = await response.json();
         
-        // 2. Verificamos que realmente recibimos el link de pago
-        if (data && data.init_point) {
-            console.log("Redirigiendo a:", data.init_point);
-            window.location.href = data.init_point; 
+        // AQUÍ ESTABA EL ERROR: Cambiamos init_point por id
+        if (data && data.id) {
+            console.log("ID de pago recibido:", data.id);
+            // Usamos el ID para armar la URL de Mercado Pago manualmente
+            window.location.href = 'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=' + data.id;
         } else {
-            // Si el servidor respondió pero no mandó el link
-            console.error("Respuesta inesperada:", data);
-            alert("No se pudo generar el link de pago. Revisá la consola del servidor.");
+            console.error("El servidor no envió el ID:", data);
+            alert("No se pudo generar el link de pago (ID faltante).");
         }
 
     } catch (err) {

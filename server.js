@@ -273,50 +273,37 @@ const client = new MercadoPagoConfig({
 
 app.post("/crear-preferencia", async (req, res) => {
     try {
-        // 1. Verificamos que llegue el cuerpo del mensaje
         const { tipo } = req.body;
-        console.log("Plan solicitado:", tipo);
-
-        // 2. Forzamos el precio a número decimal (Mercado Pago lo prefiere así)
-        let precio = 2.00;
+        let precio = 2.00; // Ajusté a tus botones de la imagen
         if (tipo === 'medio') precio = 1000.00;
         if (tipo === 'pro') precio = 5000.00;
 
         const preference = new Preference(client);
-        
-        const response = await preference.create({
+        const result = await preference.create({
             body: {
                 items: [{
-                    title: `Pack Créditos Santua - ${(tipo || 'Básico').toUpperCase()}`,
+                    title: `Plan ${tipo}`,
                     quantity: 1,
-                    unit_price: Number(precio), // Forzamos que sea un número
+                    unit_price: precio,
                     currency_id: "ARS"
                 }],
+                // Asegúrate que estas URLs existan
                 back_urls: {
-                    success: "https://centralsantua.com.ar/perfil.html?pago=exitoso",
-                    failure: "https://centralsantua.com.ar/perfil.html?pago=error",
-                    pending: "https://centralsantua.com.ar/perfil.html?pago=pendiente"
+                    success: "https://centralsantua.com.ar/perfil.html",
+                    failure: "https://centralsantua.com.ar/perfil.html",
+                    pending: "https://centralsantua.com.ar/perfil.html"
                 },
-                auto_return: "approved"
+                auto_return: "approved",
             }
         });
-
-        console.log("✅ Preferencia creada con ID:", response.id);
-        res.json({ id: response.id });
-
+        res.json({ id: result.id });
     } catch (error) {
-        // ESTO ES CLAVE: Si falla, esto nos dirá EXACTAMENTE qué dijo Mercado Pago
-        console.error("❌ ERROR DETALLADO DE MERCADO PAGO:");
-        if (error.response) {
-            console.error(JSON.stringify(error.response, null, 2));
-        } else {
-            console.error(error);
-        }
-        res.status(500).json({ error: "Error interno del servidor", detalle: error.message });
+        console.error(error);
+        res.status(500).json({ error: error.message }); // Enviamos el error real al front
     }
-}); 
+});
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);
     console.log(`🌍 ACCESIBLE DESDE EL TÚNEL DE SERVEO`);
