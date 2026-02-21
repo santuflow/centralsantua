@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activar Sticker | Central Santua</title>
+    <link rel="stylesheet" href="style.css?v=1.1">
+    <style>
+        .pago-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #4facfe;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .sticker-badge {
+            display: inline-block;
+            background: #4facfe;
+            color: black;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .ventajas-list {
+            text-align: left;
+            margin: 25px 0;
+            list-style: none;
+            padding: 0;
+        }
+        .ventajas-list li {
+            margin-bottom: 15px;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+        }
+        .ventajas-list li::before {
+            content: "✅";
+            margin-right: 10px;
+        }
+        .precio-tag {
+            font-size: 2.5rem;
+            color: white;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .btn-mercado-pago {
+            background: #009ee3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn-mercado-pago:hover {
+            background: #007bb5;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <nav class="container-nav-ajustado">
+            <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="pago-container">
+            <div class="sticker-badge">ID DETECTADO: <span id="id-sticker">Cargando...</span></div>
+            
+            <h2 style="color: white;">¡Sticker Listo para Activar!</h2>
+            <p style="color: #aaa;">Estás a un paso de blindar tu patente o pertenencia con nuestro sistema de recuperación inteligente.</p>
+
+            <ul class="ventajas-list">
+                <li><strong>Protección de Privacidad:</strong> Vos elegís qué datos mostrar cuando alguien escanee.</li>
+                <li><strong>Aviso Inmediato:</strong> Notificación vía sistema cuando se reporte un hallazgo.</li>
+                <li><strong>Mensaje Personalizado:</strong> Agregá instrucciones para quien encuentre tu objeto.</li>
+                <li><strong>Sin Suscripciones:</strong> Pagás una vez y te protegemos para siempre.</li>
+            </ul>
+
+            <div class="precio-tag">$1.000</div>
+
+            <button class="btn-mercado-pago" onclick="procesarPago()">PAGAR CON MERCADO PAGO</button>
+            
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #666;">
+                Al pagar, serás redirigido a tu panel para configurar los datos de contacto.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // 1. Recuperamos el ID del sticker que guardamos en el Index
+        const stickerID = localStorage.getItem("qr_escaneado_pendiente");
+        
+        if (!stickerID) {
+            alert("No se detectó ningún código. Volviendo al inicio.");
+            window.location.href = "index.html";
+        } else {
+            document.getElementById("id-sticker").innerText = stickerID;
+        }
+
+        function procesarPago() {
+            // Aquí simulas el éxito del pago. 
+            // En el futuro, acá pondrás el link de Mercado Pago.
+            alert("Redirigiendo a Mercado Pago...");
+            
+            // Simulamos que el pago fue exitoso y lo mandamos al perfil
+            setTimeout(() => {
+                // Pasamos el ID por la URL para que perfil.html lo reconozca
+                window.location.href = "perfil.html?activacion=exitosa&id=" + stickerID;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

@@ -315,7 +315,10 @@ function abrirInterfazCamara() {
             window.location.href = "presentacion_pago.html";
         }
     ).catch(err => {
-        alert("Error de cámara: Asegurante de permitir los permisos de privacidad en tu navegador.");
+        // En lugar de un alert seco, damos instrucciones
+        console.error("Error de cámara:", err);
+        alert("¡Ups! Para escanear el sticker necesitamos permiso para usar la cámara.\n\n" + 
+              "Si no te apareció el cartel, buscá el ícono de la 'Cámara' o un 'Candado' en la barra de direcciones (arriba) y dale a 'Permitir'.");
         detenerEscaneo();
     });
 }

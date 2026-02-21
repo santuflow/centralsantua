@@ -303,8 +303,26 @@ app.post("/crear-preferencia", async (req, res) => {
     }
 });
 
+// Ruta segura en el servidor
+app.post('/api/generar-lote-seguro', async (req, res) => {
+    const { cantidad, tipo } = req.body;
+    const nuevosIDs = [];
+
+    for (let i = 0; i < cantidad; i++) {
+        // Generamos el ID en el SERVIDOR
+        const id = "SN" + Math.random().toString(36).substr(2, 6).toUpperCase();
+        nuevosIDs.push(id);
+        
+        // GUARDAR EN DB: id, tipo, estado: 'producido'
+        // await db.stickers.insert({ id_qr: id, tipo: tipo, estado: 'producido' });
+    }
+
+    res.json({ ids: nuevosIDs });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);
     console.log(`🌍 ACCESIBLE DESDE EL TÚNEL DE SERVEO`);
 });
+

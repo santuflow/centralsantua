@@ -139,7 +139,37 @@
             <span class="stat-label">Matchs</span>
             <span class="stat-number" id="s-m" style="color:var(--warning)">0</span>
         </div>
+  
+         <div class="stat-box">
+    <span class="stat-label">QRs GENERADOS</span>
+    <span class="stat-number" id="s-gen">0</span>
+</div>
+
+<div class="stat-box">
+    <span class="stat-label">QRs ACTIVADOS</span>
+    <span class="stat-number" id="s-act" style="color:var(--success)">0</span>
+</div>      
+
     </div>
+
+    <div class="stat-box" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.6); border: 1px dashed var(--primary);">
+    <span class="stat-label"><i class="fas fa-qrcode"></i> Producción de Stickers</span>
+    <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+        <input type="number" id="cant-qr" placeholder="Cantidad (Ej: 100)" 
+               style="background: #000; border: 1px solid var(--border); color: var(--primary); padding: 8px; border-radius: 4px; width: 150px;">
+        
+        <select id="tipo-qr" style="background: #000; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 4px;">
+            <option value="moto">Moto (17x17 cm)</option>
+            <option value="auto">Auto (30x10 cm)</option>
+        </select>
+
+        <button class="btn-cmd" style="border-color: var(--success); color: var(--success);" onclick="prepararLote()">
+            <i class="fas fa-plus-circle"></i> GENERAR LOTE
+        </button>
+    </div>
+    
+    <div id="print-area" style="display:none;"></div>
+</div>
 
     <div class="search-container">
         <i class="fas fa-search"></i>
@@ -286,6 +316,133 @@
 
     loadData();
     setInterval(loadData, 5000);
+
+    async function prepararLote() {
+    const cantInput = document.getElementById('cant-qr');
+    const tipoInput = document.getElementById('tipo-qr');
+    const cant = parseInt(cantInput.value);
+    const tipo = tipoInput.value;
+    
+    if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
+
+    try {
+        // 1. SOLICITUD SEGURA AL SERVIDOR
+        // Pedimos los IDs oficiales antes de abrir la ventana de impresión
+        const response = await fetch('/api/generar-lote-seguro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cantidad: cant, tipo: tipo })
+        });
+
+        if (!response.ok) throw new Error("Error al validar con el servidor");
+        
+        const data = await response.json();
+        const listaIDs = data.ids; // Array de IDs oficiales enviados por el servidor
+
+        // 2. ABRIR VENTANA DE IMPRESIÓN
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html>
+            <head>
+                <title>Central Santua - Impresión Oficial</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+                    body { font-family: 'Archivo Black', sans-serif; margin: 0; padding: 20px; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
+                    .contenedor-par { display: flex; background: #000; padding: 5px; margin-bottom: 30px; border-radius: 4px; }
+                    .sticker { background: #fff; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; position: relative; }
+                    .auto { width: 140mm; height: 95mm; border: 10px solid #FFD700; }
+                    .moto { width: 160mm; height: 160mm; border: 15px solid #FFD700; margin-bottom: 40px; }
+                    .franja { background: #000; color: #fff; width: 100%; text-align: center; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+                    .franja.arriba { height: 18%; font-size: 1.1rem; border-bottom: 4px solid #FFD700; }
+                    .franja.abajo { height: 18%; border-top: 4px solid #FFD700; padding: 2px 0; }
+                    .texto-contacto { font-size: 0.85rem; color: #fff; margin-bottom: 2px; }
+                    .texto-web { font-size: 0.7rem; color: #FFD700; letter-spacing: 1px; }
+                    .cuerpo { flex-grow: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; }
+                    .qr-img { border: 2px solid #000; padding: 5px; background: #fff; }
+                    .id-placa { background: #000; color: #FFD700; padding: 3px 15px; margin-top: -8px; font-size: 1.4rem; letter-spacing: 2px; border: 2px solid #FFD700; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
+                    .linea-corte { width: 0; border-left: 3px dashed #FFD700; height: 95mm; }
+                    @media print { body { background: #fff; } .contenedor-par { box-shadow: none; } }
+                </style>
+            </head>
+            <body>
+        `);
+
+        // 3. GENERACIÓN DE STICKERS CON IDS OFICIALES
+        listaIDs.forEach(idUnico => {
+            const url = `https://centralsantua.com.ar/?id=${idUnico}`;
+            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(url)}`;
+
+            if (tipo === 'auto') {
+                win.document.write(`
+                    <div class="contenedor-par">
+                        <div class="sticker auto">
+                            <div class="franja arriba">🛡️ OBJETO PROTEGIDO 🛡️</div>
+                            <div class="cuerpo">
+                                <img src="${qrImg}" class="qr-img" width="180" height="180" />
+                                <div class="id-placa">${idUnico}</div>
+                            </div>
+                            <div class="franja abajo">
+                                <div class="texto-contacto">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
+                                <div class="texto-web">CENTRALSANTUA.COM.AR</div>
+                            </div>
+                        </div>
+                        <div class="linea-corte"></div>
+                        <div class="sticker auto">
+                            <div class="franja arriba">🛡️ OBJETO PROTEGIDO 🛡️</div>
+                            <div class="cuerpo">
+                                <img src="${qrImg}" class="qr-img" width="180" height="180" />
+                                <div class="id-placa">${idUnico}</div>
+                            </div>
+                            <div class="franja abajo">
+                                <div class="texto-contacto">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
+                                <div class="texto-web">CENTRALSANTUA.COM.AR</div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            } else {
+                win.document.write(`
+                    <div class="sticker moto">
+                        <div class="franja arriba" style="font-size: 1.8rem;">🛡️ OBJETO PROTEGIDO 🛡️</div>
+                        <div class="cuerpo">
+                            <img src="${qrImg}" class="qr-img" width="380" height="380" />
+                            <div class="id-placa" style="font-size: 2.8rem; margin-top: -15px;">${idUnico}</div>
+                        </div>
+                        <div class="franja abajo" style="height: 15%;">
+                            <div class="texto-contacto" style="font-size: 1.2rem;">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
+                            <div class="texto-web" style="font-size: 1rem;">WWW.CENTRALSANTUA.COM.AR</div>
+                        </div>
+                    </div>
+                `);
+            }
+        });
+
+        win.document.write('</body></html>');
+        win.document.close();
+
+        // 4. ACTUALIZAR CONTADOR VISUAL
+        const statGen = document.getElementById('s-gen');
+        if (statGen) {
+            statGen.innerText = parseInt(statGen.innerText) + listaIDs.length;
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Hubo un error de conexión con el servidor. No se generaron QRs.");
+    }
+}
+
+// Código para cargar estadísticas al entrar
+    window.onload = async () => {
+        try {
+            const res = await fetch('/api/stats');
+            const stats = await res.json();
+            document.getElementById('s-gen').innerText = stats.generados;
+            document.getElementById('s-act').innerText = stats.activados;
+        } catch (error) {
+            console.error("Error cargando estadísticas:", error);
+        }
+    };
 </script>
 </body>
 </html>
