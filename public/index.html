@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Santua | Red Oficial de Hallazgos</title>
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
 
-    <header class="barra-superior">
-    <nav class="contenedor-nav">
+<header class="navbar"> <nav class="container-nav-ajustado">
         <a href="index.html" class="logo-link">
-            <h1 class="logo-texto">CENTRAL<span>SANTUA</span></h1>
+            <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
         </a>
 
         <div class="nav-acciones">
@@ -35,18 +36,17 @@
     <a href="encontre.html">Encontre algo</a>
     <a href="perdi.html">Perdi algo</a>
     <a href="perfil.html">Administrar Codigos QR</a>
-    <a href="tienda.html">Generar Codigo QR</a>
     <a href="tutorial.html">¿Cómo funciona?</a>
     <a href="ayuda.html">Ayuda</a>
     <a href="javascript:void(0)" onclick="abrirModalTerminos(event)">Términos y Condiciones</a>
     <a href="javascript:void(0)" onclick="cerrarSesion()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
 </div>
 
-    <main class="container">
-        <section class="hero-section">
-            <h2>Red de Hallazgos</h2>
-            <p>El nexo directo para recuperar documentos y patentes extraviadas. Seguridad total y gestión en tiempo real.</p>
-        </section>
+<main class="container">
+    <section class="hero-section">
+        <h2>Tu tranquilidad, a un escaneo de distancia</h2>
+        <p>La red directa para la recuperación de documentos y patentes. Gestión segura, privada y en pocos segundos.</p>
+    </section>
         
         <div class="stats-container">
     <div class="stat-box">
@@ -69,25 +69,32 @@
         </div>
     </div>
 </div>
+<div class="button-group">
+    <button class="btn btn-activar-negro" onclick="verificarAccesoActivacion()" style="grid-column: 1 / -1; margin-bottom: 10px;">
+    <span class="icon">✨</span>
+    <div class="btn-content">
+        <span class="text">ACTIVAR STICKER QR</span>
+    </div>
+    <span class="icon">✨</span>
+</button>
 
-        <button class="btn-info-main" onclick="abrirGuia()">
+    <a href="encontre.html" class="btn btn-encontre">
+        <span class="icon">🔍</span>
+        <div class="btn-content">
+            <span class="text">ENCONTRÉ ALGO</span>
+        </div>
+    </a>
+
+    <a href="perdi.html" class="btn btn-perdi">
+        <span class="icon">🛡️</span>
+        <div class="btn-content">
+            <span class="text">PERDÍ ALGO</span>
+        </div>
+    </a>
+</div>
+                <button class="btn-info-main" onclick="abrirGuia()">
             <span class="icon">💡</span> LEER: ¿CÓMO FUNCIONA EL SISTEMA?
         </button>
-
-        <div class="button-group">
-            <a href="encontre.html" class="btn btn-encontre">
-                <span class="icon">🔍</span>
-                <div class="btn-content">
-                    <span class="text">ENCONTRÉ ALGO</span>
-                </div>
-            </a>
-            <a href="perdi.html" class="btn btn-perdi">
-                <span class="icon">🛡️</span>
-                <div class="btn-content">
-                    <span class="text">PERDÍ ALGO</span>
-                </div>
-            </a>
-        </div>
 
         <section class="extra-info">
             <div class="info-card">
@@ -264,7 +271,78 @@ function cerrarSesion() {
     localStorage.clear();
     window.location.href = 'index.html';
 }
+
+let html5QrCode; // Variable global para el control de la cámara
+
+function verificarAccesoActivacion() {
+    // Verificamos si el usuario está logueado con tu variable actual
+    const logueado = localStorage.getItem('estaLogueado');
+
+    if (logueado !== 'true') {
+        alert("¡Hola! Para activar tu sticker y proteger tus objetos, primero debés iniciar sesión.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    // Si está logueado, abrimos la interfaz del escáner
+    abrirInterfazCamara();
+}
+
+function abrirInterfazCamara() {
+    // Mostramos el contenedor negro que ya creaste
+    document.getElementById('scanner-wrapper').style.display = 'flex';
+    
+    html5QrCode = new Html5Qrcode("reader");
+    
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0 
+    };
+
+    // Iniciamos la cámara trasera
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+            // ÉXITO: Detectó el QR
+            detenerEscaneo();
+            
+            // Guardamos el código para la página de pago
+            localStorage.setItem("qr_escaneado_pendiente", decodedText);
+            
+            // Redirigimos a la página de información y pago
+            window.location.href = "presentacion_pago.html";
+        }
+    ).catch(err => {
+        alert("Error de cámara: Asegurante de permitir los permisos de privacidad en tu navegador.");
+        detenerEscaneo();
+    });
+}
+
+function detenerEscaneo() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scanner-wrapper').style.display = 'none';
+        }).catch(() => {
+            document.getElementById('scanner-wrapper').style.display = 'none';
+        });
+    } else {
+        document.getElementById('scanner-wrapper').style.display = 'none';
+    }
+}
+
 </script>
+
+<div id="scanner-wrapper" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="background: #111; padding: 20px; border-radius: 15px; border: 2px solid #4facfe; width: 90%; max-width: 450px; text-align: center;">
+        <h2 style="color: white; margin-bottom: 20px;">Escaneá tu Sticker QR</h2>
+        <div id="reader" style="width: 100%; border-radius: 10px; overflow: hidden; background: black;"></div>
+        <button onclick="detenerEscaneo()" style="margin-top: 25px; background: #ff4d4d; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            CANCELAR
+        </button>
+    </div>
+</div>
 
     <script src="interfaz.js"></script>
 </body>

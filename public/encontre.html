@@ -9,14 +9,14 @@
 </head>
 <body>
 
-   <header class="barra-superior">
-    <nav class="contenedor-nav">
+   <header class="navbar">
+    <nav class="container-nav-ajustado">
         <a href="index.html" class="logo-link">
-            <h1 class="logo-texto">CENTRAL<span>SANTUA</span></h1>
+            <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
         </a>
 
         <div class="nav-acciones">
-            <div id="auth-buttons">
+            <div id="auth-buttons" class="auth-container">
                 <a href="login.html" class="btn-auth login">Ingresar</a>
                 <a href="registro.html" class="btn-auth registro">Registrarse</a>
             </div>
@@ -30,17 +30,52 @@
     </nav>
 </header>
 
-  <div id="side-menu" class="menu-lateral">
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token"); 
+        const authSection = document.getElementById("auth-buttons");
+        const menuBtn = document.getElementById("boton-menu-privado");
+
+        if (token) {
+            // USUARIO LOGUEADO: Forzamos mostrar menú y ocultar botones
+            if (authSection) authSection.style.setProperty("display", "none", "important");
+            if (menuBtn) menuBtn.style.setProperty("display", "flex", "important");
+        } else {
+            // USUARIO NO LOGUEADO: Forzamos ocultar menú y mostrar botones
+            if (authSection) authSection.style.setProperty("display", "flex", "important");
+            if (menuBtn) menuBtn.style.setProperty("display", "none", "important");
+        }
+    });
+</script>
+
+<div id="side-menu" class="menu-lateral">
     <a href="javascript:void(0)" class="cerrar-btn" onclick="toggleMenu()">&times;</a>
     <a href="index.html">Inicio</a>
     <a href="encontre.html">Encontre algo</a>
     <a href="perdi.html">Perdi algo</a>
-    <a href="tienda.html">Generar Codigo QR</a>
+    <a href="perfil.html">Administrar Codigos QR</a>
     <a href="tutorial.html">¿Cómo funciona?</a>
     <a href="ayuda.html">Ayuda</a>
     <a href="javascript:void(0)" onclick="abrirModalTerminos(event)">Términos y Condiciones</a>
     <a href="javascript:void(0)" onclick="cerrarSesion()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
 </div>
+
+<script>
+    function toggleMenu() {
+        const menu = document.getElementById("side-menu");
+        // Verificamos el ancho actual para saber si abrir o cerrar
+        if (menu.style.width === "250px") {
+            menu.style.width = "0";
+        } else {
+            menu.style.width = "250px";
+        }
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+    }
+</script>
 
     <main class="main-layout">
         
@@ -111,14 +146,6 @@
             </form>
         </section>
 
-        <aside class="sidebar-info">
-            <div class="glass-card highlight">
-                <h3>Formatos Soportados</h3>
-                <p>✅ <strong>Autos:</strong> ABC 123 / AB 123 CD.</p>
-                <p>✅ <strong>Motos:</strong> 123 ABC / A123BCD.</p>
-                <p>✅ <strong>DNI:</strong> Tarjeta o Libreta.</p>
-            </div>
-        </aside>
     </main>
 
     <div id="modal-resultado" class="modal-overlay" style="display: none;">

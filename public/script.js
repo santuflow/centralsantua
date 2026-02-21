@@ -275,3 +275,50 @@ async function pagar(tipoPlan) {
         alert("No se pudo conectar con el servidor.");
     }
 }
+
+function verificarAccesoActivacion() {
+    // Aquí verificamos si el usuario tiene una sesión activa (puedes usar una variable global o una cookie)
+    const usuarioLogueado = document.body.classList.contains('user-logged-in'); 
+
+    if (usuarioLogueado) {
+        // Si está logueado, lo mandamos directo a la página de pago/carga de ID
+        window.location.href = "/activar-sticker.html";
+    } else {
+        // Si NO está logueado, mostramos el modal explicativo
+        mostrarModal(
+            "🔒 Acción Requerida", 
+            "Para activar tu sticker y configurar tus datos de contacto, primero debes crear una cuenta o iniciar sesión. ¡Es rápido y protege tu seguridad!", 
+            "🎫"
+        );
+        
+        // Modificamos el botón del modal para que lo lleve a registrarse
+        const areaContacto = document.getElementById('area-contacto');
+        if (areaContacto) {
+            areaContacto.innerHTML = `
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <a href="/login.html" class="btn-modal-secundario">INICIAR SESIÓN</a>
+                    <a href="/registro.html" class="btn-modal-primario">CREAR CUENTA</a>
+                </div>
+            `;
+            areaContacto.style.display = 'block';
+        }
+    }
+}
+
+//boton activar sticker qr funcion.
+function verificarAccesoActivacion() {
+    // Verificamos si existe un token o ID de usuario en el localStorage (o como manejes tu sesión)
+    const usuarioLogueado = localStorage.getItem('userId'); // Ajustar según tu sistema actual
+
+    if (usuarioLogueado) {
+        // Si ya está logueado, lo mandamos a la página donde carga el ID de su sticker físico
+        window.location.href = '/activar-sticker.html';
+    } else {
+        // Si no está logueado, le mostramos el mensaje explicativo que pediste
+        // Podés usar un alert simple o tu modal personalizado
+        const mensaje = "🚀 ¡Casi listo!\n\nPara activar tu sticker QR de $1000 y vincularlo a tu vehículo, primero debés registrarte o iniciar sesión.\n\nEsto permite que el sistema sepa a qué WhatsApp avisar cuando alguien escanee tu patente.";
+        
+        alert(mensaje);
+        window.location.href = '/login.html';
+    }
+}

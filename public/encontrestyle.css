@@ -1,21 +1,68 @@
 /* ============================================================
-   ESTILOS BASE: ENCONTRÉ ALGO (UNIFICADO CON PERDISTYLE)
+    FORZAR NAVEGACIÓN COMPACTA (FIX FINAL)
    ============================================================ */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+.navbar {
+    z-index: 2000 !important;
+    background-color: rgba(10, 10, 10, 0.95) !important;
+    height: 70px !important; /* Altura idéntica al index */
+    min-height: 70px !important;
+    max-height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    border-bottom: 3px solid #cc0000 !important;
+    width: 100%;
+    padding: 0 !important; /* Eliminamos padding que estira la barra */
+    overflow: hidden; /* Evita que el contenido la deforme */
 }
 
-body {
-    /* Bandera nítida como fondo */
-    background: url('bandera.jpg') no-repeat center center fixed;
-    background-size: cover;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #ffffff;
-    min-height: 100vh;
-    display: flex;
+.container-nav-ajustado {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px !important;
+    height: 100% !important;
+}
+
+/* EL LOGO ES LO QUE SUELE ESTIRAR LA BARRA */
+.logo {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important; /* Crucial para que no ocupe espacio extra */
+    font-size: 1.5rem !important;
+}
+
+.nav-acciones {
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+}
+
+/* BOTÓN DE MENÚ SIN ESPACIOS EXTRAS */
+.boton-menu {
+    background: none !important;
+    border: none !important;
+    padding: 5px;
+    cursor: pointer;
+    /* QUITAMOS EL DISPLAY FLEX !IMPORTANT DE ACÁ */
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px; 
+    width: 40px;
+    height: 40px;
+}
+
+.barrita {
+    background-color: white !important;
+    display: block !important;
+    width: 25px !important;
+    height: 2px !important; /* Grosor fino y elegante */
+    border-radius: 10px !important;
+    margin: 0 !important; /* El espacio lo da el 'gap' del padre */
+    transition: 0.3s !important;
 }
 
 /* ============================================================

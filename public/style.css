@@ -1,5 +1,5 @@
 /* ============================================================
-   ESTILOS GENERALES Y RESET
+    ESTILOS GENERALES Y RESET
    ============================================================ */
 * {
     margin: 0;
@@ -9,86 +9,195 @@
 
 body {
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    /* BANDERA NÍTIDA: Sin capas que la tapen */
     background: url('bandera.jpg') no-repeat center center fixed;
     background-size: cover;
     color: #ffffff;
     display: flex;
     flex-direction: column;
-    align-items: center;
     min-height: 100vh;
     overflow-x: hidden;
 }
 
 /* ============================================================
-   NAVBAR Y LOGO
+    NAVBAR Y LOGO (SINCRONIZADO CON TU HTML)
    ============================================================ */
 .navbar {
     background-color: rgba(10, 10, 10, 0.95); 
-    padding: 20px 0;
-    text-align: center;
+    padding: 12px 0;
     border-bottom: 3px solid #cc0000;
     width: 100%;
     box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    position: relative;
+    z-index: 1000;
 }
 
+/* IMPORTANTE: Usamos el nombre exacto de tu HTML para que funcione el Flex */
+.container-nav-ajustado {
+    display: flex !important;
+    justify-content: space-between !important; /* EMPUJA EL MENÚ A LA DERECHA */
+    align-items: center !important;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.logo-link {
+    text-decoration: none;
+}
+
+/* Corregimos para que tome la clase .logo de tu h1 */
 .logo {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
 .logo span {
     color: #4facfe;
-    font-weight: 400;
+}
+
+/* Agrupa botones y menú a la derecha */
+.nav-acciones {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px;
+}
+
+/* Botones de ingreso */
+.btn-auth {
+    text-decoration: none;
+    color: white;
+    font-size: 0.9rem;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.login { background: #333; }
+.login:hover { background: #444; }
+
+.registro { 
+    background: #4facfe; 
+    color: #000; 
+}
+
+/* Estilo para las tres rayitas del menú */
+ .boton-menu {
+    background: none !important;
+    border: none !important;
+    padding: 5px !important;
+    cursor: pointer;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important; /* Espacio fijo entre rayas */
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.barrita {
+    background-color: white !important;
+    display: block !important;
+    width: 25px !important;
+    height: 2px !important; /* Grosor fino y elegante */
+    border-radius: 10px !important;
+    margin: 0 !important; /* El espacio lo da el 'gap' del padre */
+    transition: 0.3s !important;
+}
+
+/* AJUSTE PARA MÓVILES (Para que no se amontone nada) */
+@media (max-width: 600px) {
+    .logo {
+        font-size: 1.3rem !important;
+    }
+    
+    .container-nav-ajustado {
+        padding: 0 10px;
+    }
+
+    .btn-auth {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
 }
 
 /* ============================================================
-   CONTENEDOR Y HERO (BIENVENIDA)
+    CONTENEDOR Y HERO (BIENVENIDA)
    ============================================================ */
 .container {
     width: 100%;
-    max-width: 1000px;
-    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 1;
+    padding: 0 15px;
+    box-sizing: border-box;
+    flex: 1; /* Empuja el contenido hacia arriba */
 }
 
 .hero-section {
-    text-align: center;
-    margin-bottom: 30px;
-    background: rgba(0, 0, 0, 0.85); /* Fondo oscuro para que el texto resalte */
-    padding: 30px;
+    width: 100% !important;
+    max-width: 900px;
+    background: rgba(0, 0, 0, 0.85); 
+    padding: 25px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(79, 172, 254, 0.3);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.hero-badge {
-    background: #4facfe;
-    color: #000;
-    display: inline-block;
-    padding: 5px 15px;
-    border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 900;
-    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    box-sizing: border-box;
+    
+    /* SEPARACIÓN DE LA FRANJA ROJA */
+    margin-top: 20px !important; 
+    margin-bottom: 20px;
 }
 
 .hero-section h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: #ffffff;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    line-height: 1.2;
 }
 
 .hero-section p {
     color: #ccc;
-    font-size: 1.1rem;
-    line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0 auto;
+    max-width: 750px;
+}
+
+/* ============================================================
+    OPTIMIZACIÓN PARA CELULARES
+   ============================================================ */
+@media (max-width: 600px) {
+    .contenedor-nav {
+        padding: 0 10px;
+    }
+    
+    .logo-texto { font-size: 1.3rem; }
+
+    .hero-section {
+        margin-top: 15px !important; 
+        padding: 15px !important;
+        margin-bottom: 10px;
+    }
+
+    .hero-section h2 {
+        font-size: 1.25rem !important;
+    }
+
+    .hero-section p {
+        font-size: 0.85rem !important;
+    }
 }
 
 /* ============================================================
@@ -127,7 +236,7 @@ body {
     gap: 20px;
     width: 100%;
     max-width: 500px;
-    margin-bottom: 50px;
+    margin-bottom: 10px;
 }
 
 .btn {
@@ -334,7 +443,7 @@ footer {
     border: 1px solid #1a1a1a; /* Borde sutil */
     border-radius: 12px;
     padding: 15px 30px;
-    margin: 25px auto;
+    margin: 5px auto;
     width: fit-content;
     gap: 30px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.6);
@@ -741,4 +850,59 @@ footer {
 .btn-generate:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3);
+}
+
+/* Estilo específico para el botón negro de activación - VERSIÓN SLIM Y PEGADA */
+.btn-activar-negro {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #333 !important;
+    
+    /* ALTURA: Ahora sí reducida a menos de la mitad */
+    padding: 16px 15px !important; 
+    min-height: 30px !important; 
+    
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    
+    /* MARGEN: Lo ponemos en 0 para que no empuje a los de abajo */
+    margin: 0 auto 0px auto !important; 
+}
+
+.btn-activar-negro:hover {
+    background-color: #1a1a1a !important;
+    transform: scale(1.01);
+}
+
+/* Forzamos que el grupo de botones de abajo suba */
+.button-group {
+    margin-top: 5px !important; /* Espacio mínimo entre el negro y los otros */
+    gap: 5px !important; /* Espacio entre el verde y el rojo */
+}
+
+/* Ajuste para PC */
+@media (min-width: 601px) {
+    .btn-activar-negro {
+        max-width: 400px;
+    }
+}
+
+/* Ajuste para Celular */
+@media (max-width: 600px) {
+    .btn-activar-negro {
+        width: 100% !important;
+        margin-bottom: 5px !important; /* Un poquito de aire para que no se toquen */
+    }
+    .button-group {
+        padding: 0 10px;
+        margin-top: 0px !important;
+    }
 }
