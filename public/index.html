@@ -255,31 +255,30 @@ function gestionarInterfaz() {
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
-
-    // Limpiamos el ID por si la URL viene con basura o duplicados
-    if (idEscaneado && idEscaneado.includes('id=')) {
-        idEscaneado = idEscaneado.split('id=')[1];
-    }
+    
+    // Esta línea es la clave: detecta si volvemos de Mercado Pago
+    const esRetornoPago = params.get('status') || params.get('preference_id');
 
     if (idEscaneado) {
-        // 1. Buscamos si este sticker ya está registrado en MI celular
+        // Si vengo de pagar, NO REDIRECCIONO. Me quedo para que se guarde el sticker.
+        if (esRetornoPago) {
+            console.log("Pago detectado, procesando registro...");
+            return; 
+        }
+
+        // Si es un escaneo normal (sin pago de por medio):
         let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
         const yaEsMio = misStickers.find(s => s.id === idEscaneado);
 
         if (yaEsMio) {
-            // CASO A: El dueño escaneó su propio QR.
-            // Lo mandamos al perfil para que vea sus datos o los edite.
             window.location.href = "perfil.html";
         } else {
-            // CASO B: Alguien encontró el objeto (o es un sticker nuevo).
-            // Lo mandamos a recuperar.html. 
-            // Si en recuperar.html no hay datos, esa página le dirá "Sticker no activado".
+            // Si no lo tengo yo, lo encontré o es nuevo
             window.location.href = `recuperar.html?id=${idEscaneado}`;
         }
     }
     
-    // Ejecutamos la interfaz (botones de login/registro o menú)
-    gestionarInterfaz();
+    if (typeof gestionarInterfaz === 'function') gestionarInterfaz();
 });
 
 // Función para el menú lateral

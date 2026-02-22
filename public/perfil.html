@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #00f2fe;
             --accent-dark: #4facfe;
-            --bg-dark: #0a0a0a;
-            --card-bg: #141414;
+            --bg-dark: #070707;
+            --card-bg: #111111;
             --success: #00ff88;
             --border: rgba(255, 255, 255, 0.08);
+            --text-dim: #888;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,137 +22,142 @@
         body {
             background: var(--bg-dark);
             color: white;
-            font-family: 'Inter', -apple-system, sans-serif;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
         }
 
+        /* Fondo Animado Sutil */
         .page-overlay {
             min-height: 100vh;
-            background: radial-gradient(circle at top right, rgba(0, 242, 254, 0.03), transparent);
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(0, 242, 254, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
         }
 
         header.barra-superior {
-            background: rgba(0, 0, 0, 0.85);
-            padding: 15px 5%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 18px 5%;
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
             position: sticky; top: 0; z-index: 1000;
         }
 
-        .logo-texto { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; }
+        .logo-texto { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; }
         .logo-texto span { color: var(--accent); }
 
         .btn-header {
-            color: #888; text-decoration: none; font-weight: 600; font-size: 0.75rem; 
-            border: 1px solid #333; padding: 8px 15px; border-radius: 8px; transition: 0.3s;
+            color: white; text-decoration: none; font-weight: 600; font-size: 0.8rem; 
+            background: rgba(255,255,255,0.05); padding: 10px 18px; border-radius: 12px; 
+            border: 1px solid var(--border); transition: 0.3s;
         }
-        .btn-header:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-header:hover { background: var(--accent); color: #000; }
 
-        .perfil-wrapper { max-width: 650px; margin: 0 auto; padding: 30px 20px; }
+        .perfil-wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
 
         .card {
-            background: var(--card-bg); border-radius: 24px; padding: 30px;
-            border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            background: var(--card-bg); border-radius: 32px; padding: 35px;
+            border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(0,0,0,0.8);
         }
 
-        h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; color: #fff; }
-        .sub-p { color: #555; font-size: 0.9rem; margin-bottom: 30px; }
+        h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .sub-p { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 35px; }
 
-        /* Lista Profesional */
+        /* QR Item con Diseño Premium */
         .qr-item {
-            background: #0d0d0d; border: 1px solid var(--border);
-            padding: 20px; border-radius: 18px; margin-bottom: 15px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            padding: 22px; border-radius: 22px; margin-bottom: 16px;
             display: flex; justify-content: space-between; align-items: center;
+            transition: 0.3s;
         }
+        .qr-item:hover { border-color: var(--accent); background: rgba(0, 242, 254, 0.02); }
 
-        .qr-info h4 { font-size: 1.1rem; color: #fff; margin-bottom: 3px; }
-        .qr-info span { font-family: monospace; font-size: 0.7rem; color: #444; letter-spacing: 1px; }
+        .qr-info h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .qr-info span { font-family: 'Monaco', monospace; font-size: 0.75rem; color: var(--accent); opacity: 0.8; }
 
         .btn-config {
-            background: #1a1a1a; color: var(--accent); border: 1px solid #333;
-            width: 45px; height: 45px; border-radius: 12px; cursor: pointer;
+            background: white; color: black; border: none;
+            width: 48px; height: 48px; border-radius: 14px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; transition: 0.3s;
         }
-        .btn-config:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        .btn-config:hover { transform: scale(1.05); background: var(--accent); }
 
-        /* Modal Rediseñado */
+        /* Modal Ultra Moderno */
         .modal {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; padding: 20px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; 
+            padding: 20px; backdrop-filter: blur(10px);
         }
         .modal-content {
-            background: #111; width: 100%; max-width: 450px; padding: 35px;
-            border-radius: 28px; border: 1px solid #222; position: relative;
+            background: #111; width: 100%; max-width: 450px; padding: 40px;
+            border-radius: 35px; border: 1px solid #222; position: relative;
+            animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .field { margin-bottom: 20px; }
-        .field label { display: block; color: #888; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px; }
+        .field { margin-bottom: 22px; }
+        .field label { display: block; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 10px; font-weight: 700; letter-spacing: 1px; }
         
         .field input, .field select {
-            width: 100%; background: #000; border: 1px solid #222; padding: 14px;
-            border-radius: 12px; color: white; font-size: 0.95rem; outline: none; transition: 0.3s;
+            width: 100%; background: #000; border: 1px solid #222; padding: 16px;
+            border-radius: 15px; color: white; font-size: 1rem; outline: none; transition: 0.3s;
         }
-        .field input:focus { border-color: var(--accent); }
+        .field input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
 
         .btn-save {
-            width: 100%; padding: 16px; border-radius: 14px; border: none;
-            background: var(--accent); color: #000; font-weight: 800; cursor: pointer; transition: 0.3s;
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
+            color: #000; font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 1rem;
         }
-        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); }
+        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 242, 254, 0.4); }
 
-        /* Recomendaciones */
-        .tips-section { margin-top: 40px; border-top: 1px solid var(--border); pt: 30px; }
-        .tip-card { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-start; }
-        .tip-card i { color: var(--accent); font-size: 1.2rem; margin-top: 3px; }
-        .tip-card p { font-size: 0.85rem; color: #666; line-height: 1.5; }
-
+        /* Toast de notificación */
         #toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--success); color: #000; padding: 12px 30px;
-            border-radius: 50px; font-size: 0.9rem; font-weight: bold; display: none; z-index: 5000;
+            background: white; color: black; padding: 14px 35px;
+            border-radius: 100px; font-size: 0.9rem; font-weight: 800; display: none; 
+            z-index: 5000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        @media (max-width: 480px) {
-            .perfil-wrapper { padding: 15px; }
-            .card { padding: 20px; }
-            .modal-content { padding: 25px; }
-        }
+        .tips-section { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 30px; }
+        .tip-card { display: flex; gap: 15px; margin-bottom: 25px; }
+        .tip-card i { color: var(--accent); font-size: 1.2rem; }
+        .tip-card p { font-size: 0.85rem; color: #777; }
     </style>
 </head>
 <body>
 
-<div id="toast">✅ Cambios guardados</div>
+<div id="toast">✅ Cambios sincronizados</div>
 
 <div class="page-overlay">
     <header class="barra-superior">
         <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
-        <a href="index.html" class="btn-header"><i class="fas fa-home"></i> INICIO</a>
+        <a href="index.html" class="btn-header"><i class="fas fa-sign-out-alt"></i> SALIR</a>
     </header>
 
     <main class="perfil-wrapper">
         <div class="card">
-            <h2>MIS ETIQUETAS</h2>
-            <p class="sub-p">Configura la protección de tus pertenencias.</p>
+            <h2>Panel de Objetos</h2>
+            <p class="sub-p">Gestiona la protección de tus pertenencias en tiempo real.</p>
             
-            <div id="lista-vacia" style="text-align: center; padding: 40px 0; display: none;">
-                <i class="fas fa-qrcode" style="font-size: 3rem; color: #1a1a1a; margin-bottom: 15px;"></i>
-                <p style="color: #444; font-size: 0.9rem;">No hay etiquetas registradas.</p>
+            <div id="lista-vacia" style="text-align: center; padding: 50px 0; display: none;">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fas fa-qrcode" style="font-size: 2rem; color: #333;"></i>
+                </div>
+                <p style="color: #555; font-size: 0.9rem;">No tienes etiquetas activas todavía.</p>
             </div>
 
             <div id="contenedor-qrs"></div>
 
             <section class="tips-section">
-                <h3 style="font-size: 0.9rem; color: #fff; margin-bottom: 20px;">RECOMENDACIONES DE SEGURIDAD</h3>
                 <div class="tip-card">
-                    <i class="fas fa-user-secret"></i>
-                    <p><strong>Privacidad:</strong> Si prefieres no mostrar tu número personal, elige la opción de "Intermediación Santua". Nosotros recibimos el aviso y te contactamos.</p>
-                </div>
-                <div class="tip-card">
-                    <i class="fas fa-bell"></i>
-                    <p><strong>Mensaje Directo:</strong> Escribe un mensaje amable. Las personas son más propensas a ayudar si leen una petición cordial.</p>
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <p style="color: #eee; font-weight: 600; margin-bottom: 4px;">Protección Inteligente</p>
+                        <p>Los cambios realizados aquí se actualizan instantáneamente para cualquier persona que escanee tu código.</p>
+                    </div>
                 </div>
             </section>
         </div>
@@ -159,33 +166,33 @@
 
 <div class="modal" id="modal-gestion">
     <div class="modal-content">
-        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 25px; font-size: 1.2rem;">Configurar Sticker</h3>
+        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 30px; font-size: 1.4rem;">Configurar</h3>
 
         <div class="field">
-            <label>Nombre del Objeto (Alias)</label>
-            <input type="text" id="edit-alias" placeholder="Ej: Mi Casco, Llaves de Casa...">
+            <label>Identificador del Objeto</label>
+            <input type="text" id="edit-alias" placeholder="Ej: Mi Mochila, Casco Moto...">
         </div>
 
         <div class="field">
-            <label>Tipo de Contacto</label>
+            <label>Método de Contacto</label>
             <select id="edit-tipo-contacto" onchange="toggleContacto()">
-                <option value="directo">WhatsApp Directo (Mi número)</option>
-                <option value="intermediario">Intermediación Central Santua</option>
+                <option value="directo">WhatsApp Directo</option>
+                <option value="intermediario">Central Santua (Privado)</option>
             </select>
         </div>
 
         <div class="field" id="wrapper-tel">
-            <label>Tu WhatsApp (con código de país)</label>
-            <input type="tel" id="edit-tel" placeholder="Ej: 5491100000000">
+            <label>WhatsApp (con código de país)</label>
+            <input type="tel" id="edit-tel" placeholder="5491133334444">
         </div>
 
         <div class="field">
             <label>Mensaje para el hallador</label>
-            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, gratificaré devolución.">
+            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, serás gratificado.">
         </div>
 
-        <button class="btn-save" onclick="guardarCambiosGestion()">GUARDAR CONFIGURACIÓN</button>
-        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#444; margin-top:20px; cursor:pointer; font-size: 0.8rem; font-weight: 600;">CANCELAR</button>
+        <button class="btn-save" id="btn-save-main" onclick="guardarCambiosGestion()">GUARDAR Y SINCRONIZAR</button>
+        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:25px; cursor:pointer; font-size: 0.85rem; font-weight: 700;">CANCELAR</button>
     </div>
 </div>
 
@@ -195,32 +202,25 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
-        const idPendiente = localStorage.getItem("qr_escaneado_pendiente");
         
-        // LÓGICA DE ACTIVACIÓN POST-PAGO
-        const pagoExitoso = params.get('collection_status') === 'approved' || params.get('status') === 'approved';
-        
-        if (pagoExitoso && idPendiente) {
-            if (!misStickers.find(s => s.id === idPendiente)) {
+        // 1. Verificar si venimos de un pago exitoso
+        const idNuevo = params.get('id');
+        const status = params.get('status') || params.get('collection_status');
+
+        if (idNuevo && status === 'approved') {
+            if (!misStickers.find(s => s.id === idNuevo)) {
                 misStickers.push({
-                    id: idPendiente,
-                    alias: "Nueva Etiqueta",
+                    id: idNuevo,
+                    alias: "Nuevo Objeto",
                     tipo: "directo",
                     telefono: "",
                     mensaje: "Si encontraste esto, por favor contáctame."
                 });
                 localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
-                localStorage.removeItem("qr_escaneado_pendiente");
-                showToast("¡Activación Exitosa!");
+                showToast("¡Etiqueta Activada!");
             }
+            // Limpiamos la URL
             window.history.replaceState({}, document.title, "perfil.html");
-        }
-
-        // LÓGICA ANTI-REPETICIÓN: Si el QR escaneado ya está activado
-        if (idPendiente && misStickers.find(s => s.id === idPendiente)) {
-             // Si ya existe, enviamos a recuperar para que vean los datos
-             window.location.href = "recuperar.html?id=" + idPendiente;
-             return;
         }
         
         renderLista();
@@ -245,11 +245,11 @@
         contenedor.innerHTML = misStickers.map(s => `
             <div class="qr-item">
                 <div class="qr-info">
-                    <h4>${s.alias || 'Sin nombre'}</h4>
+                    <h4>${s.alias || 'Objeto sin nombre'}</h4>
                     <span>ID: ${s.id}</span>
                 </div>
                 <button class="btn-config" onclick="abrirGestion('${s.id}')">
-                    <i class="fas fa-sliders-h"></i>
+                    <i class="fas fa-pen"></i>
                 </button>
             </div>
         `).join('');
@@ -258,7 +258,7 @@
     function abrirGestion(id) {
         const s = misStickers.find(st => st.id === id);
         idEditando = id;
-        document.getElementById('modal-titulo').innerText = "Configurar " + (s.alias || "Etiqueta");
+        document.getElementById('modal-titulo').innerText = "Editar " + (s.alias || "Objeto");
         document.getElementById('edit-alias').value = s.alias || "";
         document.getElementById('edit-tipo-contacto').value = s.tipo || "directo";
         document.getElementById('edit-tel').value = s.telefono || "";
@@ -267,18 +267,51 @@
         document.getElementById('modal-gestion').style.display = 'flex';
     }
 
-    function guardarCambiosGestion() {
+    // FUNCIÓN CRÍTICA: GUARDA LOCAL Y EN LA NUBE
+    async function guardarCambiosGestion() {
+        const btn = document.getElementById('btn-save-main');
+        const originalText = btn.innerText;
+        
         const index = misStickers.findIndex(s => s.id === idEditando);
-        if (index !== -1) {
-            misStickers[index].alias = document.getElementById('edit-alias').value.trim();
-            misStickers[index].tipo = document.getElementById('edit-tipo-contacto').value;
-            misStickers[index].telefono = document.getElementById('edit-tel').value.trim();
-            misStickers[index].mensaje = document.getElementById('edit-msg').value.trim();
-            
-            localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
+        if (index === -1) return;
+
+        // Recopilamos datos
+        const nuevosDatos = {
+            id: idEditando,
+            alias: document.getElementById('edit-alias').value.trim(),
+            tipo: document.getElementById('edit-tipo-contacto').value,
+            telefono: document.getElementById('edit-tel').value.trim(),
+            mensaje: document.getElementById('edit-msg').value.trim()
+        };
+
+        // 1. Guardar en LocalStorage (para el dueño)
+        misStickers[index] = nuevosDatos;
+        localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
+
+        // 2. Sincronizar con el Servidor (para el hallador)
+        btn.innerText = "SINCRONIZANDO...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/sticker/configurar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(nuevosDatos)
+            });
+
+            if (response.ok) {
+                showToast("Sincronizado con éxito");
+            } else {
+                throw new Error();
+            }
+        } catch (err) {
+            console.error("Error sincronización:", err);
+            showToast("Guardado local (Sin conexión)");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
             cerrarModal();
             renderLista();
-            showToast("Datos actualizados");
         }
     }
 

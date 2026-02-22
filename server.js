@@ -271,38 +271,6 @@ const { MercadoPagoConfig, Preference } = require('mercadopago');
 const client = new MercadoPagoConfig({ 
     accessToken: 'APP_USR-7751639628824719-021612-dbddd90a31825e1b6fa2cb41fa93b3e4-2118365527' 
 });
-
-app.post("/crear-preferencia", async (req, res) => {
-    try {
-        const { tipo } = req.body;
-        let precio = 2.00; // Ajusté a tus botones de la imagen
-        if (tipo === 'medio') precio = 1000.00;
-        if (tipo === 'pro') precio = 5000.00;
-
-        const preference = new Preference(client);
-        const result = await preference.create({
-            body: {
-                items: [{
-                    title: `Plan ${tipo}`,
-                    quantity: 1,
-                    unit_price: precio,
-                    currency_id: "ARS"
-                }],
-                // Asegúrate que estas URLs existan
-                back_urls: {
-                    success: "https://centralsantua.com.ar/perfil.html",
-                    failure: "https://centralsantua.com.ar/perfil.html",
-                    pending: "https://centralsantua.com.ar/perfil.html"
-                },
-                auto_return: "approved",
-            }
-        });
-        res.json({ id: result.id });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message }); // Enviamos el error real al front
-    }
-});
  
 // 2. RUTA PARA GENERAR (Solo una vez)
 app.post('/api/generar-lote-seguro', (req, res) => {
