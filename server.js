@@ -336,6 +336,77 @@ app.post("/crear-preferencia", async (req, res) => {
     }
 });
 
+// AGREGAR ESTO ANTES DEL PORT
+app.get("/validar-qr/:id", (req, res) => {
+    const id = req.params.id.toUpperCase().trim();
+    
+    // Buscamos si el ID existe y si ya está activado (pagado)
+    const sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
+
+    if (sticker && sticker.activado) {
+        // SI YA ESTÁ ACTIVO: Mandamos a recuperar.html
+        return res.json({ 
+            status: "activado", 
+            redirect: `/recuperar.html?id=${id}` 
+        });
+    } else {
+        // SI ES NUEVO O NO ESTÁ ACTIVO: Mandamos a pagar
+        return res.json({ 
+            status: "nuevo", 
+            redirect: `/presentacion_pagos.html?id=${id}` 
+        });
+    }
+});
+
+
+
+app.post('/api/sticker/configurar', (req, res) => {
+    const { id, alias, telefono, mensaje, tipo } = req.body;
+    const nroID = id.toUpperCase().trim();
+
+    const index = baseDeDatosSimulada.findIndex(s => s.id_qr === nroID);
+
+    if (index !== -1) {
+        // Actualizamos los datos y lo marcamos como ACTIVADO
+        baseDeDatosSimulada[index] = {
+            ...baseDeDatosSimulada[index],
+            alias,
+            telefono,
+            mensaje,
+            tipo,
+            activado: true // <--- Esto es lo que hace que deje de pedir pago
+        };
+        console.log(`✅ Sticker ${nroID} configurado y activado por el dueño.`);
+        res.json({ success: true });
+    } else {
+        // Si por alguna razón el ID no existía en el lote, lo creamos y activamos
+        baseDeDatosSimulada.push({
+            id_qr: nroID,
+            alias,
+            telefono,
+            mensaje,
+            tipo,
+            activado: true
+        });
+        res.json({ success: true });
+    }
+});
+
+app.get('/api/sticker/consultar/:id', (req, res) => {
+    const id = req.params.id.toUpperCase().trim();
+    const sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
+
+    if (sticker && sticker.activado) {
+        res.json({
+            telefono: sticker.telefono,
+            mensaje: sticker.mensaje,
+            tipo: sticker.tipo
+        });
+    } else {
+        res.status(404).json({ error: "No activado o no existe" });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);

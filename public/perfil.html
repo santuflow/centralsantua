@@ -200,32 +200,50 @@
     let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
     let idEditando = null;
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
         const params = new URLSearchParams(window.location.search);
         
-        // 1. Verificar si venimos de un pago exitoso
         const idNuevo = params.get('id');
         const status = params.get('status') || params.get('collection_status');
 
+        // MEJORA: Si venimos de un pago exitoso, le avisamos al servidor DE INMEDIATO
         if (idNuevo && status === 'approved') {
-            if (!misStickers.find(s => s.id === idNuevo)) {
-                misStickers.push({
-                    id: idNuevo,
-                    alias: "Nuevo Objeto",
-                    tipo: "directo",
-                    telefono: "",
-                    mensaje: "Si encontraste esto, por favor contáctame."
+            const stickerNuevo = {
+                id: idNuevo,
+                alias: "Nuevo Objeto",
+                tipo: "directo",
+                telefono: "",
+                mensaje: "Si encontraste esto, por favor contáctame."
+            };
+
+            // 1. Guardar en Servidor (PARA QUE EL HALLADOR NO VEA PAGO)
+            try {
+                await fetch('/api/sticker/configurar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(stickerNuevo)
                 });
+                console.log("Servidor: Sticker activado tras pago.");
+            } catch (e) {
+                console.error("Error activando en servidor tras pago:", e);
+            }
+
+            // 2. Guardar en Local (Para el dueño)
+            if (!misStickers.find(s => s.id === idNuevo)) {
+                misStickers.push(stickerNuevo);
                 localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
                 showToast("¡Etiqueta Activada!");
             }
-            // Limpiamos la URL
+            
+            // Limpiamos la URL para que no re-procese al refrescar
             window.history.replaceState({}, document.title, "perfil.html");
         }
         
         renderLista();
     });
 
+    // --- El resto de tus funciones se mantienen igual porque están perfectas ---
+    
     function toggleContacto() {
         const tipo = document.getElementById('edit-tipo-contacto').value;
         document.getElementById('wrapper-tel').style.display = (tipo === 'directo') ? 'block' : 'none';
@@ -234,13 +252,11 @@
     function renderLista() {
         const contenedor = document.getElementById('contenedor-qrs');
         const vacio = document.getElementById('lista-vacia');
-
         if (misStickers.length === 0) {
             vacio.style.display = 'block';
             contenedor.innerHTML = '';
             return;
         }
-
         vacio.style.display = 'none';
         contenedor.innerHTML = misStickers.map(s => `
             <div class="qr-item">
@@ -267,15 +283,12 @@
         document.getElementById('modal-gestion').style.display = 'flex';
     }
 
-    // FUNCIÓN CRÍTICA: GUARDA LOCAL Y EN LA NUBE
     async function guardarCambiosGestion() {
         const btn = document.getElementById('btn-save-main');
         const originalText = btn.innerText;
-        
         const index = misStickers.findIndex(s => s.id === idEditando);
         if (index === -1) return;
 
-        // Recopilamos datos
         const nuevosDatos = {
             id: idEditando,
             alias: document.getElementById('edit-alias').value.trim(),
@@ -284,11 +297,9 @@
             mensaje: document.getElementById('edit-msg').value.trim()
         };
 
-        // 1. Guardar en LocalStorage (para el dueño)
         misStickers[index] = nuevosDatos;
         localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
 
-        // 2. Sincronizar con el Servidor (para el hallador)
         btn.innerText = "SINCRONIZANDO...";
         btn.disabled = true;
 
@@ -298,14 +309,9 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(nuevosDatos)
             });
-
-            if (response.ok) {
-                showToast("Sincronizado con éxito");
-            } else {
-                throw new Error();
-            }
+            if (response.ok) showToast("Sincronizado con éxito");
+            else throw new Error();
         } catch (err) {
-            console.error("Error sincronización:", err);
             showToast("Guardado local (Sin conexión)");
         } finally {
             btn.innerText = originalText;

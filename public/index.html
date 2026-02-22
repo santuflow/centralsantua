@@ -256,26 +256,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
     
-    // Esta línea es la clave: detecta si volvemos de Mercado Pago
+    // Detecta si volvemos de Mercado Pago
     const esRetornoPago = params.get('status') || params.get('preference_id');
 
     if (idEscaneado) {
-        // Si vengo de pagar, NO REDIRECCIONO. Me quedo para que se guarde el sticker.
+        // 1. Si vengo de pagar, NO REDIRECCIONO. Me quedo para procesar.
         if (esRetornoPago) {
             console.log("Pago detectado, procesando registro...");
+            // Aquí podrías llamar a una función que marque el sticker como activo en el server
             return; 
         }
 
-        // Si es un escaneo normal (sin pago de por medio):
-        let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
-        const yaEsMio = misStickers.find(s => s.id === idEscaneado);
+        // 2. NUEVA LÓGICA: Preguntar al servidor antes de decidir
+        fetch(`/validar-qr/${idEscaneado}`)
+            .then(res => res.json())
+            .then(data => {
+                // El servidor nos dirá si mandarlo a recuperar.html o a pagar (presentacion_pagos.html)
+                // Esto funciona para CUALQUIER celular que escanee.
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(err => {
+                console.warn("Error consultando servidor, usando lógica local de respaldo:", err);
+                
+                // 3. LÓGICA DE RESPALDO (Tu código original por si el server falla)
+                let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+                const yaEsMio = misStickers.find(s => s.id === idEscaneado);
 
-        if (yaEsMio) {
-            window.location.href = "perfil.html";
-        } else {
-            // Si no lo tengo yo, lo encontré o es nuevo
-            window.location.href = `recuperar.html?id=${idEscaneado}`;
-        }
+                if (yaEsMio) {
+                    window.location.href = "perfil.html";
+                } else {
+                    window.location.href = `recuperar.html?id=${idEscaneado}`;
+                }
+            });
     }
     
     if (typeof gestionarInterfaz === 'function') gestionarInterfaz();
