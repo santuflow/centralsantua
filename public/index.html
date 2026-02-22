@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // --- CORRECCIÓN AQUÍ ---
-        fetch(`/validar-qr/${idEscaneado}`)
+        fetch(`/api/validar-qr/${idEscaneado}`)
             .then(res => {
                 // Si la respuesta no es OK (ej. 404), saltamos directo al catch
                 if (!res.ok) throw new Error("ID no reconocido por el servidor");
@@ -351,15 +351,33 @@ function abrirInterfazCamara() {
         { facingMode: "environment" }, 
         config,
         (decodedText) => {
-            // ÉXITO: Detectó el QR
-            detenerEscaneo();
-            
-            // Guardamos el código para la página de pago
-            localStorage.setItem("qr_escaneado_pendiente", decodedText);
-            
-            // Redirigimos a la página de información y pago
-            window.location.href = "presentacion_pago.html";
-        }
+    detenerEscaneo();
+    
+    // Extraemos solo el ID si es una URL completa (ej: santua.com?id=SN123 -> SN123)
+    let idLimpio = decodedText;
+    if(decodedText.includes('id=')) {
+        idLimpio = decodedText.split('id=')[1].split('&')[0];
+    }
+
+    // Le preguntamos al servidor qué hacer con este ID
+    fetch(`/api/validar-qr/${idLimpio}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "activado") {
+                // Si ya está pago, lo mandamos a recuperar
+                window.location.href = `recuperar.html?id=${idLimpio}`;
+            } else {
+                // Si es nuevo, lo mandamos a pagar
+                localStorage.setItem("qr_escaneado_pendiente", idLimpio);
+                window.location.href = `presentacion_pago.html?id=${idLimpio}`;
+            }
+        })
+        .catch(err => {
+            console.error("Error validando:", err);
+            // Si falla el servidor, por seguridad mandamos a recuperar
+            window.location.href = `recuperar.html?id=${idLimpio}`;
+        });
+}
     ).catch(err => {
         // En lugar de un alert seco, damos instrucciones
         console.error("Error de cámara:", err);

@@ -323,7 +323,7 @@ app.post("/crear-preferencia", async (req, res) => {
                 back_urls: {
                     // Render detectará automáticamente tu dominio
                     success: `https://${req.get('host')}/perfil.html?activacion=exitosa&id=${id_qr}`,
-                    failure: `https://${req.get('host')}/presentacion_pagos.html?error=pago_fallido`,
+                    failure: `https://${req.get('host')}/presentacion_pago.html?error=pago_fallido`,
                     pending: `https://${req.get('host')}/perfil.html`
                 },
                 auto_return: "approved",
@@ -336,24 +336,22 @@ app.post("/crear-preferencia", async (req, res) => {
     }
 });
 
-// AGREGAR ESTO ANTES DEL PORT
-app.get("/validar-qr/:id", (req, res) => {
+// BUSCA ESTO AL FINAL DE TU SERVER.JS Y REEMPLÁZALO:
+app.get("/api/validar-qr/:id", (req, res) => {
     const id = req.params.id.toUpperCase().trim();
-    
-    // Buscamos si el ID existe y si ya está activado (pagado)
     const sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
 
     if (sticker && sticker.activado) {
         // SI YA ESTÁ ACTIVO: Mandamos a recuperar.html
         return res.json({ 
             status: "activado", 
-            redirect: `/recuperar.html?id=${id}` 
+            redirect: `recuperar.html?id=${id}` 
         });
     } else {
-        // SI ES NUEVO O NO ESTÁ ACTIVO: Mandamos a pagar
+        // SI ES NUEVO: Mandamos a pagar
         return res.json({ 
             status: "nuevo", 
-            redirect: `/presentacion_pagos.html?id=${id}` 
+            redirect: `presentacion_pago.html?id=${id}` 
         });
     }
 });
