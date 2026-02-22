@@ -256,40 +256,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
     
-    // Detecta si volvemos de Mercado Pago
     const esRetornoPago = params.get('status') || params.get('preference_id');
 
     if (idEscaneado) {
-        // 1. Si vengo de pagar, NO REDIRECCIONO. Me quedo para procesar.
         if (esRetornoPago) {
             console.log("Pago detectado, procesando registro...");
-            // Aquí podrías llamar a una función que marque el sticker como activo en el server
             return; 
         }
 
-        // 2. NUEVA LÓGICA: Preguntar al servidor antes de decidir
+        // --- CORRECCIÓN AQUÍ ---
         fetch(`/validar-qr/${idEscaneado}`)
-            .then(res => res.json())
+            .then(res => {
+                // Si la respuesta no es OK (ej. 404), saltamos directo al catch
+                if (!res.ok) throw new Error("ID no reconocido por el servidor");
+                return res.json();
+            })
             .then(data => {
-                // El servidor nos dirá si mandarlo a recuperar.html o a pagar (presentacion_pagos.html)
-                // Esto funciona para CUALQUIER celular que escanee.
-                if (data.redirect) {
+                // Si el servidor nos da una ruta, vamos ahí (recuperar.html)
+                if (data && data.redirect) {
                     window.location.href = data.redirect;
+                } else {
+                    // Si no hay ruta en el JSON, disparamos el error para ir al respaldo
+                    throw new Error("Respuesta de servidor incompleta");
                 }
             })
             .catch(err => {
-                console.warn("Error consultando servidor, usando lógica local de respaldo:", err);
+                console.warn("Redirigiendo por lógica de respaldo:", err);
                 
-                // 3. LÓGICA DE RESPALDO (Tu código original por si el server falla)
+                // LÓGICA DE RESPALDO (Esto salva el segundo teléfono)
                 let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
                 const yaEsMio = misStickers.find(s => s.id === idEscaneado);
 
                 if (yaEsMio) {
-                    window.location.href = "perfil.html";
+                    window.location.href = `perfil.html?id=${idEscaneado}`;
                 } else {
+                    // IMPORTANTE: Aquí es donde el segundo teléfono es enviado a recuperar.html
                     window.location.href = `recuperar.html?id=${idEscaneado}`;
                 }
             });
+        
+        return; // Evita que se cargue la home mientras decide
     }
     
     if (typeof gestionarInterfaz === 'function') gestionarInterfaz();
