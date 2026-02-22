@@ -3,69 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activar Sticker | Central Santua</title>
+    <title>Activar Protección | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=1.1">
     <style>
+        :root {
+            --primary: #4facfe;
+            --accent: #00f2fe;
+            --success: #00ff88;
+        }
+
+        body {
+            background: #050505; /* Fondo sólido oscuro para resaltar el contenedor */
+        }
+
         .pago-container {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #4facfe;
-            border-radius: 20px;
+            max-width: 550px;
+            margin: 60px auto;
+            padding: 40px;
+            background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+            border: 1px solid rgba(79, 172, 254, 0.4);
+            border-radius: 24px;
             text-align: center;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Brillo decorativo superior */
+        .pago-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 80%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
         .sticker-badge {
-            display: inline-block;
-            background: #4facfe;
-            color: black;
-            padding: 5px 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(79, 172, 254, 0.15);
+            color: var(--primary);
+            padding: 8px 20px;
             border-radius: 50px;
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid var(--primary);
+            margin-bottom: 25px;
+            letter-spacing: 1px;
         }
+
+        h2 {
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .subtitulo {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
         .ventajas-list {
             text-align: left;
-            margin: 25px 0;
-            list-style: none;
+            margin: 30px 0;
             padding: 0;
+            list-style: none;
         }
+
         .ventajas-list li {
-            margin-bottom: 15px;
-            color: #ccc;
+            margin-bottom: 18px;
+            color: #e0e0e0;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+            gap: 15px;
+            font-size: 0.95rem;
         }
-        .ventajas-list li::before {
-            content: "✅";
-            margin-right: 10px;
+
+        .ventajas-list i {
+            color: var(--success);
+            margin-top: 4px;
+            font-size: 1.1rem;
         }
+
+        .ventajas-list strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .precio-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px 0;
+            border: 1px dashed #333;
+        }
+
         .precio-tag {
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: white;
-            font-weight: bold;
-            margin: 20px 0;
+            font-weight: 900;
+            display: block;
         }
+
+        .precio-label {
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+
         .btn-mercado-pago {
             background: #009ee3;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2rem;
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 158, 227, 0.2);
         }
+
         .btn-mercado-pago:hover {
             background: #007bb5;
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 158, 227, 0.4);
+        }
+
+        .seguridad-footer {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            opacity: 0.5;
+        }
+
+        .seguridad-footer span {
+            font-size: 0.7rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #id-sticker {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 900;
         }
     </style>
 </head>
 <body>
+
     <header class="navbar">
         <nav class="container-nav-ajustado">
             <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
@@ -74,30 +175,59 @@
 
     <main class="container">
         <div class="pago-container">
-            <div class="sticker-badge">ID DETECTADO: <span id="id-sticker">Cargando...</span></div>
+            <div class="sticker-badge">
+                <i class="fas fa-qrcode"></i> ID DETECTADO: <span id="id-sticker">...</span>
+            </div>
             
-            <h2 style="color: white;">¡Sticker Listo para Activar!</h2>
-            <p style="color: #aaa;">Estás a un paso de blindar tu patente o pertenencia con nuestro sistema de recuperación inteligente.</p>
+            <h2>Activación de Escudo</h2>
+            <p class="subtitulo">Vincula tu ID oficial para habilitar el sistema de contacto directo y recuperación inteligente.</p>
 
             <ul class="ventajas-list">
-                <li><strong>Protección de Privacidad:</strong> Vos elegís qué datos mostrar cuando alguien escanee.</li>
-                <li><strong>Aviso Inmediato:</strong> Notificación vía sistema cuando se reporte un hallazgo.</li>
-                <li><strong>Mensaje Personalizado:</strong> Agregá instrucciones para quien encuentre tu objeto.</li>
-                <li><strong>Sin Suscripciones:</strong> Pagás una vez y te protegemos para siempre.</li>
+                <li>
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Privacidad Blindada</strong>
+                        Tus datos personales no son públicos. Solo se muestran cuando tú lo decidas.
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-bolt"></i>
+                    <div>
+                        <strong>Conexión Inmediata</strong>
+                        Quien encuentre tu objeto podrá enviarte un WhatsApp con un solo toque.
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-infinity"></i>
+                    <div>
+                        <strong>Sin Cuotas Mensuales</strong>
+                        Un único pago de activación. Protección vitalicia para tu sticker.
+                    </div>
+                </li>
             </ul>
 
-            <div class="precio-tag">$1.000</div>
+            <div class="precio-box">
+                <span class="precio-label">Precio Final (Pago Único)</span>
+                <span class="precio-tag">$1.000</span>
+            </div>
 
-            <button class="btn-mercado-pago" onclick="procesarPago()">PAGAR CON MERCADO PAGO</button>
+            <button class="btn-mercado-pago" onclick="procesarPago()">
+                <i class="fas fa-lock"></i> ACTIVAR AHORA
+            </button>
             
-            <p style="margin-top: 20px; font-size: 0.8rem; color: #666;">
-                Al pagar, serás redirigido a tu panel para configurar los datos de contacto.
+            <div class="seguridad-footer">
+                <span><i class="fas fa-check-circle"></i> Pago Seguro</span>
+                <span><i class="fas fa-user-shield"></i> Datos Protegidos</span>
+                <span><i class="fab fa-cc-visa"></i> Mercado Pago</span>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 0.75rem; color: #555; line-height: 1.4;">
+                Al activar, confirmas que posees físicamente el sticker con el ID arriba mencionado. La activación es instantánea tras procesar el pago.
             </p>
         </div>
     </main>
 
     <script>
-        // 1. Recuperamos el ID del sticker que guardamos en el Index
         const stickerID = localStorage.getItem("qr_escaneado_pendiente");
         
         if (!stickerID) {
@@ -107,17 +237,36 @@
             document.getElementById("id-sticker").innerText = stickerID;
         }
 
-        function procesarPago() {
-            // Aquí simulas el éxito del pago. 
-            // En el futuro, acá pondrás el link de Mercado Pago.
-            alert("Redirigiendo a Mercado Pago...");
-            
-            // Simulamos que el pago fue exitoso y lo mandamos al perfil
-            setTimeout(() => {
-                // Pasamos el ID por la URL para que perfil.html lo reconozca
-                window.location.href = "perfil.html?activacion=exitosa&id=" + stickerID;
-            }, 1500);
+        async function procesarPago() {
+    const btn = document.querySelector('.btn-mercado-pago');
+    const stickerID = document.getElementById("id-sticker").innerText;
+
+    // Bloqueo visual del botón
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> GENERANDO PAGO...';
+    btn.style.pointerEvents = 'none';
+
+    try {
+        const response = await fetch('/crear-preferencia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_qr: stickerID })
+        });
+
+        const data = await response.json();
+
+        if (data.id) {
+            // Redirige al checkout oficial de Mercado Pago
+            window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+        } else {
+            throw new Error("ID de preferencia no recibido");
         }
+    } catch (error) {
+        console.error(error);
+        alert("No se pudo conectar con Mercado Pago. Reintenta.");
+        btn.innerHTML = '<i class="fas fa-lock"></i> ACTIVAR AHORA';
+        btn.style.pointerEvents = 'all';
+    }
+}
     </script>
 </body>
 </html>

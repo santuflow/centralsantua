@@ -11,6 +11,7 @@ app.use(express.static('public'));
 let hallazgos = []; 
 let busquedas = []; 
 let usuariosDB = [];
+let baseDeDatosSimulada = [];
 
 // --- ESTADÍSTICAS REALES (Sustituye a tus variables anteriores) ---
 let visitasTotales = 0;
@@ -302,22 +303,69 @@ app.post("/crear-preferencia", async (req, res) => {
         res.status(500).json({ error: error.message }); // Enviamos el error real al front
     }
 });
-
-// Ruta segura en el servidor
-app.post('/api/generar-lote-seguro', async (req, res) => {
+ 
+// 2. RUTA PARA GENERAR (Solo una vez)
+app.post('/api/generar-lote-seguro', (req, res) => {
     const { cantidad, tipo } = req.body;
     const nuevosIDs = [];
 
     for (let i = 0; i < cantidad; i++) {
-        // Generamos el ID en el SERVIDOR
         const id = "SN" + Math.random().toString(36).substr(2, 6).toUpperCase();
         nuevosIDs.push(id);
         
-        // GUARDAR EN DB: id, tipo, estado: 'producido'
-        // await db.stickers.insert({ id_qr: id, tipo: tipo, estado: 'producido' });
+        // AQUÍ ES DONDE SE GUARDA REALMENTE
+        baseDeDatosSimulada.push({
+            id_qr: id,
+            tipo: tipo,
+            activado: false,
+            fecha_creacion: new Date()
+        });
     }
 
+    console.log(`Lote generado. Total en memoria: ${baseDeDatosSimulada.length}`);
     res.json({ ids: nuevosIDs });
+});
+
+// 3. RUTA DE ESTADÍSTICAS
+app.get('/api/stats', (req, res) => {
+    const generados = baseDeDatosSimulada.length;
+    const activados = baseDeDatosSimulada.filter(qr => qr.activado === true).length;
+    
+    console.log(`Enviando stats: Generados ${generados}`);
+    res.json({ generados, activados });
+});
+
+
+// PAGO DE ACTIVACION QR
+app.post("/crear-preferencia", async (req, res) => {
+    try {
+        const { id_qr } = req.body; // Recibimos el ID que el usuario quiere activar
+        
+        const preference = new Preference(client);
+        const result = await preference.create({
+            body: {
+                items: [{
+                    title: `Activación Sticker ID: ${id_qr}`,
+                    quantity: 1,
+                    unit_price: 2.00, // Precio de prueba
+                    currency_id: "ARS"
+                }],
+                // Guardamos el ID en la referencia externa para rastrearlo
+                external_reference: id_qr, 
+                back_urls: {
+                    // Render detectará automáticamente tu dominio
+                    success: `https://${req.get('host')}/perfil.html?activacion=exitosa&id=${id_qr}`,
+                    failure: `https://${req.get('host')}/presentacion_pagos.html?error=pago_fallido`,
+                    pending: `https://${req.get('host')}/perfil.html`
+                },
+                auto_return: "approved",
+            }
+        });
+        res.json({ id: result.id });
+    } catch (error) {
+        console.error("Error MP:", error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 const PORT = process.env.PORT || 3000;
