@@ -353,31 +353,42 @@ function abrirInterfazCamara() {
         (decodedText) => {
     detenerEscaneo();
     
-    // Extraemos solo el ID si es una URL completa (ej: santua.com?id=SN123 -> SN123)
-    let idLimpio = decodedText;
-    if(decodedText.includes('id=')) {
-        idLimpio = decodedText.split('id=')[1].split('&')[0];
-    }
+// Extraemos solo el ID si es una URL completa (ej: santua.com?id=SN123 -> SN123)
+let idLimpio = decodedText;
+if(decodedText.includes('id=')) {
+    idLimpio = decodedText.split('id=')[1].split('&')[0];
+}
 
-    // Le preguntamos al servidor qué hacer con este ID
-    fetch(`/api/validar-qr/${idLimpio}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "activado") {
-                // Si ya está pago, lo mandamos a recuperar
-                window.location.href = `recuperar.html?id=${idLimpio}`;
+// Le preguntamos al servidor qué hacer con este ID
+fetch(`/api/validar-qr/${idLimpio}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "activado") {
+            // Si ya está pago, lo mandamos a recuperar (no importa si está logueado)
+            window.location.href = `recuperar.html?id=${idLimpio}`;
+        } else {
+            // --- CAMBIO AQUÍ: VALIDACIÓN DE LOGIN ---
+            const logueado = localStorage.getItem('estaLogueado');
+
+            if (logueado !== 'true') {
+                // Si no está logueado, avisamos y mandamos al login
+                alert("¡Sticker detectado! Para activarlo y proteger tu patente, primero debes Iniciar Sesión o Registrarte.");
+                localStorage.setItem("qr_escaneado_pendiente", idLimpio);
+                window.location.href = "login.html";
             } else {
-                // Si es nuevo, lo mandamos a pagar
+                // Si está logueado y es nuevo, lo mandamos a pagar
                 localStorage.setItem("qr_escaneado_pendiente", idLimpio);
                 window.location.href = `presentacion_pago.html?id=${idLimpio}`;
             }
-        })
-        .catch(err => {
-            console.error("Error validando:", err);
-            // Si falla el servidor, por seguridad mandamos a recuperar
-            window.location.href = `recuperar.html?id=${idLimpio}`;
-        });
+        }
+    })
+    .catch(err => {
+        console.error("Error validando:", err);
+        // Si falla el servidor, por seguridad mandamos a recuperar
+        window.location.href = `recuperar.html?id=${idLimpio}`;
+    });
 }
+
     ).catch(err => {
         // En lugar de un alert seco, damos instrucciones
         console.error("Error de cámara:", err);
