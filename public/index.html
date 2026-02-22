@@ -251,6 +251,32 @@ function gestionarInterfaz() {
     }
 }
 
+
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const idEscaneado = params.get('id');
+
+    if (idEscaneado) {
+        // 1. Buscamos si ya está activado
+        let stickersActivados = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+        const yaExiste = stickersActivados.find(s => s.id === idEscaneado);
+
+        if (yaExiste) {
+            // SI YA EXISTE: Alguien encontró el objeto. Vamos a recuperar.
+            window.location.href = `recuperar.html?id=${idEscaneado}`;
+        } else {
+            // SI ES NUEVO: Lo guardamos en memoria para que el botón de "ACTIVAR" 
+            // sepa qué ID procesar sin tener que abrir la cámara de nuevo.
+            localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
+            
+            // Opcional: Podés saltar directamente a la presentación de pago
+            // window.location.href = "presentacion_pago.html";
+            
+            console.log("Sticker nuevo detectado, listo para activar:", idEscaneado);
+        }
+    }
+});
+
 // Ejecución inmediata y al cargar el DOM
 gestionarInterfaz();
 document.addEventListener('DOMContentLoaded', gestionarInterfaz);

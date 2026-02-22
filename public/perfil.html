@@ -12,7 +12,6 @@
             --bg-dark: #0a0a0a;
             --card-bg: rgba(20, 20, 20, 0.98);
             --success: #00ff88;
-            --danger: #ff4d4d;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,25 +38,19 @@
         .logo-texto span { color: var(--accent); }
 
         .perfil-wrapper {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 30px;
         }
-
-        @media (max-width: 900px) { .perfil-wrapper { grid-template-columns: 1fr; } }
 
         .card {
             background: var(--card-bg);
             border-radius: 24px;
-            padding: 30px;
+            padding: 35px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        /* Formulario */
         .field { margin-bottom: 20px; }
         label { display: block; color: #888; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
         
@@ -73,31 +66,26 @@
             color: #000; font-weight: 800; cursor: pointer; transition: 0.3s;
         }
 
-        /* Lista de Activos */
-        .lista-contenedor { margin-top: 20px; }
         .qr-item {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
             padding: 20px; border-radius: 18px;
             margin-bottom: 15px; display: flex;
             justify-content: space-between; align-items: center;
-            transition: 0.3s;
         }
-        .qr-item:hover { border-color: var(--accent-dark); background: rgba(255,255,255,0.05); }
 
         .status-badge {
-            font-size: 0.65rem; padding: 4px 8px; border-radius: 5px;
-            background: rgba(0, 255, 136, 0.1); color: var(--success);
+            font-size: 0.65rem; padding: 4px 10px; border-radius: 5px;
+            background: rgba(0, 242, 254, 0.1); color: var(--accent);
             font-weight: bold; text-transform: uppercase;
         }
 
         .btn-gestionar {
             background: rgba(79, 172, 254, 0.1);
             color: var(--accent); border: 1px solid var(--accent-dark);
-            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;
+            padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600;
         }
 
-        /* Modal de Gestión */
         .modal {
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center;
@@ -117,46 +105,26 @@
 </head>
 <body>
 
-<div id="toast">✅ Cambios guardados correctamente</div>
+<div id="toast">✅ Configuración guardada</div>
 
 <div class="page-overlay">
     <header class="barra-superior">
         <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
-        <a href="index.html" style="color: #666; text-decoration: none; font-weight: bold; font-size: 0.8rem;">SALIR</a>
+        <a href="index.html" style="color: #ff4d4d; text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid #ff4d4d; padding: 5px 15px; border-radius: 8px;">CERRAR SESIÓN</a>
     </header>
 
     <main class="perfil-wrapper">
-        <aside>
-            <div class="card">
-                <h2 style="margin-bottom: 10px;">Vincular Sticker</h2>
-                <p style="color: #666; font-size: 0.85rem; margin-bottom: 25px;">Ingresa el ID de tu sticker Santua para activarlo en el sistema.</p>
-
-                <div class="field">
-                    <label>ID del Sticker (Ej: SN-123456)</label>
-                    <input type="text" id="input-nuevo-id" placeholder="Copia el ID de tu sticker">
-                </div>
-
-                <div class="field">
-                    <label>Nombre del Objeto / Patente</label>
-                    <input type="text" id="input-nombre-obj" placeholder="Ej: Mi Moto / Mochila">
-                </div>
-
-                <button class="btn-primario" onclick="activarStickerManual()">
-                    ACTIVAR AHORA
-                </button>
-            </div>
-        </aside>
-
         <section>
-            <div class="card" style="min-height: 500px;">
-                <h3 style="margin-bottom: 25px;">Mis Dispositivos Protegidos</h3>
+            <div class="card" style="min-height: 400px;">
+                <h2 style="margin-bottom: 5px;">MIS QR ACTIVADOS</h2>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 30px;">Gestiona la información de contacto de tus etiquetas activas.</p>
                 
-                <div id="lista-vacia" style="text-align: center; padding: 80px 0; color: #444;">
-                    <i class="fas fa-shield-virus" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                    <p>No tienes stickers vinculados.<br>Activa uno usando el panel izquierdo.</p>
+                <div id="lista-vacia" style="text-align: center; padding: 60px 0; color: #444;">
+                    <i class="fas fa-qrcode" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.2;"></i>
+                    <p>No tienes stickers activados todavía.<br>Escanea un sticker nuevo para empezar.</p>
                 </div>
 
-                <div id="contenedor-qrs" class="lista-contenedor">
+                <div id="contenedor-qrs">
                     </div>
             </div>
         </section>
@@ -166,22 +134,22 @@
 <div class="modal" id="modal-gestion">
     <div class="modal-content">
         <h3 id="edit-id-titulo" style="color: var(--accent); margin-bottom: 10px;">ID: SN-000000</h3>
-        <p style="color: #666; font-size: 0.8rem; margin-bottom: 25px;">Esta información aparecerá cuando alguien escanee tu QR.</p>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 25px;">Configura qué verá la persona que encuentre tu objeto.</p>
 
         <div class="field">
-            <label>WhatsApp de Contacto (Con código de área)</label>
-            <input type="tel" id="edit-tel" placeholder="Ej: 54911...">
+            <label>WhatsApp o Celular de Contacto</label>
+            <input type="tel" id="edit-tel" placeholder="Ej: 5491100000000">
         </div>
 
         <div class="field">
-            <label>Mensaje para quien lo encuentre</label>
-            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, soy de zona sur.">
+            <label>Mensaje Personalizado</label>
+            <input type="text" id="edit-msg" placeholder="Ej: Si encontraste mi moto, por favor avisame.">
         </div>
 
         <button class="btn-primario" onclick="guardarCambiosGestion()">
-            GUARDAR CONFIGURACIÓN
+            GUARDAR CAMBIOS
         </button>
-        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#444; margin-top:15px; cursor:pointer;">Cerrar sin guardar</button>
+        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:15px; cursor:pointer; font-weight: bold;">Cancelar</button>
     </div>
 </div>
 
@@ -190,42 +158,31 @@
     let idEditando = null;
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Detectar si venimos de un pago exitoso (Mercado Pago)
+        // Lógica de retorno de Mercado Pago
         const params = new URLSearchParams(window.location.search);
         const idActivado = params.get('id');
-        if (params.get('activacion') === 'exitosa' && idActivado) {
-            // Si viene de pago, lo agregamos automáticamente
-            agregarALista(idActivado, "Nuevo Sticker Activo");
+        
+        // Si el pago fue exitoso y hay un ID presente
+        if ((params.get('collection_status') === 'approved' || params.get('activacion') === 'exitosa') && idActivado) {
+            
+            // Solo lo agregamos si no existe ya en la lista
+            if (!misStickers.find(s => s.id === idActivado)) {
+                misStickers.push({
+                    id: idActivado,
+                    nombre: "Objeto Protegido",
+                    telefono: "",
+                    mensaje: "¡Hola! Si encontraste esto, por favor contáctame."
+                });
+                actualizarStorage();
+            }
+            
+            // Limpiamos la URL para que no se duplique al recargar
             window.history.replaceState({}, document.title, "/perfil.html");
-            showToast("¡Sticker activado con éxito!");
+            showToast("¡Sticker Activado!");
         }
+        
         renderLista();
     });
-
-    function activarStickerManual() {
-        const id = document.getElementById('input-nuevo-id').value.trim().toUpperCase();
-        const nombre = document.getElementById('input-nombre-obj').value.trim();
-
-        if (!id || !nombre) return alert("Completa el ID y el nombre.");
-        
-        agregarALista(id, nombre);
-        document.getElementById('input-nuevo-id').value = "";
-        document.getElementById('input-nombre-obj').value = "";
-    }
-
-    function agregarALista(id, nombre) {
-        if (misStickers.find(s => s.id === id)) return alert("Este ID ya está en tu lista.");
-        
-        misStickers.push({
-            id: id,
-            nombre: nombre,
-            telefono: "",
-            mensaje: "¡Hola! Si encontraste esto, por favor contáctame."
-        });
-        
-        actualizarStorage();
-        renderLista();
-    }
 
     function renderLista() {
         const contenedor = document.getElementById('contenedor-qrs');
@@ -241,12 +198,12 @@
         contenedor.innerHTML = misStickers.map(s => `
             <div class="qr-item">
                 <div>
-                    <span class="status-badge">Activo</span>
-                    <h4 style="margin-top: 5px;">${s.nombre}</h4>
-                    <small style="color: #666; font-family: monospace;">ID: ${s.id}</small>
+                    <span class="status-badge">PROTEGIDO</span>
+                    <h4 style="margin-top: 5px; color: #fff;">${s.id}</h4>
+                    <small style="color: #888;">${s.mensaje.substring(0, 30)}...</small>
                 </div>
                 <button class="btn-gestionar" onclick="abrirGestion('${s.id}')">
-                    <i class="fas fa-cog"></i> Configurar
+                    <i class="fas fa-user-edit"></i> EDITAR
                 </button>
             </div>
         `).join('');
@@ -271,7 +228,8 @@
             misStickers[index].mensaje = msg;
             actualizarStorage();
             cerrarModal();
-            showToast("Configuración actualizada");
+            renderLista();
+            showToast("Datos actualizados correctamente");
         }
     }
 

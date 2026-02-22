@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperación | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --accent: #00f2fe;
@@ -17,7 +18,8 @@
         
         body { 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: var(--bg-dark); 
+            background: var(--bg-dark) url('bandera.jpg') no-repeat center center fixed;
+            background-size: cover;
             color: white; 
             min-height: 100vh;
             display: flex;
@@ -25,44 +27,26 @@
             align-items: center;
         }
 
-        /* BARRA SUPERIOR PROFESIONAL */
-        header {
-            width: 100%;
-            padding: 20px 5%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0,242,254,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .overlay {
+            background: radial-gradient(circle, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.98) 100%);
+            width: 100%; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
 
-        .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+        header {
+            width: 100%; padding: 20px 5%; background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px); display: flex; justify-content: center;
+            border-bottom: 1px solid rgba(0,242,254,0.2);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
         .logo span { color: var(--accent); }
 
-        .nav-btns { display: flex; gap: 10px; }
-        .btn-nav { 
-            text-decoration: none; font-size: 0.8rem; font-weight: bold; padding: 8px 15px; 
-            border-radius: 8px; transition: 0.3s;
-        }
-        .btn-login { color: white; border: 1px solid #333; }
-        .btn-signup { background: var(--accent); color: black; }
-
-        /* CONTENIDO PRINCIPAL */
         .container { width: 90%; max-width: 500px; padding: 40px 0; }
 
         .card { 
-            background: var(--card-bg); 
-            padding: 35px; 
-            border-radius: 30px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
+            background: var(--card-bg); padding: 35px; border-radius: 30px; 
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;
         }
 
         .card::before {
@@ -79,110 +63,101 @@
         h1 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 800; }
         .id-tag { background: #000; color: var(--accent); padding: 5px 15px; border-radius: 10px; font-family: monospace; font-size: 1.1rem; border: 1px solid #222; }
 
-        p.subtitle { color: #aaa; margin: 20px 0 30px; line-height: 1.6; }
+        #mensaje-dueno { 
+            color: #eee; background: rgba(255,255,255,0.05); padding: 20px; 
+            border-radius: 15px; margin: 20px 0; font-style: italic; line-height: 1.6;
+            border-left: 4px solid var(--accent);
+        }
 
         .btn-action { 
             background: var(--success); color: white; text-decoration: none; 
             padding: 18px; border-radius: 15px; font-weight: 800; 
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.3s; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2);
-            margin-bottom: 20px;
+            transition: 0.3s; margin-bottom: 20px;
         }
-        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(46, 204, 113, 0.3); }
+        .btn-action:hover { transform: scale(1.02); }
 
-        /* SECCIÓN RECOMENDACIONES */
         .tips {
             background: rgba(255,255,255,0.03); border-radius: 20px; padding: 20px;
             text-align: left; margin-top: 25px; border: 1px solid rgba(255,255,255,0.05);
         }
-        .tips h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .tips ul { list-style: none; }
-        .tips li { font-size: 0.85rem; color: #888; margin-bottom: 8px; display: flex; gap: 10px; }
-        .tips li::before { content: '•'; color: var(--accent); }
-
-        /* SECCIÓN INVITACIÓN REGISTRO */
-        .promo-card {
-            margin-top: 40px; background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
-            padding: 25px; border-radius: 25px; border: 1px solid #333; text-align: center;
-        }
-        .promo-card h2 { font-size: 1.2rem; margin-bottom: 10px; }
-        .promo-card p { font-size: 0.9rem; color: #777; margin-bottom: 20px; }
-        .btn-promo {
-            display: inline-block; padding: 10px 20px; background: white; color: black;
-            text-decoration: none; border-radius: 10px; font-weight: bold; transition: 0.3s;
-        }
-        .btn-promo:hover { background: var(--accent); }
+        .tips h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 12px; }
+        .tips li { font-size: 0.85rem; color: #888; margin-bottom: 8px; list-style: none; display: flex; gap: 10px;}
 
         footer { margin-top: auto; padding: 30px; color: #444; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
+<div class="overlay">
     <header>
         <div class="logo">CENTRAL<span>SANTUA</span></div>
-        <div class="nav-btns">
-            <a href="login.html" class="btn-nav btn-login">INGRESAR</a>
-            <a href="registro.html" class="btn-nav btn-signup">REGISTRARME</a>
-        </div>
     </header>
 
     <main class="container">
         <div class="card">
             <div class="icon-badge">🛡️</div>
-            <h1>Objeto Identificado</h1>
+            <h1>¡Objeto Encontrado!</h1>
             <p style="margin-top: 10px;">ID de Seguridad: <span class="id-tag" id="display-id">...</span></p>
             
-            <p class="subtitle">
-                Gracias por tu honestidad. Este objeto está protegido por nuestro sistema de recuperación. Pulsa el botón de abajo para coordinar la devolución con el dueño de forma segura.
-            </p>
+            <div id="mensaje-dueno">
+                "Gracias por escanear. Por favor, contáctame para coordinar la devolución de mi pertenencia."
+            </div>
             
             <a id="whatsapp-link" href="#" class="btn-action">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="24" height="24" alt="WA">
-                CONTACTAR AHORA
+                <i class="fab fa-whatsapp" style="font-size: 24px;"></i>
+                CONTACTAR AL DUEÑO
             </a>
 
             <div class="tips">
-                <h3>🤝 Recomendaciones de seguridad</h3>
+                <h3><i class="fas fa-handshake"></i> Consejos de devolución</h3>
                 <ul>
-                    <li>Coordinar el encuentro en lugares públicos y concurridos.</li>
-                    <li>Si es un objeto pequeño, puedes dejarlo en una recepción segura.</li>
-                    <li>No es necesario brindar datos personales adicionales.</li>
+                    <li>• Coordinar en lugares públicos (estaciones, plazas).</li>
+                    <li>• No es necesario dar tu dirección personal.</li>
+                    <li>• Gracias por tu gran gesto de honestidad.</li>
                 </ul>
             </div>
-        </div>
-
-        <div class="promo-card">
-            <h2>¿Tus cosas están protegidas?</h2>
-            <p>Unite a Central Santua y registrá tus llaves, mascotas o vehículos para estar más tranquilo hoy mismo.</p>
-            <a href="registro.html" class="btn-promo">PROTEGER MIS OBJETOS</a>
         </div>
     </main>
 
     <footer>
-        &copy; 2026 Central Santua - Seguridad y Recuperación de Objetos.
+        &copy; 2026 Central Santua - Tecnología en Recuperación.
     </footer>
+</div>
 
-    <script>
-        // Leer parámetros de la URL
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. Obtener el ID de la URL
         const params = new URLSearchParams(window.location.search);
-        const id = params.get('id') || 'SANTUA-ID';
-        const tel = params.get('tel'); // Número del dueño si es directo
-
+        const id = params.get('id') || 'SIN-ID';
         document.getElementById('display-id').textContent = id;
 
-        const link = document.getElementById('whatsapp-link');
-        
-        if (tel) {
-            // CONTACTO DIRECTO CON EL DUEÑO
-            link.href = `https://wa.me/${tel}?text=Hola!%20Encontré%20tu%20objeto%20con%20ID%20${id}.%20Me%20comunico%20para%20coordinar%20la%20devolución.`;
-            link.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="24" height="24"> CONTACTAR AL DUEÑO`;
+        // 2. Buscar datos en la base de datos (Simulado con localStorage para este ejemplo)
+        // En un sistema real, aquí harías un: fetch(`/api/obtener-datos-qr/${id}`)
+        const baseDeDatosSimulada = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+        const datosDuenio = baseDeDatosSimulada.find(s => s.id === id);
+
+        const linkBtn = document.getElementById('whatsapp-link');
+        const cajaMensaje = document.getElementById('mensaje-dueno');
+
+        if (datosDuenio && datosDuenio.telefono) {
+            // EL DUEÑO CONFIGURÓ SU TELÉFONO
+            const textoWA = encodeURIComponent(`¡Hola! Encontré tu objeto con ID: ${id}. Me comunico para coordinar la entrega.`);
+            linkBtn.href = `https://wa.me/${datosDuenio.telefono}?text=${textoWA}`;
+            
+            if (datosDuenio.mensaje) {
+                cajaMensaje.innerText = `"${datosDuenio.mensaje}"`;
+            }
         } else {
-            // CONTACTO CON CENTRAL SANTUA (Intermediario)
-            // Aquí pones tu número de empresa real
-            const telEmpresa = "5491138680830"; 
-            link.href = `https://wa.me/${telEmpresa}?text=Hola%20Central%20Santua!%20Encontré%20un%20objeto%20con%20ID%20${id}.`;
-            link.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="24" height="24"> AVISAR A CENTRAL SANTUA`;
+            // EL DUEÑO NO CONFIGURÓ NADA O ES UN QR NUEVO
+            const telCentral = "5491138680830"; // Tu número de soporte
+            const textoCentral = encodeURIComponent(`Hola Central Santua, encontré el objeto con ID: ${id}. El dueño no configuró sus datos.`);
+            linkBtn.href = `https://wa.me/${telCentral}?text=${textoCentral}`;
+            linkBtn.innerHTML = `<i class="fas fa-headset"></i> AVISAR A CENTRAL SANTUA`;
+            cajaMensaje.innerText = "El dueño aún no ha configurado un mensaje personalizado, pero puedes avisar a nuestra central para que lo contactemos.";
         }
-    </script>
+    });
+</script>
+
 </body>
 </html>
