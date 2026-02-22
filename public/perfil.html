@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Stickers | Central Santua</title>
+    <title>Panel de Control | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,6 +12,7 @@
             --bg-dark: #0a0a0a;
             --card-bg: #141414;
             --success: #00ff88;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,122 +24,99 @@
             overflow-x: hidden;
         }
 
-        /* Fondo sutil */
         .page-overlay {
             min-height: 100vh;
-            background: radial-gradient(circle at top right, rgba(79, 172, 254, 0.05), transparent);
+            background: radial-gradient(circle at top right, rgba(0, 242, 254, 0.03), transparent);
         }
 
         header.barra-superior {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             padding: 15px 5%;
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(15px);
+            position: sticky; top: 0; z-index: 1000;
         }
 
         .logo-texto { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; }
         .logo-texto span { color: var(--accent); }
 
-        .perfil-wrapper {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px 20px;
+        .btn-header {
+            color: #888; text-decoration: none; font-weight: 600; font-size: 0.75rem; 
+            border: 1px solid #333; padding: 8px 15px; border-radius: 8px; transition: 0.3s;
         }
+        .btn-header:hover { border-color: var(--accent); color: var(--accent); }
+
+        .perfil-wrapper { max-width: 650px; margin: 0 auto; padding: 30px 20px; }
 
         .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--card-bg); border-radius: 24px; padding: 30px;
+            border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
 
-        h2 { font-size: 1.2rem; letter-spacing: 1px; margin-bottom: 5px; }
-        .sub-p { color: #666; font-size: 0.85rem; margin-bottom: 25px; }
+        h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; color: #fff; }
+        .sub-p { color: #555; font-size: 0.9rem; margin-bottom: 30px; }
 
-        /* Lista de QRs */
+        /* Lista Profesional */
         .qr-item {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 18px;
-            border-radius: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: 0.3s;
+            background: #0d0d0d; border: 1px solid var(--border);
+            padding: 20px; border-radius: 18px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .qr-info h4 { font-size: 1rem; color: #fff; margin-bottom: 4px; font-family: monospace; }
-        .qr-info small { color: #555; font-size: 0.75rem; display: block; }
+        .qr-info h4 { font-size: 1.1rem; color: #fff; margin-bottom: 3px; }
+        .qr-info span { font-family: monospace; font-size: 0.7rem; color: #444; letter-spacing: 1px; }
 
-        .status-badge {
-            font-size: 0.6rem; 
-            padding: 3px 8px; 
-            border-radius: 4px;
-            background: rgba(0, 255, 136, 0.1); 
-            color: var(--success);
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: inline-block;
+        .btn-config {
+            background: #1a1a1a; color: var(--accent); border: 1px solid #333;
+            width: 45px; height: 45px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
         }
+        .btn-config:hover { background: var(--accent); color: #000; border-color: var(--accent); }
 
-        .btn-gestionar {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-gestionar:hover { background: var(--accent); color: #000; }
-
-        /* Modales y Forms */
+        /* Modal Rediseñado */
         .modal {
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
-            padding: 20px;
+            background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; padding: 20px;
         }
         .modal-content {
-            background: #181818; width: 100%; max-width: 400px; padding: 30px;
-            border-radius: 20px; border: 1px solid var(--accent-dark);
+            background: #111; width: 100%; max-width: 450px; padding: 35px;
+            border-radius: 28px; border: 1px solid #222; position: relative;
         }
 
-        .field { margin-bottom: 15px; }
-        label { display: block; color: #666; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 5px; font-weight: 700; }
+        .field { margin-bottom: 20px; }
+        .field label { display: block; color: #888; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px; }
         
-        input {
-            width: 100%; background: #0c0c0c; border: 1px solid #222; padding: 12px;
-            border-radius: 10px; color: white; font-size: 0.9rem;
+        .field input, .field select {
+            width: 100%; background: #000; border: 1px solid #222; padding: 14px;
+            border-radius: 12px; color: white; font-size: 0.95rem; outline: none; transition: 0.3s;
         }
+        .field input:focus { border-color: var(--accent); }
 
-        .btn-primario {
-            width: 100%; padding: 14px; border-radius: 10px; border: none;
-            background: var(--accent); color: #000; font-weight: 700; cursor: pointer;
+        .btn-save {
+            width: 100%; padding: 16px; border-radius: 14px; border: none;
+            background: var(--accent); color: #000; font-weight: 800; cursor: pointer; transition: 0.3s;
         }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); }
+
+        /* Recomendaciones */
+        .tips-section { margin-top: 40px; border-top: 1px solid var(--border); pt: 30px; }
+        .tip-card { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-start; }
+        .tip-card i { color: var(--accent); font-size: 1.2rem; margin-top: 3px; }
+        .tip-card p { font-size: 0.85rem; color: #666; line-height: 1.5; }
 
         #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--success); color: #000; padding: 10px 25px;
-            border-radius: 10px; font-size: 0.85rem; font-weight: bold; display: none; z-index: 5000;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--success); color: #000; padding: 12px 30px;
+            border-radius: 50px; font-size: 0.9rem; font-weight: bold; display: none; z-index: 5000;
         }
 
-        /* Celulares */
         @media (max-width: 480px) {
-            .perfil-wrapper { padding: 20px 15px; }
-            .card { padding: 20px; border: none; background: transparent; box-shadow: none; }
-            .qr-item { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .btn-gestionar { width: 100%; text-align: center; }
+            .perfil-wrapper { padding: 15px; }
+            .card { padding: 20px; }
+            .modal-content { padding: 25px; }
         }
     </style>
 </head>
@@ -148,45 +126,66 @@
 
 <div class="page-overlay">
     <header class="barra-superior">
-        <a href="index.html" style="text-decoration: none; color: inherit;">
-            <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
-        </a>
-        <a href="index.html" onclick="localStorage.removeItem('estaLogueado')" style="color: #ff4d4d; text-decoration: none; font-weight: bold; font-size: 0.7rem; border: 1px solid rgba(255,77,77,0.3); padding: 5px 12px; border-radius: 6px;">SALIR</a>
+        <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
+        <a href="index.html" class="btn-header"><i class="fas fa-home"></i> INICIO</a>
     </header>
 
     <main class="perfil-wrapper">
         <div class="card">
             <h2>MIS ETIQUETAS</h2>
-            <p class="sub-p">Gestiona la información de contacto de tus stickers.</p>
+            <p class="sub-p">Configura la protección de tus pertenencias.</p>
             
             <div id="lista-vacia" style="text-align: center; padding: 40px 0; display: none;">
-                <i class="fas fa-qrcode" style="font-size: 3rem; color: #222; margin-bottom: 15px;"></i>
-                <p style="color: #444; font-size: 0.9rem;">No hay stickers activos.</p>
+                <i class="fas fa-qrcode" style="font-size: 3rem; color: #1a1a1a; margin-bottom: 15px;"></i>
+                <p style="color: #444; font-size: 0.9rem;">No hay etiquetas registradas.</p>
             </div>
 
-            <div id="contenedor-qrs">
+            <div id="contenedor-qrs"></div>
+
+            <section class="tips-section">
+                <h3 style="font-size: 0.9rem; color: #fff; margin-bottom: 20px;">RECOMENDACIONES DE SEGURIDAD</h3>
+                <div class="tip-card">
+                    <i class="fas fa-user-secret"></i>
+                    <p><strong>Privacidad:</strong> Si prefieres no mostrar tu número personal, elige la opción de "Intermediación Santua". Nosotros recibimos el aviso y te contactamos.</p>
                 </div>
+                <div class="tip-card">
+                    <i class="fas fa-bell"></i>
+                    <p><strong>Mensaje Directo:</strong> Escribe un mensaje amable. Las personas son más propensas a ayudar si leen una petición cordial.</p>
+                </div>
+            </section>
         </div>
     </main>
 </div>
 
 <div class="modal" id="modal-gestion">
     <div class="modal-content">
-        <h3 id="edit-id-titulo" style="color: var(--accent); margin-bottom: 5px;">ID: ---</h3>
-        <p style="color: #555; font-size: 0.8rem; margin-bottom: 20px;">Información que verá quien escanee el QR.</p>
+        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 25px; font-size: 1.2rem;">Configurar Sticker</h3>
 
         <div class="field">
-            <label>WhatsApp de contacto</label>
+            <label>Nombre del Objeto (Alias)</label>
+            <input type="text" id="edit-alias" placeholder="Ej: Mi Casco, Llaves de Casa...">
+        </div>
+
+        <div class="field">
+            <label>Tipo de Contacto</label>
+            <select id="edit-tipo-contacto" onchange="toggleContacto()">
+                <option value="directo">WhatsApp Directo (Mi número)</option>
+                <option value="intermediario">Intermediación Central Santua</option>
+            </select>
+        </div>
+
+        <div class="field" id="wrapper-tel">
+            <label>Tu WhatsApp (con código de país)</label>
             <input type="tel" id="edit-tel" placeholder="Ej: 5491100000000">
         </div>
 
         <div class="field">
-            <label>Mensaje para quien lo encuentre</label>
-            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame si lo encontraste.">
+            <label>Mensaje para el hallador</label>
+            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, gratificaré devolución.">
         </div>
 
-        <button class="btn-primario" onclick="guardarCambiosGestion()">GUARDAR</button>
-        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#444; margin-top:15px; cursor:pointer; font-size: 0.8rem;">Cerrar sin guardar</button>
+        <button class="btn-save" onclick="guardarCambiosGestion()">GUARDAR CONFIGURACIÓN</button>
+        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#444; margin-top:20px; cursor:pointer; font-size: 0.8rem; font-weight: 600;">CANCELAR</button>
     </div>
 </div>
 
@@ -196,29 +195,41 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
-        
-        // 1. Detectar retorno de Mercado Pago o Activación
         const idPendiente = localStorage.getItem("qr_escaneado_pendiente");
+        
+        // LÓGICA DE ACTIVACIÓN POST-PAGO
         const pagoExitoso = params.get('collection_status') === 'approved' || params.get('status') === 'approved';
-        const activacionSimulada = params.get('activacion') === 'exitosa';
-
-        if ((pagoExitoso || activacionSimulada) && idPendiente) {
+        
+        if (pagoExitoso && idPendiente) {
             if (!misStickers.find(s => s.id === idPendiente)) {
                 misStickers.push({
                     id: idPendiente,
+                    alias: "Nueva Etiqueta",
+                    tipo: "directo",
                     telefono: "",
-                    mensaje: "Si encontraste este objeto, por favor contáctame."
+                    mensaje: "Si encontraste esto, por favor contáctame."
                 });
                 localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
                 localStorage.removeItem("qr_escaneado_pendiente");
-                showToast("¡Sticker activado con éxito!");
+                showToast("¡Activación Exitosa!");
             }
-            // Limpia la URL de parámetros de pago
             window.history.replaceState({}, document.title, "perfil.html");
+        }
+
+        // LÓGICA ANTI-REPETICIÓN: Si el QR escaneado ya está activado
+        if (idPendiente && misStickers.find(s => s.id === idPendiente)) {
+             // Si ya existe, enviamos a recuperar para que vean los datos
+             window.location.href = "recuperar.html?id=" + idPendiente;
+             return;
         }
         
         renderLista();
     });
+
+    function toggleContacto() {
+        const tipo = document.getElementById('edit-tipo-contacto').value;
+        document.getElementById('wrapper-tel').style.display = (tipo === 'directo') ? 'block' : 'none';
+    }
 
     function renderLista() {
         const contenedor = document.getElementById('contenedor-qrs');
@@ -234,35 +245,40 @@
         contenedor.innerHTML = misStickers.map(s => `
             <div class="qr-item">
                 <div class="qr-info">
-                    <span class="status-badge">ACTIVO</span>
-                    <h4>${s.id}</h4>
-                    <small>${s.mensaje.substring(0, 35)}${s.mensaje.length > 35 ? '...' : ''}</small>
+                    <h4>${s.alias || 'Sin nombre'}</h4>
+                    <span>ID: ${s.id}</span>
                 </div>
-                <button class="btn-gestionar" onclick="abrirGestion('${s.id}')">
-                    <i class="fas fa-pen"></i> CONFIGURAR
+                <button class="btn-config" onclick="abrirGestion('${s.id}')">
+                    <i class="fas fa-sliders-h"></i>
                 </button>
             </div>
         `).join('');
     }
 
     function abrirGestion(id) {
-        const sticker = misStickers.find(s => s.id === id);
+        const s = misStickers.find(st => st.id === id);
         idEditando = id;
-        document.getElementById('edit-id-titulo').innerText = "ID: " + id;
-        document.getElementById('edit-tel').value = sticker.telefono || "";
-        document.getElementById('edit-msg').value = sticker.mensaje || "";
+        document.getElementById('modal-titulo').innerText = "Configurar " + (s.alias || "Etiqueta");
+        document.getElementById('edit-alias').value = s.alias || "";
+        document.getElementById('edit-tipo-contacto').value = s.tipo || "directo";
+        document.getElementById('edit-tel').value = s.telefono || "";
+        document.getElementById('edit-msg').value = s.mensaje || "";
+        toggleContacto();
         document.getElementById('modal-gestion').style.display = 'flex';
     }
 
     function guardarCambiosGestion() {
         const index = misStickers.findIndex(s => s.id === idEditando);
         if (index !== -1) {
+            misStickers[index].alias = document.getElementById('edit-alias').value.trim();
+            misStickers[index].tipo = document.getElementById('edit-tipo-contacto').value;
             misStickers[index].telefono = document.getElementById('edit-tel').value.trim();
             misStickers[index].mensaje = document.getElementById('edit-msg').value.trim();
+            
             localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
             cerrarModal();
             renderLista();
-            showToast("Configuración guardada");
+            showToast("Datos actualizados");
         }
     }
 

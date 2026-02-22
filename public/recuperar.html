@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperación | Central Santua</title>
+    <title>Recuperación de Objeto | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -11,80 +11,101 @@
             --accent-dark: #4facfe;
             --bg-dark: #0a0a0a;
             --card-bg: #141414;
-            --success: #2ecc71;
+            --success: #25D366; /* Color oficial WhatsApp */
+            --text-secondary: #888;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: var(--bg-dark) url('bandera.jpg') no-repeat center center fixed;
-            background-size: cover;
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--bg-dark);
             color: white; 
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
 
+        /* Fondo con efecto de profundidad */
         .overlay {
-            background: radial-gradient(circle, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.98) 100%);
-            width: 100%; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            flex: 1;
+            background: radial-gradient(circle at top center, rgba(0, 242, 254, 0.08), transparent);
+            width: 100%; display: flex; flex-direction: column; align-items: center;
+            padding-bottom: 40px;
         }
 
         header {
-            width: 100%; padding: 20px 5%; background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(10px); display: flex; justify-content: center;
-            border-bottom: 1px solid rgba(0,242,254,0.2);
+            width: 100%; padding: 25px 0; display: flex; justify-content: center;
+            margin-bottom: 20px;
         }
 
-        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
+        .logo { font-size: 1.2rem; font-weight: 900; letter-spacing: 2px; text-align: center; }
         .logo span { color: var(--accent); }
 
-        .container { width: 90%; max-width: 500px; padding: 40px 0; }
+        .container { width: 90%; max-width: 440px; }
 
         .card { 
-            background: var(--card-bg); padding: 35px; border-radius: 30px; 
-            border: 1px solid rgba(255,255,255,0.1); text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+            background: var(--card-bg); padding: 40px 30px; border-radius: 32px; 
+            border: 1px solid rgba(255,255,255,0.06); text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6); position: relative;
         }
 
-        .card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
-            background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+        /* Badge de Gracias */
+        .heart-badge {
+            width: 70px; height: 70px; background: rgba(0,242,254,0.1);
+            border-radius: 22px; display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin: 0 auto 25px; border: 1px solid rgba(0,242,254,0.3);
+            animation: pulse 2s infinite;
         }
 
-        .icon-badge {
-            width: 80px; height: 80px; background: rgba(0,242,254,0.1);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 40px; margin: 0 auto 20px; border: 1px solid var(--accent);
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
-        h1 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 800; }
-        .id-tag { background: #000; color: var(--accent); padding: 5px 15px; border-radius: 10px; font-family: monospace; font-size: 1.1rem; border: 1px solid #222; }
+        h1 { font-size: 1.6rem; margin-bottom: 12px; font-weight: 800; letter-spacing: -0.5px; }
+        p.sub-hero { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.4; }
+
+        .id-badge {
+            display: inline-block; background: rgba(255,255,255,0.03); color: #444; 
+            padding: 4px 12px; border-radius: 8px; font-family: monospace; font-size: 0.7rem; 
+            border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;
+        }
+
+        #mensaje-container { 
+            background: rgba(255,255,255,0.03); padding: 25px; 
+            border-radius: 20px; margin-bottom: 30px; position: relative;
+            border-left: 3px solid var(--accent); text-align: left;
+        }
 
         #mensaje-dueno { 
-            color: #eee; background: rgba(255,255,255,0.05); padding: 20px; 
-            border-radius: 15px; margin: 20px 0; font-style: italic; line-height: 1.6;
-            border-left: 4px solid var(--accent);
+            color: #fff; font-size: 1.05rem; font-style: italic; line-height: 1.5;
         }
 
         .btn-action { 
             background: var(--success); color: white; text-decoration: none; 
-            padding: 18px; border-radius: 15px; font-weight: 800; 
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.3s; margin-bottom: 20px;
+            padding: 20px; border-radius: 20px; font-weight: 800; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2);
         }
-        .btn-action:hover { transform: scale(1.02); }
 
-        .tips {
-            background: rgba(255,255,255,0.03); border-radius: 20px; padding: 20px;
-            text-align: left; margin-top: 25px; border: 1px solid rgba(255,255,255,0.05);
+        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(37, 211, 102, 0.3); }
+        .btn-action i { font-size: 1.4rem; }
+
+        /* Estilo para el botón de Central Santua si no hay dueño */
+        .btn-central { background: #fff; color: #000; box-shadow: 0 10px 20px rgba(255,255,255,0.1); }
+        .btn-central:hover { background: #f0f0f0; box-shadow: 0 15px 25px rgba(255,255,255,0.2); }
+
+        .footer-tips {
+            margin-top: 35px; text-align: left; padding: 0 10px;
         }
-        .tips h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 12px; }
-        .tips li { font-size: 0.85rem; color: #888; margin-bottom: 8px; list-style: none; display: flex; gap: 10px;}
+        .footer-tips h3 { font-size: 0.75rem; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .tip-item { display: flex; gap: 12px; margin-bottom: 15px; align-items: flex-start; }
+        .tip-item i { color: var(--accent); font-size: 0.9rem; margin-top: 2px; }
+        .tip-item p { font-size: 0.85rem; color: #666; line-height: 1.4; }
 
-        footer { margin-top: auto; padding: 30px; color: #444; font-size: 0.8rem; }
+        footer { padding: 30px; color: #333; font-size: 0.75rem; text-align: center; }
     </style>
 </head>
 <body>
@@ -96,67 +117,88 @@
 
     <main class="container">
         <div class="card">
-            <div class="icon-badge">🛡️</div>
-            <h1>¡Objeto Encontrado!</h1>
-            <p style="margin-top: 10px;">ID de Seguridad: <span class="id-tag" id="display-id">...</span></p>
+            <div class="heart-badge">🤝</div>
+            <h1>¡Gracias por tu gesto!</h1>
+            <p class="sub-hero">Has encontrado un objeto protegido. El dueño agradecerá enormemente tu ayuda para recuperarlo.</p>
             
-            <div id="mensaje-dueno">
-                "Gracias por escanear. Por favor, contáctame para coordinar la devolución de mi pertenencia."
+            <div id="mensaje-container">
+                <p id="mensaje-dueno">Cargando mensaje del propietario...</p>
             </div>
             
             <a id="whatsapp-link" href="#" class="btn-action">
-                <i class="fab fa-whatsapp" style="font-size: 24px;"></i>
-                CONTACTAR AL DUEÑO
+                <i class="fab fa-whatsapp"></i>
+                NOTIFICAR AL DUEÑO
             </a>
 
-            <div class="tips">
-                <h3><i class="fas fa-handshake"></i> Consejos de devolución</h3>
-                <ul>
-                    <li>• Coordinar en lugares públicos (estaciones, plazas).</li>
-                    <li>• No es necesario dar tu dirección personal.</li>
-                    <li>• Gracias por tu gran gesto de honestidad.</li>
-                </ul>
+            <div class="id-badge" id="display-id">ID: ...</div>
+
+            <div class="footer-tips">
+                <h3>Sugerencias para la entrega</h3>
+                <div class="tip-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <p>Por tu seguridad, sugerimos coordinar el encuentro en lugares concurridos o públicos.</p>
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No es necesario compartir tu dirección ni datos privados adicionales.</p>
+                </div>
             </div>
         </div>
     </main>
 
     <footer>
-        &copy; 2026 Central Santua - Tecnología en Recuperación.
+        &copy; 2026 Central Santua - Red Ética de Recuperación.
     </footer>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        // 1. Obtener el ID de la URL
+        // 1. Obtener ID de la URL
         const params = new URLSearchParams(window.location.search);
-        const id = params.get('id') || 'SIN-ID';
-        document.getElementById('display-id').textContent = id;
+        const id = params.get('id') || 'ST-SANTUA';
+        document.getElementById('display-id').textContent = `CÓDIGO: ${id}`;
 
-        // 2. Buscar datos en la base de datos (Simulado con localStorage para este ejemplo)
-        // En un sistema real, aquí harías un: fetch(`/api/obtener-datos-qr/${id}`)
-        const baseDeDatosSimulada = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
-        const datosDuenio = baseDeDatosSimulada.find(s => s.id === id);
+        // 2. Simulación de Base de Datos (Esto lo traerás de tu servidor luego)
+        const misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+        const datosDuenio = misStickers.find(s => s.id === id);
 
         const linkBtn = document.getElementById('whatsapp-link');
         const cajaMensaje = document.getElementById('mensaje-dueno');
 
-        if (datosDuenio && datosDuenio.telefono) {
-            // EL DUEÑO CONFIGURÓ SU TELÉFONO
-            const textoWA = encodeURIComponent(`¡Hola! Encontré tu objeto con ID: ${id}. Me comunico para coordinar la entrega.`);
-            linkBtn.href = `https://wa.me/${datosDuenio.telefono}?text=${textoWA}`;
-            
-            if (datosDuenio.mensaje) {
-                cajaMensaje.innerText = `"${datosDuenio.mensaje}"`;
+        // Lógica de visualización profesional
+        if (datosDuenio) {
+            // El dueño configuró el sticker
+            const mensajePersonalizado = datosDuenio.mensaje || "Muchas gracias por encontrar mi objeto. Por favor, contáctame para coordinar la devolución.";
+            cajaMensaje.innerText = `"${mensajePersonalizado}"`;
+
+            if (datosDuenio.tipo === "intermediario") {
+                // CASO INTERMEDIARIO: Escribe a Central Santua
+                setCentralSantua(id, linkBtn, "El propietario ha solicitado que Central Santua gestione la recuperación. Haz clic abajo para avisarnos.");
+            } else {
+                // CASO DIRECTO: Escribe al dueño
+                const tel = datosDuenio.telefono;
+                if (tel) {
+                    const textoWA = encodeURIComponent(`¡Hola! He encontrado tu objeto con código ${id}. Me gustaría coordinar contigo para devolvértelo.`);
+                    linkBtn.href = `https://wa.me/${tel}?text=${textoWA}`;
+                } else {
+                    setCentralSantua(id, linkBtn, "El propietario no ha configurado un teléfono de contacto directo. Por favor, avísanos a nosotros.");
+                }
             }
         } else {
-            // EL DUEÑO NO CONFIGURÓ NADA O ES UN QR NUEVO
-            const telCentral = "5491138680830"; // Tu número de soporte
-            const textoCentral = encodeURIComponent(`Hola Central Santua, encontré el objeto con ID: ${id}. El dueño no configuró sus datos.`);
-            linkBtn.href = `https://wa.me/${telCentral}?text=${textoCentral}`;
-            linkBtn.innerHTML = `<i class="fas fa-headset"></i> AVISAR A CENTRAL SANTUA`;
-            cajaMensaje.innerText = "El dueño aún no ha configurado un mensaje personalizado, pero puedes avisar a nuestra central para que lo contactemos.";
+            // STICKER NO ACTIVADO O NO ENCONTRADO
+            setCentralSantua(id, linkBtn, "Este objeto está protegido por nuestra red, pero el dueño aún no ha actualizado sus datos de contacto.");
         }
     });
+
+    function setCentralSantua(id, btn, msg) {
+        const telCentral = "5491138680830"; // TU NÚMERO DE SOPORTE
+        const textoCentral = encodeURIComponent(`Hola Central Santua, encontré un objeto con código: ${id}. Necesito ayuda para contactar al dueño.`);
+        
+        document.getElementById('mensaje-dueno').innerText = msg;
+        btn.href = `https://wa.me/${telCentral}?text=${textoCentral}`;
+        btn.innerHTML = `<i class="fas fa-headset"></i> AVISAR A CENTRAL SANTUA`;
+        btn.classList.add('btn-central');
+    }
 </script>
 
 </body>

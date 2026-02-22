@@ -254,32 +254,33 @@ function gestionarInterfaz() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
-    const idEscaneado = params.get('id');
+    let idEscaneado = params.get('id');
+
+    // Limpiamos el ID por si la URL viene con basura o duplicados
+    if (idEscaneado && idEscaneado.includes('id=')) {
+        idEscaneado = idEscaneado.split('id=')[1];
+    }
 
     if (idEscaneado) {
-        // 1. Buscamos si ya está activado
-        let stickersActivados = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
-        const yaExiste = stickersActivados.find(s => s.id === idEscaneado);
+        // 1. Buscamos si este sticker ya está registrado en MI celular
+        let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+        const yaEsMio = misStickers.find(s => s.id === idEscaneado);
 
-        if (yaExiste) {
-            // SI YA EXISTE: Alguien encontró el objeto. Vamos a recuperar.
-            window.location.href = `recuperar.html?id=${idEscaneado}`;
+        if (yaEsMio) {
+            // CASO A: El dueño escaneó su propio QR.
+            // Lo mandamos al perfil para que vea sus datos o los edite.
+            window.location.href = "perfil.html";
         } else {
-            // SI ES NUEVO: Lo guardamos en memoria para que el botón de "ACTIVAR" 
-            // sepa qué ID procesar sin tener que abrir la cámara de nuevo.
-            localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
-            
-            // Opcional: Podés saltar directamente a la presentación de pago
-            // window.location.href = "presentacion_pago.html";
-            
-            console.log("Sticker nuevo detectado, listo para activar:", idEscaneado);
+            // CASO B: Alguien encontró el objeto (o es un sticker nuevo).
+            // Lo mandamos a recuperar.html. 
+            // Si en recuperar.html no hay datos, esa página le dirá "Sticker no activado".
+            window.location.href = `recuperar.html?id=${idEscaneado}`;
         }
     }
+    
+    // Ejecutamos la interfaz (botones de login/registro o menú)
+    gestionarInterfaz();
 });
-
-// Ejecución inmediata y al cargar el DOM
-gestionarInterfaz();
-document.addEventListener('DOMContentLoaded', gestionarInterfaz);
 
 // Función para el menú lateral
 function toggleMenu() {
