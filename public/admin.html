@@ -369,12 +369,26 @@
                         height: 100mm;
                         display: flex;
                         position: relative;
-                        background: #dcdcdc; /* Gris metal base */
-                        /* BORDE TRIPLE: Rojo-Amarillo-Rojo */
-                        border: 6px solid #ff0000;
-                        box-shadow: inset 0 0 0 4px #ffff00, inset 0 0 0 8px #ff0000;
+                        background: #dcdcdc;
+                        border: 6px solid #ff0000; /* Borde Rojo Exterior */
                         box-sizing: border-box;
-                        overflow: hidden;
+                    }
+
+                    /* Franjas continuas que pasan por la zona de corte */
+                    .sticker-auto-full::before {
+                        content: "";
+                        position: absolute;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        border: 4px solid #ffff00; /* Franja Amarilla */
+                        pointer-events: none;
+                    }
+
+                    .sticker-auto-full::after {
+                        content: "";
+                        position: absolute;
+                        top: 4px; left: 4px; right: 4px; bottom: 4px;
+                        border: 4px solid #ff0000; /* Franja Roja Interior */
+                        pointer-events: none;
                     }
 
                     /* STICKER MOTO (170x170mm) */
@@ -399,19 +413,19 @@
                         align-items: center;
                         justify-content: space-between;
                         padding: 15px 5px;
-                        z-index: 2;
+                        z-index: 2; /* Por encima de las franjas */
                     }
 
-                    /* Línea de corte central */
+                    /* Línea de corte central integrada */
                     .linea-corte {
                         position: absolute;
-                        left: 50%; top: 0; bottom: 0;
-                        width: 2px;
-                        border-left: 3px dashed #333;
-                        z-index: 5;
+                        left: 50%; top: 10px; bottom: 10px;
+                        width: 0;
+                        border-left: 2px dashed rgba(0,0,0,0.3);
+                        z-index: 10;
+                        transform: translateX(-50%);
                     }
 
-                    /* Textos Reforzados */
                     .header-txt {
                         background: #000 !important;
                         color: #fff !important;
@@ -431,7 +445,7 @@
 
                     .id-tag {
                         background: #000 !important;
-                        color: #ffff00 !important; /* Amarillo sobre negro para legibilidad total */
+                        color: #ffff00 !important;
                         font-family: 'Roboto Mono', monospace;
                         font-size: 2.2rem;
                         padding: 5px 25px;
@@ -445,11 +459,15 @@
                         font-size: 0.9rem;
                         line-height: 1.2;
                         font-weight: 900;
+                        text-transform: uppercase;
                     }
 
                     @media print {
                         body { background: #fff; padding: 0; }
-                        .sticker-auto-full, .sticker-moto-full { page-break-after: always; margin: 0 auto 10mm auto; }
+                        .sticker-auto-full, .sticker-moto-full { 
+                            page-break-after: always; 
+                            margin: 0 auto 15mm auto; 
+                        }
                     }
                 </style>
             </head>
@@ -503,6 +521,7 @@
         alert("ERROR: " + error.message);
     }
 }
+123123123
 
 // Código para cargar estadísticas al entrar
     window.onload = async () => {
