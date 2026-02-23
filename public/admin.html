@@ -326,92 +326,111 @@
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
     try {
-        // 1. SOLICITUD SEGURA AL SERVIDOR
-        // Pedimos los IDs oficiales antes de abrir la ventana de impresión
+        // Bloqueo de seguridad para evitar duplicar clics
+        const btn = document.querySelector('button[onclick="prepararLote()"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO...';
+
+        // 1. SOLICITUD AL SERVIDOR (Aquí es donde se crean los IDs "inhackeables")
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cantidad: cant, tipo: tipo })
         });
 
-        if (!response.ok) throw new Error("Error al validar con el servidor");
+        if (!response.ok) throw new Error("Error en el servidor");
         
         const data = await response.json();
-        const listaIDs = data.ids; // Array de IDs oficiales enviados por el servidor
+        const listaIDs = data.ids; 
 
-        // 2. ABRIR VENTANA DE IMPRESIÓN
+        // 2. ABRIR VENTANA DE IMPRESIÓN PROFESIONAL
         const win = window.open('', '_blank');
         win.document.write(`
             <html>
             <head>
-                <title>Central Santua - Impresión Oficial</title>
+                <title>ORDEN DE IMPRESIÓN | CENTRAL SANTUA</title>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
-                    body { font-family: 'Archivo Black', sans-serif; margin: 0; padding: 20px; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
-                    .contenedor-par { display: flex; background: #000; padding: 5px; margin-bottom: 30px; border-radius: 4px; }
-                    .sticker { background: #fff; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; position: relative; }
-                    .auto { width: 140mm; height: 95mm; border: 10px solid #FFD700; }
-                    .moto { width: 160mm; height: 160mm; border: 15px solid #FFD700; margin-bottom: 40px; }
-                    .franja { background: #000; color: #fff; width: 100%; text-align: center; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-                    .franja.arriba { height: 18%; font-size: 1.1rem; border-bottom: 4px solid #FFD700; }
-                    .franja.abajo { height: 18%; border-top: 4px solid #FFD700; padding: 2px 0; }
-                    .texto-contacto { font-size: 0.85rem; color: #fff; margin-bottom: 2px; }
-                    .texto-web { font-size: 0.7rem; color: #FFD700; letter-spacing: 1px; }
-                    .cuerpo { flex-grow: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; }
-                    .qr-img { border: 2px solid #000; padding: 5px; background: #fff; }
-                    .id-placa { background: #000; color: #FFD700; padding: 3px 15px; margin-top: -8px; font-size: 1.4rem; letter-spacing: 2px; border: 2px solid #FFD700; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
-                    .linea-corte { width: 0; border-left: 3px dashed #FFD700; height: 95mm; }
-                    @media print { body { background: #fff; } .contenedor-par { box-shadow: none; } }
+                    body { font-family: 'Archivo Black', sans-serif; margin: 0; padding: 0; background: #fff; }
+                    
+                    /* Contenedor Auto: 300mm x 100mm */
+                    .hoja-auto { 
+                        width: 300mm; height: 100mm; 
+                        display: flex; background: #000; 
+                        margin: 10mm auto; position: relative;
+                        page-break-inside: avoid;
+                        border: 2px solid #FFD700;
+                    }
+                    
+                    .guia-corte {
+                        position: absolute; left: 50%; top: 0;
+                        width: 0; height: 100%;
+                        border-left: 3px dashed #FFD700;
+                        z-index: 10;
+                    }
+
+                    .sticker-auto { 
+                        flex: 1; display: flex; flex-direction: column; 
+                        align-items: center; justify-content: space-around;
+                        padding: 10px; box-sizing: border-box;
+                    }
+
+                    /* Contenedor Moto: 170mm x 170mm */
+                    .sticker-moto { 
+                        width: 170mm; height: 170mm; 
+                        margin: 10mm auto; background: #000;
+                        display: flex; flex-direction: column; align-items: center;
+                        justify-content: space-around;
+                        page-break-inside: avoid;
+                        border: 5px solid #FFD700;
+                    }
+
+                    .qr-box { background: #fff; padding: 15px; border-radius: 8px; }
+                    .id-text { color: #FFD700; font-size: 2rem; letter-spacing: 4px; border: 2px solid #FFD700; padding: 5px 20px; }
+                    .header-txt { color: #fff; font-size: 1.1rem; text-transform: uppercase; }
+                    .footer-txt { color: #fff; font-size: 0.7rem; opacity: 0.8; }
+
+                    @media print {
+                        body { background: #fff; }
+                        .hoja-auto, .sticker-moto { margin: 0; }
+                    }
                 </style>
             </head>
             <body>
         `);
 
-        // 3. GENERACIÓN DE STICKERS CON IDS OFICIALES
+        // 3. GENERACIÓN DE CADA PIEZA
         listaIDs.forEach(idUnico => {
-            const url = `https://centralsantua.com.ar/?id=${idUnico}`;
-            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(url)}`;
+            // Importante: Cambiamos a la URL de activación
+            const url = `https://centralsantua.com.ar/activar?id=${idUnico}`;
+            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
             if (tipo === 'auto') {
                 win.document.write(`
-                    <div class="contenedor-par">
-                        <div class="sticker auto">
-                            <div class="franja arriba">🛡️ OBJETO PROTEGIDO 🛡️</div>
-                            <div class="cuerpo">
-                                <img src="${qrImg}" class="qr-img" width="180" height="180" />
-                                <div class="id-placa">${idUnico}</div>
-                            </div>
-                            <div class="franja abajo">
-                                <div class="texto-contacto">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
-                                <div class="texto-web">CENTRALSANTUA.COM.AR</div>
-                            </div>
+                    <div class="hoja-auto">
+                        <div class="guia-corte"></div>
+                        <div class="sticker-auto">
+                            <div class="header-txt">🛡️ VEHÍCULO PROTEGIDO</div>
+                            <div class="qr-box"><img src="${qrImg}" width="160"></div>
+                            <div class="id-text">${idUnico}</div>
+                            <div class="footer-txt">WWW.CENTRALSANTUA.COM.AR</div>
                         </div>
-                        <div class="linea-corte"></div>
-                        <div class="sticker auto">
-                            <div class="franja arriba">🛡️ OBJETO PROTEGIDO 🛡️</div>
-                            <div class="cuerpo">
-                                <img src="${qrImg}" class="qr-img" width="180" height="180" />
-                                <div class="id-placa">${idUnico}</div>
-                            </div>
-                            <div class="franja abajo">
-                                <div class="texto-contacto">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
-                                <div class="texto-web">CENTRALSANTUA.COM.AR</div>
-                            </div>
+                        <div class="sticker-auto">
+                            <div class="header-txt">🛡️ VEHÍCULO PROTEGIDO</div>
+                            <div class="qr-box"><img src="${qrImg}" width="160"></div>
+                            <div class="id-text">${idUnico}</div>
+                            <div class="footer-txt">WWW.CENTRALSANTUA.COM.AR</div>
                         </div>
                     </div>
                 `);
             } else {
                 win.document.write(`
-                    <div class="sticker moto">
-                        <div class="franja arriba" style="font-size: 1.8rem;">🛡️ OBJETO PROTEGIDO 🛡️</div>
-                        <div class="cuerpo">
-                            <img src="${qrImg}" class="qr-img" width="380" height="380" />
-                            <div class="id-placa" style="font-size: 2.8rem; margin-top: -15px;">${idUnico}</div>
-                        </div>
-                        <div class="franja abajo" style="height: 15%;">
-                            <div class="texto-contacto" style="font-size: 1.2rem;">ESCANEAME PARA CONTACTAR AL DUEÑO</div>
-                            <div class="texto-web" style="font-size: 1rem;">WWW.CENTRALSANTUA.COM.AR</div>
-                        </div>
+                    <div class="sticker-moto">
+                        <div class="header-txt" style="font-size:1.8rem;">🛡️ MOTO PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="320"></div>
+                        <div class="id-text" style="font-size:3rem;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size:1rem;">WWW.CENTRALSANTUA.COM.AR</div>
                     </div>
                 `);
             }
@@ -419,16 +438,18 @@
 
         win.document.write('</body></html>');
         win.document.close();
+        
+        // Restaurar botón
+        btn.disabled = false;
+        btn.innerHTML = originalText;
 
-        // 4. ACTUALIZAR CONTADOR VISUAL
+        // Actualizar contador visual
         const statGen = document.getElementById('s-gen');
-        if (statGen) {
-            statGen.innerText = parseInt(statGen.innerText) + listaIDs.length;
-        }
+        if (statGen) statGen.innerText = parseInt(statGen.innerText) + listaIDs.length;
 
     } catch (error) {
-        console.error(error);
-        alert("Hubo un error de conexión con el servidor. No se generaron QRs.");
+        alert("ERROR CRÍTICO: " + error.message);
+        location.reload();
     }
 }
 
