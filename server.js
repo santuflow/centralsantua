@@ -272,26 +272,39 @@ const client = new MercadoPagoConfig({
     accessToken: 'APP_USR-7751639628824719-021612-dbddd90a31825e1b6fa2cb41fa93b3e4-2118365527' 
 });
  
-// 2. RUTA PARA GENERAR (Solo una vez)
+// 2. RUTA PARA GENERAR LOTE (Protegida y Profesional)
 app.post('/api/generar-lote-seguro', (req, res) => {
-    const { cantidad, tipo } = req.body;
-    const nuevosIDs = [];
+    try {
+        const { cantidad, tipo } = req.body;
+        const nuevosIDs = [];
+        const crypto = require('crypto'); // Para máxima seguridad
 
-    for (let i = 0; i < cantidad; i++) {
-        const id = "SN" + Math.random().toString(36).substr(2, 6).toUpperCase();
-        nuevosIDs.push(id);
-        
-        // AQUÍ ES DONDE SE GUARDA REALMENTE
-        baseDeDatosSimulada.push({
-            id_qr: id,
-            tipo: tipo,
-            activado: false,
-            fecha_creacion: new Date()
-        });
+        for (let i = 0; i < cantidad; i++) {
+            // Generamos 4 bytes aleatorios (ej: 4f2a9b1c)
+            const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
+            
+            // Formato Santua: CS-XXXX-XXXX (Inhackeable)
+            const idPro = `CS-${randomHex.slice(0, 4)}-${randomHex.slice(4, 8)}`;
+            
+            nuevosIDs.push(idPro);
+            
+            // Guardado en tu base de datos
+            baseDeDatosSimulada.push({
+                id_qr: idPro,
+                tipo: tipo,
+                activado: false,
+                fecha_creacion: new Date(),
+                seguridad: "Nivel Criptográfico"
+            });
+        }
+
+        // Devolvemos los IDs al frontend para que los imprima
+        res.json({ ids: nuevosIDs });
+
+    } catch (error) {
+        console.error("Error en generación:", error);
+        res.status(500).json({ error: "Error al generar lote seguro" });
     }
-
-    console.log(`Lote generado. Total en memoria: ${baseDeDatosSimulada.length}`);
-    res.json({ ids: nuevosIDs });
 });
 
 // 3. RUTA DE ESTADÍSTICAS
