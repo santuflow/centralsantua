@@ -365,7 +365,7 @@
                         gap: 10mm;
                     }
 
-                    /* AUTO: Se mantiene igual como pediste */
+                    /* AUTO: Diseño de dos mitades */
                     .sticker-auto-full {
                         width: 300mm;
                         height: 100mm;
@@ -405,12 +405,12 @@
                         pointer-events: none;
                     }
 
-                    /* MOTO: CORREGIDO CON TRIPLE BORDE */
+                    /* MOTO: Triple borde Premium */
                     .sticker-moto-full {
                         width: 170mm;
                         height: 170mm;
                         background: #dcdcdc;
-                        border: 8px solid #ff0000; /* Pared 1 (Exterior Roja) */
+                        border: 8px solid #ff0000;
                         position: relative;
                         display: flex;
                         flex-direction: column;
@@ -423,7 +423,7 @@
                         content: "";
                         position: absolute;
                         top: 0; left: 0; right: 0; bottom: 0;
-                        border: 6px solid #ffff00; /* Pared 2 (Amarilla) */
+                        border: 6px solid #ffff00;
                         pointer-events: none;
                     }
 
@@ -431,7 +431,7 @@
                         content: "";
                         position: absolute;
                         top: 6px; left: 6px; right: 6px; bottom: 6px;
-                        border: 6px solid #ff0000; /* Pared 3 (Interior Roja) */
+                        border: 6px solid #ff0000;
                         pointer-events: none;
                     }
 
@@ -487,7 +487,8 @@
         `);
 
         listaIDs.forEach(idUnico => {
-            const url = `https://centralsantua.com.ar/activar?id=${idUnico}`;
+            // CORRECCIÓN DE RUTA: Apunta al index para que se active tu lógica de escaneo
+            const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
             const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
             if (tipo === 'auto') {
