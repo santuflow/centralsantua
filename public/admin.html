@@ -329,7 +329,7 @@
         const btn = document.querySelector('button[onclick="prepararLote()"]');
         const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
@@ -345,109 +345,116 @@
         win.document.write(`
             <html>
             <head>
-                <title>STIKERS DE ALERTA | CENTRAL SANTUA</title>
+                <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
                     
                     body { 
                         font-family: 'Archivo Black', sans-serif; 
-                        margin: 0; padding: 40px; background: #fff; 
+                        margin: 0; padding: 20px; background: #f0f0f0; 
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
 
-                    .separador-hoja {
-                        margin-bottom: 60px; 
-                        page-break-inside: avoid;
-                        display: flex;
-                        justify-content: center;
-                    }
-
-                    /* EL STICKER CON BORDE DE ALERTA */
-                    .sticker-card {
-                        background: linear-gradient(145deg, #d1d1d1 0%, #f0f0f0 100%);
-                        /* DOBLE BORDE: Amarillo Vial + Negro */
-                        border: 8px solid #FFD700; 
-                        outline: 4px solid #000;
-                        outline-offset: -12px;
-                        
+                    .contenedor-impresion {
                         display: flex;
                         flex-direction: column;
                         align-items: center;
+                        gap: 30px;
+                    }
+
+                    /* BLOQUE UNIFICADO AUTO (300x100mm) */
+                    .sticker-auto-full {
+                        width: 300mm;
+                        height: 100mm;
+                        display: flex;
                         position: relative;
+                        background: #dcdcdc; /* Gris metal base */
+                        /* BORDE TRIPLE: Rojo-Amarillo-Rojo */
+                        border: 6px solid #ff0000;
+                        box-shadow: inset 0 0 0 4px #ffff00, inset 0 0 0 8px #ff0000;
                         box-sizing: border-box;
-                        padding: 15px;
+                        overflow: hidden;
                     }
 
-                    .hoja-auto { 
-                        width: 300mm; height: 100mm; 
-                        display: flex; gap: 15mm; /* Espacio para corte cómodo */
-                    }
-
-                    .sticker-auto { 
-                        flex: 1; height: 100%;
+                    /* STICKER MOTO (170x170mm) */
+                    .sticker-moto-full {
+                        width: 170mm;
+                        height: 170mm;
+                        background: #dcdcdc;
+                        border: 8px solid #ff0000;
+                        box-shadow: inset 0 0 0 5px #ffff00, inset 0 0 0 10px #ff0000;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                         justify-content: space-between;
+                        padding: 20px;
+                        box-sizing: border-box;
                     }
 
-                    .sticker-moto { 
-                        width: 170mm; height: 170mm; 
+                    .mitad-sticker {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                         justify-content: space-between;
+                        padding: 15px 5px;
+                        z-index: 2;
                     }
 
-                    /* Header Negro Sólido */
-                    .header-tag {
-                        background: #000 !important;
-                        color: #FFD700 !important; /* Texto amarillo sobre negro */
-                        width: 100%;
-                        padding: 12px 0;
-                        text-align: center;
-                        font-size: 1.6rem;
-                        letter-spacing: 2px;
-                        border-radius: 2px;
+                    /* Línea de corte central */
+                    .linea-corte {
+                        position: absolute;
+                        left: 50%; top: 0; bottom: 0;
+                        width: 2px;
+                        border-left: 3px dashed #333;
+                        z-index: 5;
                     }
 
-                    .qr-container {
-                        background: #fff;
-                        padding: 10px;
-                        border: 3px solid #000;
-                        border-radius: 4px;
-                    }
-
-                    /* ID en bloque negro */
-                    .id-box {
-                        font-family: 'Roboto Mono', monospace;
+                    /* Textos Reforzados */
+                    .header-txt {
                         background: #000 !important;
                         color: #fff !important;
-                        padding: 10px 35px;
-                        font-size: 2.4rem;
-                        border-radius: 4px;
-                        letter-spacing: 4px;
-                        box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-                    }
-
-                    .footer-info {
+                        width: 90%;
                         text-align: center;
-                        color: #000;
-                        font-size: 0.9rem;
-                        font-weight: bold;
+                        padding: 8px 0;
+                        font-size: 1.5rem;
+                        border-radius: 4px;
                         text-transform: uppercase;
                     }
 
-                    .brand-accent {
-                        font-size: 1.1rem;
-                        border-top: 2px solid #000;
-                        padding-top: 5px;
-                        margin-top: 5px;
-                        display: inline-block;
+                    .qr-box {
+                        background: #fff;
+                        padding: 10px;
+                        border: 2px solid #000;
+                    }
+
+                    .id-tag {
+                        background: #000 !important;
+                        color: #ffff00 !important; /* Amarillo sobre negro para legibilidad total */
+                        font-family: 'Roboto Mono', monospace;
+                        font-size: 2.2rem;
+                        padding: 5px 25px;
+                        border-radius: 3px;
+                        letter-spacing: 3px;
+                    }
+
+                    .footer-txt {
+                        text-align: center;
+                        color: #000;
+                        font-size: 0.9rem;
+                        line-height: 1.2;
+                        font-weight: 900;
                     }
 
                     @media print {
                         body { background: #fff; padding: 0; }
-                        .separador-hoja { margin-bottom: 80px; }
+                        .sticker-auto-full, .sticker-moto-full { page-break-after: always; margin: 0 auto 10mm auto; }
                     }
                 </style>
             </head>
             <body>
+                <div class="contenedor-impresion">
         `);
 
         listaIDs.forEach(idUnico => {
@@ -456,47 +463,38 @@
 
             if (tipo === 'auto') {
                 win.document.write(`
-                    <div class="separador-hoja">
-                        <div class="hoja-auto">
-                            <div class="sticker-card sticker-auto">
-                                <div class="header-tag">⚠️ PATENTE PROTEGIDA</div>
-                                <div class="qr-container"><img src="${qrImg}" width="145"></div>
-                                <div class="id-box">${idUnico}</div>
-                                <div class="footer-info">
-                                    ESCANEAR PARA CONTACTO OFICIAL<br>
-                                    <span class="brand-accent">CENTRALSANTUA.COM.AR</span>
-                                </div>
-                            </div>
-                            <div class="sticker-card sticker-auto">
-                                <div class="header-tag">⚠️ PATENTE PROTEGIDA</div>
-                                <div class="qr-container"><img src="${qrImg}" width="145"></div>
-                                <div class="id-box">${idUnico}</div>
-                                <div class="footer-info">
-                                    ESCANEAR PARA CONTACTO OFICIAL<br>
-                                    <span class="brand-accent">CENTRALSANTUA.COM.AR</span>
-                                </div>
-                            </div>
+                    <div class="sticker-auto-full">
+                        <div class="linea-corte"></div>
+                        <div class="mitad-sticker">
+                            <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                            <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                            <div class="id-tag">${idUnico}</div>
+                            <div class="footer-txt">ESCANEAR PARA CONTACTO<br>CENTRALSANTUA.COM.AR</div>
+                        </div>
+                        <div class="mitad-sticker">
+                            <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                            <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                            <div class="id-tag">${idUnico}</div>
+                            <div class="footer-txt">ESCANEAR PARA CONTACTO<br>CENTRALSANTUA.COM.AR</div>
                         </div>
                     </div>
                 `);
             } else {
                 win.document.write(`
-                    <div class="separador-hoja">
-                        <div class="sticker-card sticker-moto">
-                            <div class="header-tag" style="font-size: 2.2rem;">⚠️ PATENTE PROTEGIDA</div>
-                            <div class="qr-container"><img src="${qrImg}" width="280"></div>
-                            <div class="id-box" style="font-size: 3.8rem;">${idUnico}</div>
-                            <div class="footer-info" style="font-size: 1.2rem;">
-                                ESCANEAR PARA CONTACTO OFICIAL<br>
-                                <span class="brand-accent" style="font-size: 1.5rem;">CENTRALSANTUA.COM.AR</span>
-                            </div>
+                    <div class="sticker-moto-full">
+                        <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box" style="padding: 15px;"><img src="${qrImg}" width="280"></div>
+                        <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.2rem;">
+                            ESCANEAR PARA CONTACTO OFICIAL<br>
+                            WWW.CENTRALSANTUA.COM.AR
                         </div>
                     </div>
                 `);
             }
         });
 
-        win.document.write('</body></html>');
+        win.document.write('</div></body></html>');
         win.document.close();
         
         btn.disabled = false;
