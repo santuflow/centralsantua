@@ -349,9 +349,11 @@
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
                     
+                    * { box-sizing: border-box; }
+
                     body { 
                         font-family: 'Archivo Black', sans-serif; 
-                        margin: 0; padding: 20px; background: #f0f0f0; 
+                        margin: 0; padding: 10mm; background: #fff; 
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -360,70 +362,75 @@
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 30px;
+                        gap: 15mm;
                     }
 
-                    /* BLOQUE UNIFICADO AUTO (300x100mm) */
+                    /* CONTENEDOR UNIFICADO (Invisible, solo agrupa) */
                     .sticker-auto-full {
                         width: 300mm;
                         height: 100mm;
                         display: flex;
+                        justify-content: space-between; /* Crea la franja blanca en el medio */
+                        background: transparent;
                         position: relative;
-                        background: #dcdcdc;
-                        border: 6px solid #ff0000; /* Borde Rojo Exterior */
-                        box-sizing: border-box;
                     }
 
-                    /* Franjas continuas que pasan por la zona de corte */
-                    .sticker-auto-full::before {
+                    /* CADA STICKER CON SUS 4 PAREDES PROPIAS */
+                    .mitad-sticker {
+                        width: 145mm; /* 145 + 145 = 290mm. Quedan 10mm de aire en el centro */
+                        height: 100mm;
+                        background: #dcdcdc;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: space-around;
+                        padding: 15px;
+                        position: relative;
+                        border: 6px solid #ff0000; /* Pared 1 (Exterior Roja) */
+                    }
+
+                    /* Pared 2 (Amarilla) y Pared 3 (Interior Roja) */
+                    .mitad-sticker::before {
                         content: "";
                         position: absolute;
                         top: 0; left: 0; right: 0; bottom: 0;
-                        border: 4px solid #ffff00; /* Franja Amarilla */
+                        border: 4px solid #ffff00;
                         pointer-events: none;
                     }
 
-                    .sticker-auto-full::after {
+                    .mitad-sticker::after {
                         content: "";
                         position: absolute;
                         top: 4px; left: 4px; right: 4px; bottom: 4px;
-                        border: 4px solid #ff0000; /* Franja Roja Interior */
+                        border: 4px solid #ff0000;
                         pointer-events: none;
                     }
 
-                    /* STICKER MOTO (170x170mm) */
+                    /* STICKER MOTO */
                     .sticker-moto-full {
                         width: 170mm;
                         height: 170mm;
                         background: #dcdcdc;
                         border: 8px solid #ff0000;
-                        box-shadow: inset 0 0 0 5px #ffff00, inset 0 0 0 10px #ff0000;
+                        position: relative;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        justify-content: space-between;
+                        justify-content: space-around;
                         padding: 20px;
-                        box-sizing: border-box;
                     }
 
-                    .mitad-sticker {
-                        flex: 1;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: space-between;
-                        padding: 15px 5px;
-                        z-index: 2; /* Por encima de las franjas */
-                    }
-
-                    /* Línea de corte central integrada */
-                    .linea-corte {
+                    .sticker-moto-full::before {
+                        content: "";
                         position: absolute;
-                        left: 50%; top: 10px; bottom: 10px;
-                        width: 0;
-                        border-left: 2px dashed rgba(0,0,0,0.3);
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        border: 5px solid #ffff00;
+                        pointer-events: none;
+                    }
+
+                    .header-txt, .qr-box, .id-tag, .footer-txt {
                         z-index: 10;
-                        transform: translateX(-50%);
+                        position: relative;
                     }
 
                     .header-txt {
@@ -432,14 +439,13 @@
                         width: 90%;
                         text-align: center;
                         padding: 8px 0;
-                        font-size: 1.5rem;
+                        font-size: 1.3rem;
                         border-radius: 4px;
-                        text-transform: uppercase;
                     }
 
                     .qr-box {
                         background: #fff;
-                        padding: 10px;
+                        padding: 8px;
                         border: 2px solid #000;
                     }
 
@@ -447,26 +453,24 @@
                         background: #000 !important;
                         color: #ffff00 !important;
                         font-family: 'Roboto Mono', monospace;
-                        font-size: 2.2rem;
-                        padding: 5px 25px;
+                        font-size: 2rem;
+                        padding: 5px 20px;
                         border-radius: 3px;
-                        letter-spacing: 3px;
+                        letter-spacing: 2px;
                     }
 
                     .footer-txt {
                         text-align: center;
                         color: #000;
-                        font-size: 0.9rem;
-                        line-height: 1.2;
+                        font-size: 0.8rem;
+                        line-height: 1.1;
                         font-weight: 900;
-                        text-transform: uppercase;
                     }
 
                     @media print {
-                        body { background: #fff; padding: 0; }
+                        body { padding: 0; margin: 0; }
                         .sticker-auto-full, .sticker-moto-full { 
                             page-break-after: always; 
-                            margin: 0 auto 15mm auto; 
                         }
                     }
                 </style>
@@ -482,7 +486,6 @@
             if (tipo === 'auto') {
                 win.document.write(`
                     <div class="sticker-auto-full">
-                        <div class="linea-corte"></div>
                         <div class="mitad-sticker">
                             <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
                             <div class="qr-box"><img src="${qrImg}" width="140"></div>
@@ -501,7 +504,7 @@
                 win.document.write(`
                     <div class="sticker-moto-full">
                         <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box" style="padding: 15px;"><img src="${qrImg}" width="280"></div>
+                        <div class="qr-box"><img src="${qrImg}" width="280"></div>
                         <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
                         <div class="footer-txt" style="font-size: 1.2rem;">
                             ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
@@ -521,7 +524,6 @@
         alert("ERROR: " + error.message);
     }
 }
-123123123
 
 // Código para cargar estadísticas al entrar
     window.onload = async () => {
