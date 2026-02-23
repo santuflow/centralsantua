@@ -326,13 +326,12 @@
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
     try {
-        // Bloqueo de seguridad para evitar duplicar clics
         const btn = document.querySelector('button[onclick="prepararLote()"]');
         const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
 
-        // 1. SOLICITUD AL SERVIDOR (Aquí es donde se crean los IDs "inhackeables")
+        // 1. SOLICITUD AL SERVIDOR (ID INHACKEABLE)
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -344,7 +343,7 @@
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        // 2. ABRIR VENTANA DE IMPRESIÓN PROFESIONAL
+        // 2. VENTANA DE IMPRESIÓN
         const win = window.open('', '_blank');
         win.document.write(`
             <html>
@@ -352,22 +351,40 @@
                 <title>ORDEN DE IMPRESIÓN | CENTRAL SANTUA</title>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
-                    body { font-family: 'Archivo Black', sans-serif; margin: 0; padding: 0; background: #fff; }
                     
-                    /* Contenedor Auto: 300mm x 100mm */
+                    body { 
+                        font-family: 'Archivo Black', sans-serif; 
+                        margin: 0; padding: 0; background: #fff; 
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+
+                    /* El contenedor de la hoja */
                     .hoja-auto { 
                         width: 300mm; height: 100mm; 
-                        display: flex; background: #000; 
+                        display: flex; background: #fff; 
                         margin: 10mm auto; position: relative;
                         page-break-inside: avoid;
-                        border: 2px solid #FFD700;
+                        border: 4px solid #ff0000; /* BORDE ROJO */
                     }
-                    
-                    .guia-corte {
-                        position: absolute; left: 50%; top: 0;
-                        width: 0; height: 100%;
-                        border-left: 3px dashed #FFD700;
-                        z-index: 10;
+
+                    .sticker-moto { 
+                        width: 170mm; height: 170mm; 
+                        margin: 10mm auto; background: #fff;
+                        display: flex; flex-direction: column; align-items: center;
+                        justify-content: space-around;
+                        page-break-inside: avoid;
+                        border: 8px solid #ff0000; /* BORDE ROJO */
+                    }
+
+                    /* FRANJAS NEGRAS TÁCTICAS */
+                    .black-bar {
+                        background: #000 !important;
+                        color: #fff !important;
+                        width: 100%;
+                        text-align: center;
+                        padding: 8px 0;
+                        text-transform: uppercase;
                     }
 
                     .sticker-auto { 
@@ -376,33 +393,43 @@
                         padding: 10px; box-sizing: border-box;
                     }
 
-                    /* Contenedor Moto: 170mm x 170mm */
-                    .sticker-moto { 
-                        width: 170mm; height: 170mm; 
-                        margin: 10mm auto; background: #000;
-                        display: flex; flex-direction: column; align-items: center;
-                        justify-content: space-around;
-                        page-break-inside: avoid;
-                        border: 5px solid #FFD700;
+                    .qr-box { 
+                        background: #fff; 
+                        padding: 10px; 
+                        border: 2px solid #000;
+                        border-radius: 4px;
                     }
 
-                    .qr-box { background: #fff; padding: 15px; border-radius: 8px; }
-                    .id-text { color: #FFD700; font-size: 2rem; letter-spacing: 4px; border: 2px solid #FFD700; padding: 5px 20px; }
-                    .header-txt { color: #fff; font-size: 1.1rem; text-transform: uppercase; }
-                    .footer-txt { color: #fff; font-size: 0.7rem; opacity: 0.8; }
+                    .id-text { 
+                        color: #000; 
+                        font-size: 2.2rem; 
+                        letter-spacing: 5px; 
+                        border: 3px solid #ff0000; 
+                        padding: 5px 25px;
+                        background: #fff;
+                    }
+
+                    .header-txt { font-size: 1.4rem; letter-spacing: 1px; }
+                    .footer-txt { font-size: 0.9rem; margin-top: 5px; font-weight: bold; }
+
+                    .guia-corte {
+                        position: absolute; left: 50%; top: 0;
+                        width: 0; height: 100%;
+                        border-left: 3px dashed #ff0000;
+                        z-index: 10;
+                    }
 
                     @media print {
                         body { background: #fff; }
-                        .hoja-auto, .sticker-moto { margin: 0; }
+                        .hoja-auto, .sticker-moto { margin: 0; page-break-after: always; }
                     }
                 </style>
             </head>
             <body>
         `);
 
-        // 3. GENERACIÓN DE CADA PIEZA
+        // 3. GENERACIÓN DE PIEZAS (Doble para auto)
         listaIDs.forEach(idUnico => {
-            // Importante: Cambiamos a la URL de activación
             const url = `https://centralsantua.com.ar/activar?id=${idUnico}`;
             const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
@@ -411,26 +438,26 @@
                     <div class="hoja-auto">
                         <div class="guia-corte"></div>
                         <div class="sticker-auto">
-                            <div class="header-txt">🛡️ VEHÍCULO PROTEGIDO</div>
-                            <div class="qr-box"><img src="${qrImg}" width="160"></div>
+                            <div class="black-bar header-txt">📍 OBJETO PROTEGIDO 📍</div>
+                            <div class="qr-box"><img src="${qrImg}" width="165"></div>
                             <div class="id-text">${idUnico}</div>
-                            <div class="footer-txt">WWW.CENTRALSANTUA.COM.AR</div>
+                            <div class="black-bar footer-txt">ESCANEAME PARA CONTACTAR AL DUEÑO<br>CENTRALSANTUA.COM.AR</div>
                         </div>
                         <div class="sticker-auto">
-                            <div class="header-txt">🛡️ VEHÍCULO PROTEGIDO</div>
-                            <div class="qr-box"><img src="${qrImg}" width="160"></div>
+                            <div class="black-bar header-txt">📍 OBJETO PROTEGIDO 📍</div>
+                            <div class="qr-box"><img src="${qrImg}" width="165"></div>
                             <div class="id-text">${idUnico}</div>
-                            <div class="footer-txt">WWW.CENTRALSANTUA.COM.AR</div>
+                            <div class="black-bar footer-txt">ESCANEAME PARA CONTACTAR AL DUEÑO<br>CENTRALSANTUA.COM.AR</div>
                         </div>
                     </div>
                 `);
             } else {
                 win.document.write(`
                     <div class="sticker-moto">
-                        <div class="header-txt" style="font-size:1.8rem;">🛡️ MOTO PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="320"></div>
-                        <div class="id-text" style="font-size:3rem;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size:1rem;">WWW.CENTRALSANTUA.COM.AR</div>
+                        <div class="black-bar header-txt" style="font-size:2rem; padding:15px 0;">📍 MOTO PROTEGIDA 📍</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-text" style="font-size:3.5rem;">${idUnico}</div>
+                        <div class="black-bar footer-txt" style="font-size:1.2rem; padding:15px 0;">ESCANEAME PARA CONTACTAR AL DUEÑO<br>CENTRALSANTUA.COM.AR</div>
                     </div>
                 `);
             }
@@ -439,11 +466,9 @@
         win.document.write('</body></html>');
         win.document.close();
         
-        // Restaurar botón
         btn.disabled = false;
         btn.innerHTML = originalText;
 
-        // Actualizar contador visual
         const statGen = document.getElementById('s-gen');
         if (statGen) statGen.innerText = parseInt(statGen.innerText) + listaIDs.length;
 
