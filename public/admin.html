@@ -362,22 +362,23 @@
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 15mm;
+                        gap: 10mm;
                     }
 
-                    /* CONTENEDOR UNIFICADO (Invisible, solo agrupa) */
+                    /* CONTENEDOR UNIFICADO - Espacio reducido entre gemelos */
                     .sticker-auto-full {
                         width: 300mm;
                         height: 100mm;
                         display: flex;
-                        justify-content: space-between; /* Crea la franja blanca en el medio */
+                        justify-content: center; /* Centrados para controlar el gap */
+                        gap: 4mm; /* ESPACIO DE CORTE FINO */
                         background: transparent;
                         position: relative;
                     }
 
                     /* CADA STICKER CON SUS 4 PAREDES PROPIAS */
                     .mitad-sticker {
-                        width: 145mm; /* 145 + 145 = 290mm. Quedan 10mm de aire en el centro */
+                        width: 148mm; 
                         height: 100mm;
                         background: #dcdcdc;
                         display: flex;
@@ -386,15 +387,14 @@
                         justify-content: space-around;
                         padding: 15px;
                         position: relative;
-                        border: 6px solid #ff0000; /* Pared 1 (Exterior Roja) */
+                        border: 6px solid #ff0000; /* Pared 1 (Exterior) */
                     }
 
-                    /* Pared 2 (Amarilla) y Pared 3 (Interior Roja) */
                     .mitad-sticker::before {
                         content: "";
                         position: absolute;
                         top: 0; left: 0; right: 0; bottom: 0;
-                        border: 4px solid #ffff00;
+                        border: 4px solid #ffff00; /* Pared 2 (Amarilla) */
                         pointer-events: none;
                     }
 
@@ -402,11 +402,10 @@
                         content: "";
                         position: absolute;
                         top: 4px; left: 4px; right: 4px; bottom: 4px;
-                        border: 4px solid #ff0000;
+                        border: 4px solid #ff0000; /* Pared 3 (Interior) */
                         pointer-events: none;
                     }
 
-                    /* STICKER MOTO */
                     .sticker-moto-full {
                         width: 170mm;
                         height: 170mm;
