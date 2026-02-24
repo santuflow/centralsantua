@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios');
 const app = express();
 
 app.use(cors());
@@ -317,24 +318,24 @@ app.get('/api/stats', (req, res) => {
 });
 
 
-// PAGO DE ACTIVACION QR
+// REEMPLAZA TU RUTA /crear-preferencia POR ESTA:
 app.post("/crear-preferencia", async (req, res) => {
     try {
-        const { id_qr } = req.body; // Recibimos el ID que el usuario quiere activar
-        
+        const { id_qr } = req.body; 
         const preference = new Preference(client);
+        
         const result = await preference.create({
             body: {
                 items: [{
-                    title: `Activación Sticker ID: ${id_qr}`,
+                    title: `Activación Central Santua ID: ${id_qr}`,
                     quantity: 1,
-                    unit_price: 2.00, // Precio de prueba
+                    unit_price: 2500.00, // El precio que definiste
                     currency_id: "ARS"
                 }],
-                // Guardamos el ID en la referencia externa para rastrearlo
-                external_reference: id_qr, 
+                external_reference: id_qr, // OBLIGATORIO PARA EL WEBHOOK
+                // IMPORTANTE: notification_url debe ser tu dominio real (en Render o VPS)
+                notification_url: `https://${req.get('host')}/api/webhook-pagos`, 
                 back_urls: {
-                    // Render detectará automáticamente tu dominio
                     success: `https://${req.get('host')}/perfil.html?activacion=exitosa&id=${id_qr}`,
                     failure: `https://${req.get('host')}/presentacion_pago.html?error=pago_fallido`,
                     pending: `https://${req.get('host')}/perfil.html`
@@ -371,35 +372,26 @@ app.get("/api/validar-qr/:id", (req, res) => {
 
 
 
+// REEMPLAZA TU RUTA /api/sticker/configurar POR ESTA:
 app.post('/api/sticker/configurar', (req, res) => {
     const { id, alias, telefono, mensaje, tipo } = req.body;
     const nroID = id.toUpperCase().trim();
 
-    const index = baseDeDatosSimulada.findIndex(s => s.id_qr === nroID);
+    const sticker = baseDeDatosSimulada.find(s => s.id_qr === nroID);
 
-    if (index !== -1) {
-        // Actualizamos los datos y lo marcamos como ACTIVADO
-        baseDeDatosSimulada[index] = {
-            ...baseDeDatosSimulada[index],
-            alias,
-            telefono,
-            mensaje,
-            tipo,
-            activado: true // <--- Esto es lo que hace que deje de pedir pago
-        };
-        console.log(`✅ Sticker ${nroID} configurado y activado por el dueño.`);
+    // BLINDAJE: Solo dejamos configurar si el sistema ya lo activó por pago
+    if (sticker && sticker.activado === true) {
+        sticker.alias = alias;
+        sticker.telefono = telefono;
+        sticker.mensaje = mensaje;
+        sticker.tipo = tipo;
+        
+        console.log(`✅ Datos guardados para ${nroID}`);
         res.json({ success: true });
     } else {
-        // Si por alguna razón el ID no existía en el lote, lo creamos y activamos
-        baseDeDatosSimulada.push({
-            id_qr: nroID,
-            alias,
-            telefono,
-            mensaje,
-            tipo,
-            activado: true
-        });
-        res.json({ success: true });
+        // Si no está activado, el frontend no puede "forzar" la activación
+        console.log(`❌ Intento de configuración sin pago: ${nroID}`);
+        res.status(403).json({ success: false, message: "El sticker no ha sido pagado todavía." });
     }
 });
 
@@ -416,6 +408,42 @@ app.get('/api/sticker/consultar/:id', (req, res) => {
     } else {
         res.status(404).json({ error: "No activado o no existe" });
     }
+});
+
+// --- NUEVO: WEBHOOK DE ACTIVACIÓN BLINDADA ---
+app.post('/api/webhook-pagos', async (req, res) => {
+    const { query } = req;
+    
+    // Si Mercado Pago nos avisa de un pago
+    if (query.type === "payment") {
+        const paymentId = query['data.id'];
+        
+        try {
+            // 1. Verificamos el pago directamente con Mercado Pago usando tu Token
+            const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+                headers: { 'Authorization': `Bearer APP_USR-7751639628824719-021612-dbddd90a31825e1b6fa2cb41fa93b3e4-2118365527` }
+            });
+
+            const data = response.data;
+
+            // 2. Si el pago está aprobado de verdad...
+            if (data.status === "approved") {
+                const idQR = data.external_reference; // El ID que guardamos al crear la preferencia
+                
+                // 3. Buscamos el sticker en nuestra base de datos y lo ACTIVAMOS
+                const index = baseDeDatosSimulada.findIndex(s => s.id_qr === idQR);
+                if (index !== -1) {
+                    baseDeDatosSimulada[index].activado = true;
+                    baseDeDatosSimulada[index].pago_confirmado = true; // Marca de seguridad extra
+                    console.log(`⭐⭐⭐ SEGURIDAD: Sticker ${idQR} ACTIVADO POR PAGO REAL`);
+                }
+            }
+        } catch (error) {
+            console.error("Error validando pago:", error.message);
+        }
+    }
+    // Siempre respondemos 200 a MP
+    res.sendStatus(200);
 });
 
 const PORT = process.env.PORT || 3000;
