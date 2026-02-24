@@ -314,7 +314,10 @@ function toggleMenu() {
 }
 
 function cerrarSesion() {
-    localStorage.clear();
+    // Borra TODO lo que haya en la memoria del navegador de una sola vez
+    localStorage.clear(); 
+    
+    // Redirige al inicio
     window.location.href = 'index.html';
 }
 

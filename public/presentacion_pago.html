@@ -200,49 +200,63 @@
     </main>
 
     <script>
-        // Obtener el ID del QR que está guardado en el navegador
-        const stickerID = localStorage.getItem("qr_escaneado_pendiente");
-        
-        if (!stickerID) {
-            // Si por algún error no hay ID, volvemos atrás
-            window.location.href = "index.html";
-        } else {
-            document.getElementById("id-sticker").innerText = stickerID;
-        }
+    // 1. PRIORIDAD ABSOLUTA: Leer el ID desde la URL (lo que el QR acaba de mandar)
+    const urlParams = new URLSearchParams(window.location.search);
+    let stickerID = urlParams.get('id');
 
-        async function procesarPago() {
-            const btn = document.getElementById('btn-texto');
-            const originalContent = btn.innerHTML;
+    // 2. Si no viene en la URL, intentamos recuperarlo de la memoria (fallback)
+    if (!stickerID) {
+        stickerID = localStorage.getItem("qr_escaneado_pendiente");
+    }
 
-            // Feedback visual de carga
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-            btn.style.opacity = '0.7';
-            btn.style.pointerEvents = 'none';
+    // 3. Si lo encontramos (por URL o Memoria), lo normalizamos y guardamos para asegurar consistencia
+    if (stickerID) {
+        stickerID = stickerID.toUpperCase().trim();
+        document.getElementById("id-sticker").innerText = stickerID;
+        // Actualizamos la memoria con el ID más reciente
+        localStorage.setItem("qr_escaneado_pendiente", stickerID);
+    } else {
+        // Si después de todo no hay ID, volvemos al inicio
+        alert("No se detectó un identificador de objeto válido.");
+        window.location.href = "index.html";
+    }
 
-            try {
-                // IMPORTANTE: Asegurate que tu servidor responda en esta ruta
-                const response = await fetch('/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_qr: stickerID })
-                });
+    async function procesarPago() {
+        const btn = document.getElementById('btn-texto');
+        const originalContent = btn.innerHTML;
 
-                const data = await response.json();
+        // Feedback visual
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+        btn.style.opacity = '0.7';
+        btn.style.pointerEvents = 'none';
 
-                if (data.id) {
-                    // Redirección directa a Mercado Pago
-                    window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
-                } else {
-                    throw new Error("Error en la respuesta");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Error de conexión. Por favor, intente nuevamente.");
-                btn.innerHTML = originalContent;
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'all';
+        try {
+            // Usamos el stickerID que validamos al inicio (el más fresco)
+            const response = await fetch('/crear-preferencia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_qr: stickerID })
+            });
+
+            const data = await response.json();
+
+            if (data.id) {
+                // ANTES de ir a Mercado Pago, limpiamos la memoria vieja
+                // para que el próximo escaneo empiece de cero
+                localStorage.removeItem("qr_escaneado_pendiente");
+                
+                window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+            } else {
+                throw new Error("Error en la respuesta");
             }
+        } catch (error) {
+            console.error(error);
+            alert("Error al conectar con la plataforma de pagos.");
+            btn.innerHTML = originalContent;
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'all';
         }
-    </script>
+    }
+</script>
 </body>
 </html>
