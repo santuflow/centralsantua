@@ -329,16 +329,16 @@ app.post("/crear-preferencia", async (req, res) => {
                 items: [{
                     title: `Activación Central Santua ID: ${id_qr}`,
                     quantity: 1,
-                    unit_price: 2.00, // El precio que definiste
+                    unit_price: 2.00, 
                     currency_id: "ARS"
                 }],
-                external_reference: id_qr, // OBLIGATORIO PARA EL WEBHOOK
-                // IMPORTANTE: notification_url debe ser tu dominio real (en Render o VPS)
-                notification_url: `https://${req.get('host')}/api/webhook-pagos`, 
+                external_reference: id_qr, 
+                notification_url: `https://centralsantua.com.ar/api/webhook-pagos`, 
                 back_urls: {
-                    success: `https://${req.get('host')}/perfil.html?activacion=exitosa&id=${id_qr}`,
-                    failure: `https://${req.get('host')}/presentacion_pago.html?error=pago_fallido`,
-                    pending: `https://${req.get('host')}/perfil.html`
+                    // AGREGAMOS EL ID A LAS URLS DE RETORNO
+                    success: `https://centralsantua.com.ar/perfil.html?activacion=exitosa&id=${id_qr}`,
+                    failure: `https://centralsantua.com.ar/presentacion_pago.html?error=pago_fallido&id=${id_qr}`,
+                    pending: `https://centralsantua.com.ar/perfil.html?id=${id_qr}`
                 },
                 auto_return: "approved",
             }
@@ -444,6 +444,26 @@ app.post('/api/webhook-pagos', async (req, res) => {
     }
     // Siempre respondemos 200 a MP
     res.sendStatus(200);
+});
+
+// RUTA DE REFUERZO: Activa el sticker si el usuario vuelve con éxito en la URL
+app.get('/api/verificar-y-activar/:id', (req, res) => {
+    const id = req.params.id.toUpperCase().trim();
+    let sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
+
+    // Si por algún reinicio no existe en memoria, lo creamos
+    if (!sticker) {
+        sticker = { id_qr: id, activado: true, pago_confirmado: true };
+        baseDeDatosSimulada.push(sticker);
+        console.log(`📡 Sticker creado y activado por retorno directo: ${id}`);
+        return res.json({ success: true, status: "activado" });
+    }
+
+    // Si existe, lo activamos
+    sticker.activado = true;
+    sticker.pago_confirmado = true;
+    console.log(`🚀 Sticker activado por refuerzo: ${id}`);
+    res.json({ success: true, status: "activado" });
 });
 
 const PORT = process.env.PORT || 3000;

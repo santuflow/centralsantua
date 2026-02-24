@@ -203,49 +203,50 @@ let idEditando = null;
 document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const idNuevo = params.get('id');
-    const status = params.get('status') || params.get('collection_status');
+    // Aceptamos 'approved' o nuestro nuevo marcador 'exitosa'
+    const status = params.get('status') || params.get('collection_status') || params.get('activacion');
 
     // 1. LEER SIEMPRE LA LISTA ACTUALIZADA DEL STORAGE
     let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
 
-    // Verificamos si venimos de un pago aprobado
-    if (idNuevo && status === 'approved') {
+    // --- REFUERZO PARA CELULAR: ACTIVACIÓN FORZADA ---
+    if (idNuevo && (status === 'approved' || status === 'exitosa')) {
         
-        // REGLA DE ORO: Verificar si el ID ya existe para no duplicar ni pisar
-        const yaExiste = misStickers.some(s => s.id === idNuevo);
+        showToast("Verificando activación...");
 
-        if (!yaExiste) {
-            const stickerNuevo = {
-                id: idNuevo,
-                alias: "Nuevo Objeto",
-                tipo: "directo",
-                telefono: "",
-                mensaje: "Si encontraste esto, por favor contáctame."
-            };
+        try {
+            // Llamamos a la nueva ruta de refuerzo que creamos en server.js
+            const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`);
+            const verifyData = await verifyRes.json();
 
-            // Notificar al servidor inmediatamente
-            try {
-                await fetch('/api/sticker/configurar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(stickerNuevo)
-                });
-                console.log("Servidor: Sticker activado.");
-            } catch (e) {
-                console.error("Error activando en servidor:", e);
+            if (verifyData.success) {
+                // Si el servidor confirmó (o forzó) la activación, lo agregamos al local
+                const yaExiste = misStickers.some(s => s.id === idNuevo);
+                
+                if (!yaExiste) {
+                    const stickerNuevo = {
+                        id: idNuevo,
+                        alias: "Nuevo Objeto",
+                        tipo: "directo",
+                        telefono: "",
+                        mensaje: "Si encontraste esto, por favor contáctame."
+                    };
+                    
+                    misStickers.push(stickerNuevo);
+                    localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
+                    showToast("¡Etiqueta activada y vinculada!");
+                }
             }
-
-            // ACUMULAR: Traemos lo que hay, sumamos el nuevo y guardamos
-            misStickers.push(stickerNuevo);
-            localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
-            showToast("¡Nueva etiqueta activada con éxito!");
+        } catch (e) {
+            console.error("Error en el refuerzo de activación:", e);
+            showToast("Error de conexión, reintentando...");
         }
         
-        // Limpiar la URL para que el refresco de pantalla no intente registrar de nuevo
+        // Limpiar la URL para evitar re-registros al refrescar
         window.history.replaceState({}, document.title, "perfil.html");
     }
     
-    // Dibujar la lista pasándole los datos frescos
+    // Dibujar la lista con los stickers que tenemos
     renderLista(misStickers);
 });
 
