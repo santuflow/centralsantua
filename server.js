@@ -329,7 +329,7 @@ app.post("/crear-preferencia", async (req, res) => {
                 items: [{
                     title: `Activación Central Santua ID: ${id_qr}`,
                     quantity: 1,
-                    unit_price: 2500.00, // El precio que definiste
+                    unit_price: 2.00, // El precio que definiste
                     currency_id: "ARS"
                 }],
                 external_reference: id_qr, // OBLIGATORIO PARA EL WEBHOOK
