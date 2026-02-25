@@ -7,6 +7,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+         
+         /* --- NUEVOS ESTILOS PARA MEJORAR EL PANEL --- */
+
+/* Contenedor de Switch */
+.switch-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 18px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+}
+
+.switch-info { display: flex; flex-direction: column; gap: 4px; }
+.switch-info label { margin-bottom: 0 !important; }
+.switch-info p { font-size: 0.75rem; color: var(--text-dim); }
+
+/* El Switch (Checkbox visual) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background-color: #333; transition: .4s; border-radius: 34px;
+}
+.slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* Layout de dos columnas para el modal */
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-content { max-width: 95% !important; padding: 25px !important; }
+}
+       
+
         :root {
             --accent: #00f2fe;
             --accent-dark: #4facfe;
@@ -166,19 +217,22 @@
 
 <div class="modal" id="modal-gestion">
     <div class="modal-content">
-        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 30px; font-size: 1.4rem;">Configurar</h3>
+        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 25px; font-size: 1.4rem;">Configurar Objeto</h3>
 
         <div class="field">
             <label>Identificador del Objeto</label>
             <input type="text" id="edit-alias" placeholder="Ej: Mi Mochila, Casco Moto...">
         </div>
 
-        <div class="field">
-            <label>Método de Contacto</label>
-            <select id="edit-tipo-contacto" onchange="toggleContacto()">
-                <option value="directo">WhatsApp Directo</option>
-                <option value="intermediario">Central Santua (Privado)</option>
-            </select>
+        <div class="switch-container">
+            <div>
+                <label style="display:block; margin:0; font-size:0.85rem;">WhatsApp Directo</label>
+                <span id="label-modo" style="font-size:0.7rem; color:var(--accent);">Activado: El hallador te verá</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="edit-tipo-switch" onchange="toggleContacto()">
+                <span class="slider"></span>
+            </label>
         </div>
 
         <div class="field" id="wrapper-tel">
@@ -191,8 +245,20 @@
             <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, serás gratificado.">
         </div>
 
-        <button class="btn-save" id="btn-save-main" onclick="guardarCambiosGestion()">GUARDAR Y SINCRONIZAR</button>
-        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:25px; cursor:pointer; font-size: 0.85rem; font-weight: 700;">CANCELAR</button>
+        <div class="legal-box" id="legal-aviso">
+            Central Santua actúa únicamente como intermediario tecnológico. Al activar el contacto directo, usted asume la responsabilidad total sobre la visibilidad de su número telefónico frente a terceros.
+        </div>
+
+        <label class="terms-check">
+            <input type="checkbox" id="check-terminos" onchange="validarBotonGuardar()">
+            <span>Acepto los términos de servicio y la política de deslinde de responsabilidad.</span>
+        </label>
+
+        <button class="btn-save" id="btn-save-main" onclick="guardarCambiosGestion()" disabled style="opacity: 0.5; cursor: not-allowed;">
+            GUARDAR Y SINCRONIZAR
+        </button>
+        
+        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:20px; cursor:pointer; font-size: 0.85rem; font-weight: 700;">CANCELAR</button>
     </div>
 </div>
 
