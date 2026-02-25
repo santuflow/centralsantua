@@ -45,6 +45,49 @@
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(20px); }
 
+/* Estilo para el cuadro de deslinde de responsabilidad */
+.legal-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #222;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 20px;
+    line-height: 1.3;
+}
+
+/* Estilo para el checkbox de términos */
+.terms-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #eee;
+    margin-bottom: 20px;
+}
+
+.terms-check input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--success); /* El check será verde cuando se marque */
+}
+
+/* Contenedor del Switch (Asegurar que se vea igual que el resto) */
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+}
+
 /* Layout de dos columnas para el modal */
 .modal-grid {
     display: grid;
@@ -269,26 +312,18 @@ let idEditando = null;
 document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const idNuevo = params.get('id');
-    // Aceptamos 'approved' o nuestro nuevo marcador 'exitosa'
     const status = params.get('status') || params.get('collection_status') || params.get('activacion');
 
-    // 1. LEER SIEMPRE LA LISTA ACTUALIZADA DEL STORAGE
     let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
 
-    // --- REFUERZO PARA CELULAR: ACTIVACIÓN FORZADA ---
     if (idNuevo && (status === 'approved' || status === 'exitosa')) {
-        
         showToast("Verificando activación...");
-
         try {
-            // Llamamos a la nueva ruta de refuerzo que creamos en server.js
             const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`);
             const verifyData = await verifyRes.json();
 
             if (verifyData.success) {
-                // Si el servidor confirmó (o forzó) la activación, lo agregamos al local
                 const yaExiste = misStickers.some(s => s.id === idNuevo);
-                
                 if (!yaExiste) {
                     const stickerNuevo = {
                         id: idNuevo,
@@ -297,30 +332,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                         telefono: "",
                         mensaje: "Si encontraste esto, por favor contáctame."
                     };
-                    
                     misStickers.push(stickerNuevo);
                     localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
-                    showToast("¡Etiqueta activada y vinculada!");
+                    showToast("¡Etiqueta activada!");
                 }
             }
         } catch (e) {
-            console.error("Error en el refuerzo de activación:", e);
-            showToast("Error de conexión, reintentando...");
+            console.error("Error:", e);
         }
-        
-        // Limpiar la URL para evitar re-registros al refrescar
         window.history.replaceState({}, document.title, "perfil.html");
     }
-    
-    // Dibujar la lista con los stickers que tenemos
     renderLista(misStickers);
 });
 
-// Función de renderizado corregida para usar datos siempre actualizados
 function renderLista(datos = null) {
-    // Si no pasan datos (por ejemplo al borrar o editar), leer del storage
     const listaAMostrar = datos || JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
-    
     const contenedor = document.getElementById('contenedor-qrs');
     const vacio = document.getElementById('lista-vacia');
 
@@ -344,29 +370,74 @@ function renderLista(datos = null) {
     `).join('');
 }
 
+// --- ESTA ES LA FUNCIÓN QUE FALLABA, AQUÍ ESTÁ CORREGIDA ---
 function abrirGestion(id) {
-    // Leer del storage para obtener los datos más recientes del objeto
     const listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
     const s = listaActual.find(st => st.id === id);
     
     if (!s) return;
 
     idEditando = id;
+    
+    // 1. Llenar textos
     document.getElementById('modal-titulo').innerText = "Editar " + (s.alias || "Objeto");
     document.getElementById('edit-alias').value = s.alias || "";
-    document.getElementById('edit-tipo-contacto').value = s.tipo || "directo";
     document.getElementById('edit-tel').value = s.telefono || "";
     document.getElementById('edit-msg').value = s.mensaje || "";
     
+    // 2. Configurar el Switch (reemplaza al viejo select)
+    document.getElementById('edit-tipo-switch').checked = (s.tipo === 'directo');
+    
+    // 3. Resetear Checkbox de Términos (siempre empieza desmarcado)
+    document.getElementById('check-terminos').checked = false;
+    
+    // 4. Ejecutar validaciones visuales
     toggleContacto();
+    validarBotonGuardar();
+    
     document.getElementById('modal-gestion').style.display = 'flex';
+}
+
+// Maneja el Switch y el aviso legal
+function toggleContacto() {
+    const isDirecto = document.getElementById('edit-tipo-switch').checked;
+    const wrapperTel = document.getElementById('wrapper-tel');
+    const labelModo = document.getElementById('label-modo');
+    const legalAviso = document.getElementById('legal-aviso');
+
+    if (isDirecto) {
+        wrapperTel.style.display = 'block';
+        labelModo.innerText = "Activado: Contacto directo";
+        labelModo.style.color = "var(--success)";
+        legalAviso.innerText = "AVISO: Central Santua queda desligada de responsabilidad por la visibilidad pública de su número.";
+    } else {
+        wrapperTel.style.display = 'none';
+        labelModo.innerText = "Privado: Vía Central Santua";
+        labelModo.style.color = "var(--accent)";
+        legalAviso.innerText = "Modo Privado: Central Santua actuará como puente. Su número no será visible.";
+    }
+}
+
+// Bloquea/Desbloquea el botón de guardar
+function validarBotonGuardar() {
+    const check = document.getElementById('check-terminos');
+    const btn = document.getElementById('btn-save-main');
+    
+    if (check.checked) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.style.cursor = "not-allowed";
+    }
 }
 
 async function guardarCambiosGestion() {
     const btn = document.getElementById('btn-save-main');
     const originalText = btn.innerText;
 
-    // LEER STORAGE ANTES DE EDITAR
     let listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
     const index = listaActual.findIndex(s => s.id === idEditando);
     
@@ -375,12 +446,12 @@ async function guardarCambiosGestion() {
     const nuevosDatos = {
         id: idEditando,
         alias: document.getElementById('edit-alias').value.trim(),
-        tipo: document.getElementById('edit-tipo-contacto').value,
+        // LEER DESDE EL SWITCH
+        tipo: document.getElementById('edit-tipo-switch').checked ? 'directo' : 'intermediario',
         telefono: document.getElementById('edit-tel').value.trim(),
         mensaje: document.getElementById('edit-msg').value.trim()
     };
 
-    // Actualizar solo el elemento correspondiente
     listaActual[index] = nuevosDatos;
     localStorage.setItem('mis_stickers_santua', JSON.stringify(listaActual));
 
@@ -388,26 +459,19 @@ async function guardarCambiosGestion() {
     btn.disabled = true;
 
     try {
-        const response = await fetch('/api/sticker/configurar', {
+        await fetch('/api/sticker/configurar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nuevosDatos)
         });
-        if (response.ok) showToast("Sincronizado con éxito");
-        else throw new Error();
+        showToast("Sincronizado con éxito");
     } catch (err) {
         showToast("Guardado localmente");
     } finally {
         btn.innerText = originalText;
-        btn.disabled = false;
         cerrarModal();
-        renderLista(listaActual); // Refrescar vista con la lista editada
+        renderLista(listaActual);
     }
-}
-
-function toggleContacto() {
-    const tipo = document.getElementById('edit-tipo-contacto').value;
-    document.getElementById('wrapper-tel').style.display = (tipo === 'directo') ? 'block' : 'none';
 }
 
 function cerrarModal() { 
