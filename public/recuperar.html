@@ -147,8 +147,10 @@
             <h1>¡Gracias por tu gesto!</h1>
             <p class="sub-hero">Estás a un paso de devolver la tranquilidad al propietario de este objeto.</p>
             
-            <div id="mensaje-container">
-                <p id="mensaje-dueno" class="loading-dots">Verificando estado del objeto</p>
+            <h2 id="alias-objeto" style="font-size: 1.2rem; color: var(--accent); margin-bottom: 15px; font-weight: 800; text-transform: uppercase; display:none; letter-spacing: 1px;"></h2>
+
+            <div id="mensaje-container" style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 24px; margin-bottom: 35px; border: 1px solid rgba(255,255,255,0.03); position: relative;">
+                <p id="mensaje-dueno" class="loading-dots" style="color: #eee; font-size: 1.05rem; font-style: italic; line-height: 1.6;">Verificando estado del objeto</p>
             </div>
             
             <a id="whatsapp-link" href="#" class="btn-action" style="display: none;">
@@ -175,54 +177,69 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
-        const linkBtn = document.getElementById('whatsapp-link');
-        const cajaMensaje = document.getElementById('mensaje-dueno');
-        
-        if (!id) {
-            cajaMensaje.innerText = "Error: No se ha detectado un código válido.";
-            return;
-        }
-
-        document.getElementById('display-id').textContent = `CÓDIGO: ${id.toUpperCase()}`;
-
-        // LLAMADA REAL AL SERVIDOR EN RENDER
-        fetch(`/api/sticker/consultar/${id}`)
-            .then(res => {
-                if (!res.ok) throw new Error("No configurado");
-                return res.json();
-            })
-            .then(datos => {
-                // EL DUEÑO CONFIGURÓ SUS DATOS
-                linkBtn.style.display = 'flex';
-                
-                if (datos.tipo === "intermediario") {
-                    setCentral(id, linkBtn, "El propietario prefiere que Central Santua gestione la devolución por seguridad.");
-                } else {
-                    const mensajeFinal = datos.mensaje || "Muchas gracias por encontrar mi objeto. Por favor, contáctame para coordinar la devolución.";
-                    cajaMensaje.innerText = mensajeFinal;
-                    
-                    const textoWA = encodeURIComponent(`¡Hola! Encontré tu objeto (ID: ${id}). Me contacto para coordinar la entrega.`);
-                    linkBtn.href = `https://wa.me/${datos.telefono}?text=${textoWA}`;
-                }
-            })
-            .catch(err => {
-                // CASO: EL DUEÑO NO CONFIGURÓ O STICKER NUEVO
-                linkBtn.style.display = 'flex';
-                setCentral(id, linkBtn, "Este objeto está protegido por Central Santua. El propietario aún no ha configurado sus datos directos.");
-            });
-    });
-
-    function setCentral(id, btn, msg) {
-        const telCentral = "5491138680830"; 
-        const textoCentral = encodeURIComponent(`Hola Central Santua, encontré un objeto con ID: ${id}. El dueño no configuró contacto directo.`);
-        
-        document.getElementById('mensaje-dueno').innerText = msg;
-        btn.href = `https://wa.me/${telCentral}?text=${textoCentral}`;
-        btn.innerHTML = `<i class="fas fa-headset"></i> AVISAR A CENTRAL SANTUA`;
-        btn.classList.add('btn-central');
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const linkBtn = document.getElementById('whatsapp-link');
+    const cajaMensaje = document.getElementById('mensaje-dueno');
+    
+    if (!id) {
+        cajaMensaje.innerText = "Error: No se ha detectado un código válido.";
+        return;
     }
+
+    document.getElementById('display-id').textContent = `CÓDIGO: ${id.toUpperCase()}`;
+
+    fetch(`/api/sticker/consultar/${id}`)
+        .then(res => {
+            if (!res.ok) throw new Error("No configurado");
+            return res.json();
+        })
+        .then(datos => {
+            // EL DUEÑO CONFIGURÓ EL STICKER
+            linkBtn.style.display = 'flex';
+            
+            // --- AGREGA ESTO AQUÍ ---
+            if (datos.alias) {
+                const elAlias = document.getElementById('alias-objeto');
+                elAlias.innerText = datos.alias;
+                elAlias.style.display = 'block';
+            }
+            // ------------------------
+
+            // Caso 1: PRIVADO (Intermediario)
+            if (datos.tipo === "intermediario") {
+                const msgPrivado = "El propietario ha elegido el modo de 'Entrega Segura' a través de nuestra central. Por favor, infórmanos del hallazgo.";
+                setCentral(id, linkBtn, msgPrivado);
+            } 
+            // Caso 2: PÚBLICO (Directo)
+            else {
+                const mensajeFinal = datos.mensaje || "Muchas gracias por encontrar mi objeto. Por favor, contáctame para coordinar la devolución.";
+                cajaMensaje.innerText = mensajeFinal;
+                
+                const textoWA = encodeURIComponent(`¡Hola! Encontré tu objeto "${datos.alias || 'protegido'}" (ID: ${id}). Me contacto para coordinar la entrega.`);
+                linkBtn.href = `https://wa.me/${datos.telefono}?text=${textoWA}`;
+                linkBtn.innerHTML = `<i class="fab fa-whatsapp"></i> CONTACTAR PROPIETARIO`;
+                // Removemos clase central por si acaso
+                linkBtn.classList.remove('btn-central');
+            }
+        })
+        .catch(err => {
+            // Caso 3: NO ACTIVADO O ERROR
+            linkBtn.style.display = 'flex';
+            const msgError = "Este objeto está protegido pero el propietario aún no ha personalizado su mensaje. Central Santua gestionará el aviso.";
+            setCentral(id, linkBtn, msgError);
+        });
+});
+
+function setCentral(id, btn, msg) {
+    const telCentral = "5491138680830"; 
+    const textoCentral = encodeURIComponent(`Hola Central Santua, encontré un objeto con ID: ${id}. Deseo coordinar la devolución.`);
+    
+    document.getElementById('mensaje-dueno').innerText = msg;
+    btn.href = `https://wa.me/${telCentral}?text=${textoCentral}`;
+    btn.innerHTML = `<i class="fas fa-shield-alt"></i> NOTIFICAR A CENTRAL SANTUA`;
+    btn.classList.add('btn-central');
+}
 </script>
 
 </body>

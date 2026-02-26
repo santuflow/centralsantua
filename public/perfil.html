@@ -401,20 +401,20 @@ function abrirGestion(id) {
 // Maneja el Switch y el aviso legal
 function toggleContacto() {
     const isDirecto = document.getElementById('edit-tipo-switch').checked;
-    const wrapperTel = document.getElementById('wrapper-tel');
     const labelModo = document.getElementById('label-modo');
     const legalAviso = document.getElementById('legal-aviso');
+    const inputTelLabel = document.querySelector('#wrapper-tel label');
 
     if (isDirecto) {
-        wrapperTel.style.display = 'block';
-        labelModo.innerText = "Activado: Contacto directo";
+        labelModo.innerText = "PÚBLICO: El hallador verá tu WhatsApp";
         labelModo.style.color = "var(--success)";
-        legalAviso.innerText = "AVISO: Central Santua queda desligada de responsabilidad por la visibilidad pública de su número.";
+        inputTelLabel.innerHTML = 'WhatsApp Público <i class="fab fa-whatsapp"></i>';
+        legalAviso.innerText = "AVISO: Tu número será visible para cualquier persona que escanee el QR para facilitarte el contacto rápido.";
     } else {
-        wrapperTel.style.display = 'none';
-        labelModo.innerText = "Privado: Vía Central Santua";
+        labelModo.innerText = "PRIVADO: Vía Central Santua";
         labelModo.style.color = "var(--accent)";
-        legalAviso.innerText = "Modo Privado: Central Santua actuará como puente. Su número no será visible.";
+        inputTelLabel.innerHTML = 'WhatsApp de Contacto (Privado)';
+        legalAviso.innerText = "MODO SEGURO: Tu número NO será visible al público. Central Santua lo usará internamente para avisarte si alguien encuentra tu objeto.";
     }
 }
 
@@ -437,6 +437,11 @@ function validarBotonGuardar() {
 async function guardarCambiosGestion() {
     const btn = document.getElementById('btn-save-main');
     const originalText = btn.innerText;
+    const telValue = document.getElementById('edit-tel').value.trim();
+if (!telValue) {
+    showToast("⚠️ El teléfono es obligatorio");
+    return;
+}
 
     let listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
     const index = listaActual.findIndex(s => s.id === idEditando);
@@ -480,7 +485,8 @@ function cerrarModal() {
 
 function showToast(msg) {
     const t = document.getElementById('toast');
-    t.innerText = "✅ " + msg;
+    const icono = msg.includes("⚠️") ? "" : "✅ ";
+    t.innerText = icono + msg;
     t.style.display = 'block';
     setTimeout(() => t.style.display = 'none', 3000);
 }
