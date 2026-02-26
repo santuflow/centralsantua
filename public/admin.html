@@ -118,13 +118,19 @@
     </div>
 
     <div class="cmd-bar">
-        <button class="btn-cmd active" id="btn-h" onclick="setView('h')">Hallazgos</button>
-        <button class="btn-cmd" id="btn-b" onclick="setView('b')">Búsquedas</button>
-        <button class="btn-cmd" id="btn-m" onclick="setView('m')" style="border-color:var(--success)">Matches</button>
-        <div style="flex-grow: 1;"></div>
-        <button class="btn-cmd" onclick="exportDB()"><i class="fas fa-file-export"></i></button>
-        <button class="btn-cmd" onclick="toggleProtocol()"><i class="fas fa-info-circle"></i></button>
-    </div>
+    <button class="btn-cmd active" id="btn-h" onclick="setView('h')">Hallazgos</button>
+    <button class="btn-cmd" id="btn-b" onclick="setView('b')">Búsquedas</button>
+    <button class="btn-cmd" id="btn-m" onclick="setView('m')" style="border-color:var(--success)">Matches</button>
+    
+    <button class="btn-cmd" id="btn-s" onclick="setView('s')" style="border-color:var(--primary)">
+        <i class="fas fa-qrcode"></i> STICKERS
+    </button>
+
+    <div style="flex-grow: 1;"></div>
+    
+    <button class="btn-cmd" onclick="exportDB()"><i class="fas fa-file-export"></i></button>
+    <button class="btn-cmd" onclick="toggleProtocol()"><i class="fas fa-info-circle"></i></button>
+</div>
 
     <div class="stats-grid">
         <div class="stat-box">
@@ -192,6 +198,7 @@
 </div>
 
 <script>
+
     let db = { hallazgos: [], busquedas: [] };
     let currentView = 'h';
 
@@ -232,11 +239,15 @@
     }
 
     function setView(v) {
-        currentView = v;
-        document.querySelectorAll('.btn-cmd').forEach(b => b.classList.remove('active'));
+    currentView = v;
+    // Esto quita la luz azul de todos los botones
+    document.querySelectorAll('.btn-cmd').forEach(b => b.classList.remove('active'));
+    // Esto enciende el botón que tocaste
+    if(document.getElementById('btn-'+v)) {
         document.getElementById('btn-'+v).classList.add('active');
-        render();
     }
+    render(); // Y esto dibuja la lista
+}
 
     async function borrar(tipo, nro) {
     // Si es un match, usamos la ruta especial que limpia Hallazgos y Búsquedas
@@ -260,46 +271,55 @@
 }
 
     function render() {
-        const cont = document.getElementById('cont');
-        if (!cont) return;
-        const query = document.getElementById('bus').value.toUpperCase();
-        cont.innerHTML = "";
+    const cont = document.getElementById('cont');
+    if (!cont) return;
+    const query = document.getElementById('bus').value.toUpperCase();
+    cont.innerHTML = "";
 
-        if(currentView === 'm') {
-            db.hallazgos.forEach(h => {
-                const b = db.busquedas.find(x => x.nro === h.nro);
-                if(b && h.nro.includes(query)) {
+    // ESTO ES LO ÚNICO QUE AGREGAMOS:
+    // Si la vista es Stickers ('s'), mostramos un cartel y frenamos ahí.
+    if (currentView === 's') {
+        cont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:#888;">
+            <i class="fas fa-qrcode fa-2x"></i><br>MODO STICKERS ACTIVO</div>`;
+        return; 
+    }
+
+    // DE ACÁ PARA ABAJO ES TU CÓDIGO ORIGINAL SIN TOCAR UNA SOLA COMA:
+    if(currentView === 'm') {
+        db.hallazgos.forEach(h => {
+            const b = db.busquedas.find(x => x.nro === h.nro);
+            if(b && h.nro.includes(query)) {
+                cont.innerHTML += `
+                <div class="card match">
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="nro-id">${h.nro}</span>
+                        <span style="color:var(--success); font-size:0.7rem; font-weight:bold;">MATCH</span>
+                    </div>
+                    <p style="font-size:0.75rem; color:#888">Poseedor: ${h.contacto} | Reclama: ${b.contacto}</p>
+                    <a href="https://wa.me/${h.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
+                    <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
+                </div>`;
+            }
+        });
+    } else {
+        const list = currentView === 'h' ? db.hallazgos : db.busquedas;
+        if (list) {
+            list.forEach(item => {
+                if(item.nro.includes(query) || item.contacto.includes(query)) {
                     cont.innerHTML += `
-                    <div class="card match">
+                    <div class="card">
                         <div style="display:flex; justify-content:space-between">
-                            <span class="nro-id">${h.nro}</span>
-                            <span style="color:var(--success); font-size:0.7rem; font-weight:bold;">MATCH</span>
+                            <span class="nro-id">${item.nro}</span>
+                            <i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i>
                         </div>
-                        <p style="font-size:0.75rem; color:#888">Poseedor: ${h.contacto} | Reclama: ${b.contacto}</p>
-                        <a href="https://wa.me/${h.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
-                        <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
+                        <p style="font-size:0.75rem; color:#888">Contacto: ${item.contacto}<br>Cat: ${item.categoria || 'S/D'}</p>
+                        <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">CONTACTAR</a>
                     </div>`;
                 }
             });
-        } else {
-            const list = currentView === 'h' ? db.hallazgos : db.busquedas;
-            if (list) {
-                list.forEach(item => {
-                    if(item.nro.includes(query) || item.contacto.includes(query)) {
-                        cont.innerHTML += `
-                        <div class="card">
-                            <div style="display:flex; justify-content:space-between">
-                                <span class="nro-id">${item.nro}</span>
-                                <i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i>
-                            </div>
-                            <p style="font-size:0.75rem; color:#888">Contacto: ${item.contacto}<br>Cat: ${item.categoria || 'S/D'}</p>
-                            <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">CONTACTAR</a>
-                        </div>`;
-                    }
-                });
-            }
         }
     }
+}
 
     function toggleProtocol() {
         const m = document.getElementById('protocol-modal');
