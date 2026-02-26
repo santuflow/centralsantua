@@ -157,7 +157,12 @@ app.post('/api/buscar', (req, res) => {
 // 3. RUTA ADMIN (DATOS Y STATS)
 // =========================================
 app.get('/api/admin/data', (req, res) => {
-    res.json({ hallazgos, busquedas });
+    // Enviamos TODO al admin para que pueda gestionar
+    res.json({ 
+        hallazgos, 
+        busquedas, 
+        stickers: baseDeDatosSimulada // <--- Agregamos esto
+    });
 });
 
 // Ruta para las métricas de arriba del panel
