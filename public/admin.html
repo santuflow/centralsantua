@@ -224,7 +224,7 @@ document.getElementById('s-act').innerText = stats.activados;
 
         // Carga de tráfico (independiente)
         try {
-            const resStats = await fetch('/api/admin/stats');
+            resStats = await fetch('/api/admin/stats');
             if (resStats.ok) {
                 const s = await resStats.json();
                 document.getElementById('s-online').innerText = s.online || 0;
@@ -282,80 +282,82 @@ document.getElementById('s-act').innerText = stats.activados;
     cont.innerHTML = "";
 
     // ==========================================
-    // 1. NUEVA ZONA PROFESIONAL DE STICKERS
+    // 1. ZONA DE STICKERS (POR LOTES)
     // ==========================================
     if (currentView === 's') {
         const stickers = db.stickers || [];
         const activados = stickers.filter(s => s.activado);
         
+        // Agrupamos por lote
+        const lotesMap = {};
+        stickers.forEach(s => {
+            const loteNombre = s.lote_id || "Sin Lote";
+            if (!lotesMap[loteNombre]) lotesMap[loteNombre] = [];
+            lotesMap[loteNombre].push(s);
+        });
+
         cont.innerHTML = `
-            <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 25px; width: 100%;">
-                
-                <div>
-                    <h3 style="color:var(--primary); margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-user-check"></i> Stickers Activados (${activados.length})
-                    </h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
-                        ${activados.length === 0 ? '<p style="color:#888; grid-column:1/-1;">No hay stickers activados todavía.</p>' : 
-                        activados.reverse().map(s => `
-                            <div class="card" style="border-left: 5px solid var(--success); margin:0;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span class="nro-id">${s.id_qr}</span>
-                                    <span style="color:var(--success); font-weight:bold; font-size:0.6rem;">PAGO CONFIRMADO</span>
-                                </div>
-                                <div style="margin:10px 0; font-size:0.8rem; color:#555;">
-                                    <p><strong>👤 Usuario:</strong> ${s.alias || 'Pendiente'}</p>
-                                    <p><strong>📞 Tel:</strong> ${s.telefono || 'Sin datos'}</p>
-                                    <p><strong>📧 Tipo:</strong> ${s.tipo || 'S/D'}</p>
-                                </div>
-                                <div style="display:flex; gap:5px;">
-                                    <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa" style="flex:1; text-align:center; padding:5px; font-size:0.6rem;">WHATSAPP</a>
-                                </div>
+        <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 25px; width: 100%;">
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-user-check"></i> Stickers Activados (${activados.length})
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    ${activados.length === 0 ? '<p style="color:#888; grid-column:1/-1;">No hay stickers activados.</p>' : 
+                    activados.reverse().map(s => `
+                        <div class="card" style="border-left: 5px solid var(--success); margin:0; background: var(--card);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="nro-id">${s.id_qr}</span>
+                                <span style="color:var(--success); font-weight:bold; font-size:0.6rem;">PAGO CONFIRMADO</span>
                             </div>
-                        `).join('')}
-                    </div>
+                            <div style="margin:10px 0; font-size:0.8rem; color:#aaa;">
+                                <p><strong>👤 Usuario:</strong> ${s.alias || 'Pendiente'}</p>
+                                <p><strong>📞 Tel:</strong> ${s.telefono || 'Sin datos'}</p>
+                            </div>
+                            <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa" style="padding:5px; font-size:0.6rem;">WHATSAPP</a>
+                        </div>
+                    `).join('')}
                 </div>
+            </div>
 
-                <hr style="border:0; border-top:1px solid #eee;">
+            <hr style="border:0; border-top:1px solid var(--border); margin: 10px 0;">
 
-                <div>
-                    <h3 style="color:#666; margin-bottom:15px; font-size:1rem;"><i class="fas fa-layer-group"></i> Historial de Lotes / Stock</h3>
-                    <div style="background:white; border-radius:8px; border:1px solid #ddd; overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-                            <thead style="background:#f8f9fa;">
-                                <tr>
-                                    <th style="padding:10px; text-align:left;">ID QR</th>
-                                    <th style="padding:10px; text-align:left;">TIPO</th>
-                                    <th style="padding:10px; text-align:left;">ESTADO</th>
-                                    <th style="padding:10px; text-align:center;">QR</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${stickers.filter(s => s.id_qr.includes(query)).map(s => `
-                                    <tr style="border-top:1px solid #eee;">
-                                        <td style="padding:10px;"><strong>${s.id_qr}</strong></td>
-                                        <td style="padding:10px;">${s.tipo || 'S/D'}</td>
-                                        <td style="padding:10px;">
-                                            ${s.activado ? '<span style="color:var(--success)">✅ Activo</span>' : '<span style="color:#999">⬜ Stock</span>'}
-                                        </td>
-                                        <td style="padding:10px; text-align:center;">
-                                            <i class="fas fa-qrcode" style="cursor:pointer; color:var(--primary)" 
-                                               onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/validar-qr/${s.id_qr}')"></i>
-                                        </td>
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:20px; font-size:1.2rem;"><i class="fas fa-boxes"></i> Gestión por Lotes</h3>
+                ${Object.keys(lotesMap).sort().reverse().map(loteId => `
+                    <div style="margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-tag"></i> LOTE: ${loteId}</h4>
+                        <div style="background:var(--card); border-radius:4px; overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                                <thead style="background:rgba(79, 172, 254, 0.1);">
+                                    <tr>
+                                        <th style="padding:10px; text-align:left;">ID QR</th>
+                                        <th style="padding:10px; text-align:left;">ESTADO</th>
+                                        <th style="padding:10px; text-align:center;">QR</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${lotesMap[loteId].filter(s => s.id_qr.includes(query)).map(s => `
+                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:10px;"><strong style="color:var(--primary)">${s.id_qr}</strong></td>
+                                            <td style="padding:10px;">${s.activado ? '<span style="color:var(--success)">Activo</span>' : '<span style="color:#555">Stock</span>'}</td>
+                                            <td style="padding:10px; text-align:center;">
+                                                <i class="fas fa-qrcode" style="cursor:pointer; color:var(--primary)" onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            </div>`;
-        return; 
-    }
-
+                `).join('')}
+            </div>
+        </div>`;
+    } 
     // ==========================================
-    // 2. TU CÓDIGO ORIGINAL (SIN TOCAR NADA)
+    // 2. VISTA DE MATCHES
     // ==========================================
-    if(currentView === 'm') {
+    else if (currentView === 'm') {
         db.hallazgos.forEach(h => {
             const b = db.busquedas.find(x => x.nro === h.nro);
             if(b && h.nro.includes(query)) {
@@ -371,7 +373,11 @@ document.getElementById('s-act').innerText = stats.activados;
                 </div>`;
             }
         });
-    } else {
+    } 
+    // ==========================================
+    // 3. VISTA DE HALLAZGOS / BUSQUEDAS
+    // ==========================================
+    else {
         const list = currentView === 'h' ? db.hallazgos : db.busquedas;
         if (list) {
             list.forEach(item => {
@@ -390,7 +396,6 @@ document.getElementById('s-act').innerText = stats.activados;
         }
     }
 }
-
     function toggleProtocol() {
         const m = document.getElementById('protocol-modal');
         m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
