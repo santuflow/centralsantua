@@ -283,33 +283,31 @@ app.post('/api/generar-lote-seguro', (req, res) => {
     try {
         const { cantidad, tipo } = req.body;
         const nuevosIDs = [];
-        const crypto = require('crypto'); // Para máxima seguridad
+        const crypto = require('crypto');
+
+        // Creamos un ID de lote único para esta tanda
+        const ahora = new Date();
+        const loteId = `LOTE-${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}`;
 
         for (let i = 0; i < cantidad; i++) {
-            // Generamos 4 bytes aleatorios (ej: 4f2a9b1c)
             const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
-            
-            // Formato Santua: CS-XXXX-XXXX (Inhackeable)
             const idPro = `CS-${randomHex.slice(0, 4)}-${randomHex.slice(4, 8)}`;
             
             nuevosIDs.push(idPro);
             
-            // Guardado en tu base de datos
+            // AGREGAMOS EL lote_id AQUÍ
             baseDeDatosSimulada.push({
                 id_qr: idPro,
                 tipo: tipo,
                 activado: false,
-                fecha_creacion: new Date(),
+                lote_id: loteId, // <--- Importante para el frontend
+                fecha_creacion: ahora,
                 seguridad: "Nivel Criptográfico"
             });
         }
-
-        // Devolvemos los IDs al frontend para que los imprima
-        res.json({ ids: nuevosIDs });
-
-    } catch (error) {
-        console.error("Error en generación:", error);
-        res.status(500).json({ error: "Error al generar lote seguro" });
+        res.json({ ids: nuevosIDs, lote: loteId });
+    } catch (e) {
+        res.status(500).send("Error");
     }
 });
 

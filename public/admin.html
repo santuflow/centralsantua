@@ -201,6 +201,7 @@
 
     let db = { hallazgos: [], busquedas: [] };
     let currentView = 'h';
+    let limitePorLote = {};
 
     setInterval(() => {
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('es-AR');
@@ -282,7 +283,7 @@ document.getElementById('s-act').innerText = stats.activados;
     cont.innerHTML = "";
 
     // ==========================================
-    // 1. ZONA DE STICKERS (POR LOTES)
+    // 1. ZONA DE STICKERS (POR LOTES CON PAGINACIÓN)
     // ==========================================
     if (currentView === 's') {
         const stickers = db.stickers || [];
@@ -324,9 +325,18 @@ document.getElementById('s-act').innerText = stats.activados;
 
             <div>
                 <h3 style="color:var(--primary); margin-bottom:20px; font-size:1.2rem;"><i class="fas fa-boxes"></i> Gestión por Lotes</h3>
-                ${Object.keys(lotesMap).sort().reverse().map(loteId => `
+                ${Object.keys(lotesMap).sort().reverse().map(loteId => {
+                    // --- LÓGICA DE PAGINACIÓN ---
+                    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+                    
+                    const todosLosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
+                    const visibles = todosLosDelLote.slice(0, limitePorLote[loteId]);
+                    const hayMas = todosLosDelLote.length > limitePorLote[loteId];
+                    // ----------------------------
+
+                    return `
                     <div style="margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-tag"></i> LOTE: ${loteId}</h4>
+                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-tag"></i> LOTE: ${loteId} (${todosLosDelLote.length} unidades)</h4>
                         <div style="background:var(--card); border-radius:4px; overflow-x:auto;">
                             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                                 <thead style="background:rgba(79, 172, 254, 0.1);">
@@ -337,7 +347,7 @@ document.getElementById('s-act').innerText = stats.activados;
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${lotesMap[loteId].filter(s => s.id_qr.includes(query)).map(s => `
+                                    ${visibles.map(s => `
                                         <tr style="border-top:1px solid rgba(255,255,255,0.05);">
                                             <td style="padding:10px;"><strong style="color:var(--primary)">${s.id_qr}</strong></td>
                                             <td style="padding:10px;">${s.activado ? '<span style="color:var(--success)">Activo</span>' : '<span style="color:#555">Stock</span>'}</td>
@@ -349,8 +359,13 @@ document.getElementById('s-act').innerText = stats.activados;
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                `).join('')}
+                        ${hayMas ? `
+                            <button onclick="verMas('${loteId}')" style="width:100%; margin-top:10px; padding:10px; background:transparent; border:1px dashed var(--primary); color:var(--primary); cursor:pointer; font-weight:bold; text-transform:uppercase; font-size:0.7rem;">
+                                <i class="fas fa-plus-circle"></i> Mostrar más (+${todosLosDelLote.length - limitePorLote[loteId]} restantes)
+                            </button>
+                        ` : ''}
+                    </div>`;
+                }).join('')}
             </div>
         </div>`;
     } 
@@ -395,6 +410,13 @@ document.getElementById('s-act').innerText = stats.activados;
             });
         }
     }
+}
+
+// ESTA FUNCIÓN DEBE IR DEBAJO DE RENDER
+function verMas(loteId) {
+    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+    limitePorLote[loteId] += 50; 
+    render(); 
 }
     function toggleProtocol() {
         const m = document.getElementById('protocol-modal');
@@ -626,6 +648,13 @@ document.getElementById('s-act').innerText = stats.activados;
     } catch (error) {
         alert("ERROR: " + error.message);
     }
+}
+
+function verMas(loteId) {
+    // Si no existe, lo inicializamos en 20, si existe sumamos 50
+    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+    limitePorLote[loteId] += 50; 
+    render(); // Volvemos a dibujar para que muestre los nuevos
 }
 
 </script>
