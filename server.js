@@ -9,6 +9,17 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 
+// --- BASES DE DATOS EN MEMORIA ---
+let usuariosDB = [];
+let hallazgos = []; 
+let busquedas = []; 
+let baseDeDatosSimulada = [];
+
+// --- ESTADÍSTICAS REALES (Sustituye a tus variables anteriores) ---
+let visitasTotales = 0;
+let usuariosActivos = new Map(); 
+const historialAntiSpam = new Map(); // NUEVO: Para límite de 2 registros/10min
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -28,14 +39,19 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL
 }, (accessToken, refreshToken, profile, done) => {
-    const email = profile.emails[0].value.toLowerCase();
+    // Verificación de seguridad por si Google no manda el mail
+    const email = (profile.emails && profile.emails[0]) ? profile.emails[0].value.toLowerCase() : null;
+    
+    if (!email) return done(new Error("No se pudo obtener el email de Google"));
+
     let usuario = usuariosDB.find(u => u.email === email);
     
     if (!usuario) {
         usuario = {
             username: profile.displayName,
             email: email,
-            foto: profile.photos[0].value
+            foto: (profile.photos && profile.photos[0]) ? profile.photos[0].value : null,
+            google_id: profile.id // Guardamos el ID por seguridad
         };
         usuariosDB.push(usuario);
     }
@@ -44,17 +60,6 @@ passport.use(new GoogleStrategy({
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
-
-// --- BASES DE DATOS EN MEMORIA ---
-let hallazgos = []; 
-let busquedas = []; 
-let usuariosDB = [];
-let baseDeDatosSimulada = [];
-
-// --- ESTADÍSTICAS REALES (Sustituye a tus variables anteriores) ---
-let visitasTotales = 0;
-let usuariosActivos = new Map(); 
-const historialAntiSpam = new Map(); // NUEVO: Para límite de 2 registros/10min
 
 /**
  * NORMALIZAR: Limpia puntos, espacios, guiones y pasa a Mayúsculas
