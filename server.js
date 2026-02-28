@@ -465,6 +465,7 @@ app.get('/api/sticker/consultar/:id', (req, res) => {
     }
 });
 
+// nada
 // --- NUEVO: WEBHOOK DE ACTIVACIÓN BLINDADA ---
 app.post('/api/webhook-pagos', async (req, res) => {
     const { query } = req;
