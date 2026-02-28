@@ -192,6 +192,51 @@
             .mobile-branding { display: block; }
             .auth-card { background: transparent; border: none; padding: 10px; box-shadow: none; }
         }
+
+        .btn-google {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            color: #3c4043;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-google:hover {
+            background: #f1f3f4;
+            transform: translateY(-1px);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider:not(:empty)::before { margin-right: 15px; }
+        .divider:not(:empty)::after { margin-left: 15px; }
     </style>
 </head>
 <body>
@@ -220,6 +265,13 @@
             <div class="auth-card">
                 <h3>Bienvenido</h3>
                 <p class="subtitle">Ingresá tus datos para continuar.</p>
+
+                <a href="/auth/google" class="btn-google">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
+                    Continuar con Google
+                </a>
+
+                <div class="divider">o ingresá con mail</div>
 
                 <form id="login-form">
                     <div class="input-box">
@@ -282,6 +334,27 @@
             alert("No se pudo conectar con el servidor.");
         }
     });
+
+    // --- NUEVO: Detectar si el usuario viene de un login exitoso con Google ---
+async function verificarSesionGoogle() {
+    try {
+        const res = await fetch('/api/usuario_actual');
+        const data = await res.json();
+        
+        if (data.logueado) {
+            // Si el servidor dice que estamos logueados, sincronizamos el localStorage
+            localStorage.setItem('usuarioNombre', data.user.username);
+            localStorage.setItem('estaLogueado', 'true');
+            // Y lo mandamos al index
+            window.location.href = 'index.html';
+        }
+    } catch (e) {
+        console.log("No hay sesión activa de Google todavía");
+    }
+}
+
+// Ejecutar al cargar la página por si vuelve de Google
+verificarSesionGoogle();
     </script>
 
 </body>

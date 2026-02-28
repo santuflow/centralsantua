@@ -1,12 +1,49 @@
+require('dotenv').config(); 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const axios = require('axios');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'santua_secreto_777', 
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configuración de Passport para Google
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.CALLBACK_URL
+}, (accessToken, refreshToken, profile, done) => {
+    const email = profile.emails[0].value.toLowerCase();
+    let usuario = usuariosDB.find(u => u.email === email);
+    
+    if (!usuario) {
+        usuario = {
+            username: profile.displayName,
+            email: email,
+            foto: profile.photos[0].value
+        };
+        usuariosDB.push(usuario);
+    }
+    return done(null, usuario);
+}));
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
 
 // --- BASES DE DATOS EN MEMORIA ---
 let hallazgos = []; 
@@ -42,6 +79,21 @@ app.use((req, res, next) => {
     usuariosActivos.set(ip, ahora);
     next();
 });
+
+// --- FUNCIÓN DE SEGURIDAD PARA ADMIN ---
+function asegurarAdmin(req, res, next) {
+    // 1. ¿Está logueado con Google?
+    // 2. ¿Su mail es el tuyo?
+    const miEmailAdmin = "rodrigosantua2@gmail.com"; 
+
+    if (req.isAuthenticated() && req.user.email === miEmailAdmin) {
+        return next(); // Sos vos, pasá tranquilo
+    }
+    
+    // Si no sos vos, lo mandamos al login con un mensaje de error
+    console.log(`⚠️ INTENTO DE INTRUSIÓN de: ${req.user ? req.user.email : 'Anónimo'}`);
+    res.status(403).send("<h1>Acceso Denegado</h1><p>No tenés permisos para estar acá.</p><a href='/login.html'>Volver</a>");
+}
 
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
@@ -467,6 +519,41 @@ app.get('/api/verificar-y-activar/:id', (req, res) => {
     sticker.pago_confirmado = true;
     console.log(`🚀 Sticker activado por refuerzo: ${id}`);
     res.json({ success: true, status: "activado" });
+});
+
+// RUTA PROTEGIDA: Solo deja leer el archivo si sos el admin
+app.get('/admin.html', asegurarAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// --- RUTAS DE AUTENTICACIÓN GOOGLE ---
+
+// 1. Dispara la ventana de Google
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// 2. Recibe al usuario de vuelta
+app.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login.html' }),
+    (req, res) => {
+        // Al loguearse con éxito, lo mandamos al panel
+        res.redirect('/index.html'); 
+    }
+);
+
+// 3. Ruta para que el frontend sepa quién está conectado
+app.get('/api/usuario_actual', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.json({ logueado: true, user: req.user });
+    } else {
+        res.json({ logueado: false });
+    }
+});
+
+// 4. Cerrar sesión
+app.get('/api/logout', (req, res) => {
+    req.logout(() => {
+        res.redirect('/');
+    });
 });
 
 const PORT = process.env.PORT || 3000;
