@@ -37,25 +37,34 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.CALLBACK_URL
+    callbackURL: process.env.CALLBACK_URL,
+    proxy: true // <--- AGREGÁ ESTA LÍNEA (Es vital para Render)
 }, (accessToken, refreshToken, profile, done) => {
-    // Verificación de seguridad por si Google no manda el mail
-    const email = (profile.emails && profile.emails[0]) ? profile.emails[0].value.toLowerCase() : null;
-    
-    if (!email) return done(new Error("No se pudo obtener el email de Google"));
+    try {
+        // Extraemos el email con cuidado
+        const email = (profile.emails && profile.emails.length > 0) 
+            ? profile.emails[0].value.toLowerCase() 
+            : null;
 
-    let usuario = usuariosDB.find(u => u.email === email);
-    
-    if (!usuario) {
-        usuario = {
-            username: profile.displayName,
-            email: email,
-            foto: (profile.photos && profile.photos[0]) ? profile.photos[0].value : null,
-            google_id: profile.id // Guardamos el ID por seguridad
-        };
-        usuariosDB.push(usuario);
+        if (!email) return done(new Error("No se obtuvo email de Google"));
+
+        // Buscamos en tu lista
+        let usuario = usuariosDB.find(u => u.email === email);
+        
+        if (!usuario) {
+            usuario = {
+                username: profile.displayName || "Usuario Nuevo",
+                email: email,
+                foto: (profile.photos && profile.photos[0]) ? profile.photos[0].value : null,
+                google_id: profile.id 
+            };
+            usuariosDB.push(usuario);
+        }
+        
+        return done(null, usuario);
+    } catch (err) {
+        return done(err, null);
     }
-    return done(null, usuario);
 }));
 
 passport.serializeUser((user, done) => done(null, user));
