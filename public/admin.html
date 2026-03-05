@@ -410,24 +410,43 @@
         }
 
         filtrados.reverse().forEach(item => {
+            // Buscamos el teléfono en todas las variantes posibles que puede enviar el servidor
+            const nroTelefono = item.contacto || item.telefono || item.tel || 'S/D';
+            
+            // Limpiamos el número para el link de WhatsApp (solo números)
+            const waLink = nroTelefono !== 'S/D' ? nroTelefono.replace(/\D/g, '') : '';
+
             const isMatch = (db.hallazgos && db.busquedas) && 
                             db.hallazgos.some(h => h.nro === item.nro) && 
                             db.busquedas.some(b => b.nro === item.nro);
             
             cont.innerHTML += `
                 <div class="card ${isMatch ? 'match' : ''}">
-                    <span class="nro-id">ID: ${item.nro}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <span class="nro-id">ID: ${item.nro}</span>
+                        ${isMatch ? '<span style="background:var(--success); color:#000; font-size:0.6rem; padding:2px 5px; border-radius:3px; font-weight:bold;">MATCH</span>' : ''}
+                    </div>
                     <p style="font-size:0.8rem; color:#888; margin:5px 0;">Fecha: ${item.fecha || '---'}</p>
-                    <p style="margin:10px 0;"><b>📞 TEL:</b> ${item.tel || 'S/D'}</p>
-                    <a href="https://wa.me/${item.tel}" target="_blank" class="btn-action btn-wa">
-                        <i class="fab fa-whatsapp"></i> CONTACTAR
+                    
+                    <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; margin:10px 0; border:1px solid rgba(255,255,255,0.05);">
+                        <p style="margin:0; color:#aaa; font-size:0.7rem; text-transform:uppercase;">Contacto Directo:</p>
+                        <p style="margin:5px 0 0 0; font-size:1.1rem; color:var(--success); font-weight:bold;">
+                            <i class="fas fa-phone-alt" style="font-size:0.8rem; opacity:0.7;"></i> ${nroTelefono}
+                        </p>
+                    </div>
+
+                    <a href="https://wa.me/${waLink}" target="_blank" class="btn-action btn-wa" ${nroTelefono === 'S/D' ? 'style="pointer-events:none; opacity:0.5;"' : ''}>
+                        <i class="fab fa-whatsapp"></i> CONTACTAR POR WHATSAPP
                     </a>
+                    
                     <button onclick="borrar('${currentView}', '${item.nro}')" class="btn-action" style="background:#221111; color:#ff3333; border:1px solid #442222; margin-top:8px;">
-                        <i class="fas fa-trash-alt"></i> ELIMINAR
+                        <i class="fas fa-trash-alt"></i> ELIMINAR REGISTRO
                     </button>
                 </div>`;
-        });
+          });
+
     }
+
 }
 
 // ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓN
