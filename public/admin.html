@@ -447,10 +447,12 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- GENERAMOS UN ID DE LOTE ÚNICO POR MILISEGUNDOS ---
-    const timestamp = new Date().getTime(); 
-    const nuevoLoteId = `LOTE-${timestamp}`; 
-    // -----------------------------------------------------
+    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
+    // Esto genera algo como "5/3 00:45:12"
+    const ahora = new Date();
+    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
+    const nuevoLoteId = `LOTE-${tiempoExacto}`; 
+    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
@@ -462,7 +464,6 @@ function filtrarStickers() {
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // ENVIAMOS EL LOTE_ID PARA QUE NO SE MEZCLEN
             body: JSON.stringify({ 
                 cantidad: cant, 
                 tipo: tipo, 
@@ -475,17 +476,15 @@ function filtrarStickers() {
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        // Abrir ventana nueva y escribir el contenido
         const win = window.open('', '_blank');
         const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
         
         win.document.write(contenidoHTML);
         win.document.close();
         
-        // Refrescar la lista de lotes
         if (typeof render === "function") {
-            // Un pequeño delay para que el servidor termine de guardar antes de re-renderizar
-            setTimeout(loadData, 500); 
+            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
+            setTimeout(loadData, 1000); 
         }
 
     } catch (error) {
