@@ -200,6 +200,8 @@
     </div>
 </div>
 
+    <div id="lista-lotes-acordeon" style="margin-bottom: 25px;"></div>
+
     <div class="search-container">
         <i class="fas fa-search"></i>
         <input type="text" id="bus" placeholder="Filtrar registros..." onkeyup="render()">
@@ -300,28 +302,26 @@ document.getElementById('s-act').innerText = stats.activados;
 }
 
     function render() {
-    const cont = document.getElementById('cont');
-    if (!cont) return;
+    const cont = document.getElementById('cont');
+    const listaLotesDiv = document.getElementById('lista-lotes-acordeon'); // El div de arriba
+    if (!cont) return;
 
-    // ESTO ES LO NUEVO: Elige el buscador correcto
-    let query = "";
-    if (currentView === 's') {
-        query = document.getElementById('buscador-id') ? document.getElementById('buscador-id').value.toUpperCase() : "";
-    } else {
-        query = document.getElementById('bus') ? document.getElementById('bus').value.toUpperCase() : "";
-    }
-    
-    cont.innerHTML = "";
-    // ... (el resto del código de render sigue igual)
-
+    let query = "";
+    if (currentView === 's') {
+        query = document.getElementById('buscador-id') ? document.getElementById('buscador-id').value.toUpperCase() : "";
+        cont.innerHTML = ""; // Limpiamos la grilla de abajo en vista stickers
+    } else {
+        query = document.getElementById('bus') ? document.getElementById('bus').value.toUpperCase() : "";
+        if(listaLotesDiv) listaLotesDiv.innerHTML = ""; // Limpiamos lotes si estamos en hallazgos
+    }
+    
     // ==========================================
-    // 1. ZONA DE STICKERS (POR LOTES CON PAGINACIÓN)
+    // 1. ZONA DE STICKERS (ACORDEÓN POR LOTES)
     // ==========================================
     if (currentView === 's') {
         const stickers = db.stickers || [];
-        const activados = stickers.filter(s => s.activado);
+        const activados = stickers.filter(s => s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query))));
         
-        // Agrupamos por lote
         const lotesMap = {};
         stickers.forEach(s => {
             const loteNombre = s.lote_id || "Sin Lote";
@@ -329,119 +329,83 @@ document.getElementById('s-act').innerText = stats.activados;
             lotesMap[loteNombre].push(s);
         });
 
+        // Dibujamos los ACTIVADOS primero (sueltos arriba)
         cont.innerHTML = `
-        <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 25px; width: 100%;">
-            <div>
-                <h3 style="color:var(--primary); margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                    <i class="fas fa-user-check"></i> Stickers Activados (${activados.length})
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
-                    ${activados.length === 0 ? '<p style="color:#888; grid-column:1/-1;">No hay stickers activados.</p>' : 
-                    activados.reverse().map(s => `
-                        <div class="card" style="border-left: 5px solid var(--success); margin:0; background: var(--card);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span class="nro-id">${s.id_qr}</span>
-                                <span style="color:var(--success); font-weight:bold; font-size:0.6rem;">PAGO CONFIRMADO</span>
-                            </div>
-                            <div style="margin:10px 0; font-size:0.8rem; color:#aaa;">
-                                <p><strong>👤 Usuario:</strong> ${s.alias || 'Pendiente'}</p>
-                                <p><strong>📞 Tel:</strong> ${s.telefono || 'Sin datos'}</p>
-                            </div>
-                            <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa" style="padding:5px; font-size:0.6rem;">WHATSAPP</a>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            <hr style="border:0; border-top:1px solid var(--border); margin: 10px 0;">
-
-            <div>
-                <h3 style="color:var(--primary); margin-bottom:20px; font-size:1.2rem;"><i class="fas fa-boxes"></i> Gestión por Lotes</h3>
-                ${Object.keys(lotesMap).sort().reverse().map(loteId => {
-                    // --- LÓGICA DE PAGINACIÓN ---
-                    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
-                    
-                    const todosLosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
-                    const visibles = todosLosDelLote.slice(0, limitePorLote[loteId]);
-                    const hayMas = todosLosDelLote.length > limitePorLote[loteId];
-                    // ----------------------------
-
-                    return `
-                    <div style="margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 style="color:var(--accent); margin:0; font-size:0.9rem;">
-                                <i class="fas fa-tag"></i> LOTE: ${loteId} (${todosLosDelLote.length} unidades)
-                            </h4>
-                            <button onclick="reimprimirLote('${loteId}')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; display:flex; align-items:center; gap:5px;">
-                                <i class="fas fa-print"></i> RE-IMPRIMIR LOTE
-                            </button>
-                        </div>
-
-                        <div style="background:var(--card); border-radius:4px; overflow-x:auto;">
-                            <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-                                <thead style="background:rgba(79, 172, 254, 0.1);">
-                                    <tr>
-                                        <th style="padding:10px; text-align:left;">ID QR</th>
-                                        <th style="padding:10px; text-align:left;">ESTADO</th>
-                                        <th style="padding:10px; text-align:center;">QR</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${visibles.map(s => `
-    <tr class="fila-sticker" style="border-top:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:10px;">
-            <strong style="color:var(--primary)">${s.id_qr}</strong>
-        </td>
-        <td style="padding:10px;">
-            ${s.activado ? '<span style="color:var(--success)">Activo</span>' : '<span style="color:#555">Stock</span>'}
-        </td>
-        <td style="padding:10px; text-align:center;">
-            <i class="fas fa-qrcode" style="cursor:pointer; color:var(--primary)" 
-               onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/index.html?id=${s.id_qr}')">
-            </i>
-        </td>
-    </tr>
-`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                        ${hayMas ? `
-                            <button onclick="verMas('${loteId}')" style="width:100%; margin-top:10px; padding:10px; background:transparent; border:1px dashed var(--primary); color:var(--primary); cursor:pointer; font-weight:bold; text-transform:uppercase; font-size:0.7rem;">
-                                <i class="fas fa-plus-circle"></i> Mostrar más (+${todosLosDelLote.length - limitePorLote[loteId]} restantes)
-                            </button>
-                        ` : ''}
-                    </div>`;
-                }).join('')}
-            </div>
-        </div>`;
-    } 
-    // ==========================================
-    // 2. VISTA DE MATCHES
-    // ==========================================
-    else if (currentView === 'm') {
-        db.hallazgos.forEach(h => {
-            const b = db.busquedas.find(x => x.nro === h.nro);
-            if(b && h.nro.includes(query)) {
-                cont.innerHTML += `
-                <div class="card match">
-                    <div style="display:flex; justify-content:space-between">
-                        <span class="nro-id">${h.nro}</span>
-                        <span style="color:var(--success); font-size:0.7rem; font-weight:bold;">MATCH</span>
+        <div style="grid-column: 1/-1; width: 100%;">
+            <h3 style="color:var(--success); margin-bottom:15px;"><i class="fas fa-user-check"></i> Stickers Activados</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom:30px;">
+                ${activados.length === 0 ? '<p style="color:#555;">No hay coincidencias en activados.</p>' : 
+                activados.reverse().map(s => `
+                    <div class="card" style="border-left: 5px solid var(--success); background: var(--card);">
+                        <span class="nro-id">${s.id_qr}</span>
+                        <p style="font-size:0.8rem; margin:5px 0;">👤 ${s.alias || 'S/D'} | 📞 ${s.telefono || 'S/D'}</p>
+                        <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
                     </div>
-                    <p style="font-size:0.75rem; color:#888">Poseedor: ${h.contacto} | Reclama: ${b.contacto}</p>
-                    <a href="https://wa.me/${h.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
-                    <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
-                </div>`;
-            }
-        });
+                `).join('')}
+            </div>
+            <h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-boxes"></i> Historial de Lotes (Carpetas)</h3>
+        </div>`;
+
+        // Dibujamos los LOTES como CARPETAS en el div dedicado
+        if(listaLotesDiv) {
+            listaLotesDiv.innerHTML = Object.keys(lotesMap).sort().reverse().map(loteId => {
+                if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
+                const todosLosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
+                if (todosLosDelLote.length === 0) return ''; // Si el buscador no matchea, no mostramos el lote
+
+                const visibles = todosLosDelLote.slice(0, limitePorLote[loteId]);
+                const hayMas = todosLosDelLote.length > limitePorLote[loteId];
+
+                return `
+                <details style="margin-bottom: 10px; background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px;">
+                    <summary style="padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold;">
+                        <span><i class="fas fa-folder-open" style="color:var(--accent); margin-right:10px;"></i> LOTE: ${loteId} (${todosLosDelLote.length} uds)</span>
+                        <button onclick="event.preventDefault(); reimprimirLote('${loteId}')" style="background:var(--success); color:black; border:none; padding:5px 10px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold;">
+                            <i class="fas fa-print"></i> REIMPRIMIR
+                        </button>
+                    </summary>
+                    <div style="padding: 15px; border-top: 1px solid #222;">
+                        <table style="width:100%; text-align:left; font-size:0.8rem;">
+                            <thead style="color:var(--primary)">
+                                <tr><th>ID QR</th><th>ESTADO</th><th style="text-align:center;">ACCIÓN</th></tr>
+                            </thead>
+                            <tbody>
+                                ${visibles.map(s => `
+                                    <tr style="border-bottom:1px solid #111;">
+                                        <td style="padding:8px;">${s.id_qr}</td>
+                                        <td>${s.activado ? '✅' : '📦'}</td>
+                                        <td style="text-align:center;"><i class="fas fa-qrcode" style="cursor:pointer;" onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ${hayMas ? `<button onclick="verMas('${loteId}')" style="width:100%; margin-top:10px; background:none; border:1px dashed var(--primary); color:var(--primary); cursor:pointer;">Cargar más...</button>` : ''}
+                    </div>
+                </details>`;
+            }).join('');
+        }
     } 
     // ==========================================
-    // 3. VISTA DE HALLAZGOS / BUSQUEDAS
+    // 2. VISTAS OPERATIVAS (MATCHES / HALLAZGOS)
     // ==========================================
     else {
-        const list = currentView === 'h' ? db.hallazgos : db.busquedas;
-        if (list) {
+        if(listaLotesDiv) listaLotesDiv.innerHTML = ""; 
+        cont.innerHTML = "";
+        const list = currentView === 'm' ? [] : (currentView === 'h' ? db.hallazgos : db.busquedas);
+        
+        if (currentView === 'm') {
+            db.hallazgos.forEach(h => {
+                const b = db.busquedas.find(x => x.nro === h.nro);
+                if(b && h.nro.includes(query)) {
+                    cont.innerHTML += `
+                    <div class="card match">
+                        <span class="nro-id">${h.nro}</span>
+                        <p style="font-size:0.75rem;">MATCH DETECTADO</p>
+                        <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
+                    </div>`;
+                }
+            });
+        } else if (list) {
             list.forEach(item => {
                 if(item.nro.includes(query) || item.contacto.includes(query)) {
                     cont.innerHTML += `
@@ -450,8 +414,8 @@ document.getElementById('s-act').innerText = stats.activados;
                             <span class="nro-id">${item.nro}</span>
                             <i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i>
                         </div>
-                        <p style="font-size:0.75rem; color:#888">Contacto: ${item.contacto}<br>Cat: ${item.categoria || 'S/D'}</p>
-                        <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">CONTACTAR</a>
+                        <p style="font-size:0.75rem; color:#888">Tel: ${item.contacto}</p>
+                        <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
                     </div>`;
                 }
             });
