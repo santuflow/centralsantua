@@ -338,17 +338,20 @@
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom:30px;">
                     ${activados.length === 0 ? '<p style="color:#555;">No hay activados.</p>' : 
-                    activados.reverse().map(s => `
+                    activados.reverse().map(s => {
+                        const telLimpio = (s.telefono || s.contacto || s.tel || '').replace(/\D/g, '');
+                        return `
                         <div class="card" style="border-left: 5px solid var(--success); background: #0a0a0a;">
                             <span class="nro-id">${s.id_qr}</span>
                             <p style="font-size:0.85rem; margin:10px 0; color:#eee;">
                                 <b>👤 ${s.alias || 'S/D'}</b><br>
                                 <span style="color:#888;">📞 ${s.telefono || 'S/D'}</span>
                             </p>
-                            <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa">
+                            <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-action btn-wa">
                                 <i class="fab fa-whatsapp"></i> CONTACTAR
                             </a>
-                        </div>`).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
             </div>`;
 
@@ -369,6 +372,9 @@
                         <span style="font-weight:bold;">LOTE: ${loteId}</span>
                         <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
                     </div>
+                    <button onclick="reimprimirLote('${loteId}')" style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
+                        <i class="fas fa-print"></i> REIMPRIMIR LOTE
+                    </button>
                 </summary>
                 <div style="padding: 10px;">
                     <table style="width:100%; border-collapse: collapse;">
@@ -381,7 +387,7 @@
                                 </td>
                                 <td style="padding:10px; text-align:right;">
                                     <i class="fas fa-external-link-alt" style="cursor:pointer; color:var(--primary);" 
-                                       onclick="window.open('https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
+                                        onclick="window.open('https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
                                 </td>
                             </tr>`).join('')}
                         </tbody>
@@ -410,12 +416,8 @@
         }
 
         filtrados.reverse().forEach(item => {
-            // Buscamos el teléfono en todas las variantes posibles que puede enviar el servidor
             const nroTelefono = item.contacto || item.telefono || item.tel || 'S/D';
-            
-            // Limpiamos el número para el link de WhatsApp (solo números)
             const waLink = nroTelefono !== 'S/D' ? nroTelefono.replace(/\D/g, '') : '';
-
             const isMatch = (db.hallazgos && db.busquedas) && 
                             db.hallazgos.some(h => h.nro === item.nro) && 
                             db.busquedas.some(b => b.nro === item.nro);
@@ -427,26 +429,21 @@
                         ${isMatch ? '<span style="background:var(--success); color:#000; font-size:0.6rem; padding:2px 5px; border-radius:3px; font-weight:bold;">MATCH</span>' : ''}
                     </div>
                     <p style="font-size:0.8rem; color:#888; margin:5px 0;">Fecha: ${item.fecha || '---'}</p>
-                    
                     <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; margin:10px 0; border:1px solid rgba(255,255,255,0.05);">
                         <p style="margin:0; color:#aaa; font-size:0.7rem; text-transform:uppercase;">Contacto Directo:</p>
                         <p style="margin:5px 0 0 0; font-size:1.1rem; color:var(--success); font-weight:bold;">
                             <i class="fas fa-phone-alt" style="font-size:0.8rem; opacity:0.7;"></i> ${nroTelefono}
                         </p>
                     </div>
-
                     <a href="https://wa.me/${waLink}" target="_blank" class="btn-action btn-wa" ${nroTelefono === 'S/D' ? 'style="pointer-events:none; opacity:0.5;"' : ''}>
                         <i class="fab fa-whatsapp"></i> CONTACTAR POR WHATSAPP
                     </a>
-                    
                     <button onclick="borrar('${currentView}', '${item.nro}')" class="btn-action" style="background:#221111; color:#ff3333; border:1px solid #442222; margin-top:8px;">
                         <i class="fas fa-trash-alt"></i> ELIMINAR REGISTRO
                     </button>
                 </div>`;
-          });
-
+        });
     }
-
 }
 
 // ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓN
