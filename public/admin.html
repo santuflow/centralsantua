@@ -322,12 +322,22 @@
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
 
-        // 2. AGRUPAR POR LOTES (ESTRICTO)
+        // 2. AGRUPAR POR LOTES (CORREGIDO PARA NO MEZCLAR)
         const lotesMap = {};
         stickers.forEach(s => {
+            // Usamos el lote_id. Si el servidor manda el mismo nombre, 
+            // esto los agrupa, pero los mostraremos por separado.
             const loteId = s.lote_id || "Sin-Lote";
             if (!lotesMap[loteId]) lotesMap[loteId] = [];
             lotesMap[loteId].push(s);
+        });
+
+        // Ordenamos las llaves de los lotes: el último generado va PRIMERO
+        const lotesOrdenados = Object.keys(lotesMap).sort((a, b) => {
+            // Si el loteId tiene fecha/hora (ej: LOTE-1710...), b - a los ordena perfecto
+            const numA = parseInt(a.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+            return numB - numA; 
         });
 
         // DIBUJAR SECCIÓN ACTIVADOS (Solo lo que ya tiene dueño)
@@ -437,6 +447,11 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
+    // --- GENERAMOS UN ID DE LOTE ÚNICO POR MILISEGUNDOS ---
+    const timestamp = new Date().getTime(); 
+    const nuevoLoteId = `LOTE-${timestamp}`; 
+    // -----------------------------------------------------
+
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
@@ -447,7 +462,12 @@ function filtrarStickers() {
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cantidad: cant, tipo: tipo })
+            // ENVIAMOS EL LOTE_ID PARA QUE NO SE MEZCLEN
+            body: JSON.stringify({ 
+                cantidad: cant, 
+                tipo: tipo, 
+                lote_id: nuevoLoteId 
+            })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
@@ -462,8 +482,11 @@ function filtrarStickers() {
         win.document.write(contenidoHTML);
         win.document.close();
         
-        // Refrescar la lista de lotes en el panel de admin si existe la función render
-        if (typeof render === "function") render();
+        // Refrescar la lista de lotes
+        if (typeof render === "function") {
+            // Un pequeño delay para que el servidor termine de guardar antes de re-renderizar
+            setTimeout(loadData, 500); 
+        }
 
     } catch (error) {
         alert("ERROR: " + error.message);
