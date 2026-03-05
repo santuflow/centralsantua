@@ -368,7 +368,16 @@ document.getElementById('s-act').innerText = stats.activados;
 
                     return `
                     <div style="margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-tag"></i> LOTE: ${loteId} (${todosLosDelLote.length} unidades)</h4>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="color:var(--accent); margin:0; font-size:0.9rem;">
+                                <i class="fas fa-tag"></i> LOTE: ${loteId} (${todosLosDelLote.length} unidades)
+                            </h4>
+                            <button onclick="reimprimirLote('${loteId}')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-print"></i> RE-IMPRIMIR LOTE
+                            </button>
+                        </div>
+
                         <div style="background:var(--card); border-radius:4px; overflow-x:auto;">
                             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                                 <thead style="background:rgba(79, 172, 254, 0.1);">
@@ -630,6 +639,32 @@ function generarHTMLImpresion(listaIDs, tipo) {
             </div>
         </body>
         </html>`;
+}
+
+function reimprimirLote(loteId) {
+    // 1. Buscamos los stickers que pertenecen a este lote en tu variable 'db'
+    const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
+    
+    if (stickersDelLote.length === 0) {
+        alert("No se encontraron datos para el lote: " + loteId);
+        return;
+    }
+
+    // 2. Extraemos solo los IDs para pasárselos a tu función de impresión
+    const listaIDs = stickersDelLote.map(s => s.id_qr);
+    
+    // 3. Preguntamos el formato (Auto o Moto)
+    const esAuto = confirm("¿Imprimir en formato AUTO? (Aceptar = AUTO / Cancelar = MOTO)");
+    const tipo = esAuto ? 'auto' : 'moto';
+
+    // 4. Abrimos la ventana nueva y usamos tu función 'generarHTMLImpresion' que ya tenés
+    const win = window.open('', '_blank');
+    if (win) {
+        win.document.write(generarHTMLImpresion(listaIDs, tipo));
+        win.document.close();
+    } else {
+        alert("El navegador bloqueó la ventana emergente. Permitila para imprimir.");
+    }
 }
 
 </script>
