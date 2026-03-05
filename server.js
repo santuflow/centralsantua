@@ -344,16 +344,17 @@ const client = new MercadoPagoConfig({
     accessToken: 'APP_USR-7751639628824719-021612-dbddd90a31825e1b6fa2cb41fa93b3e4-2118365527' 
 });
  
-// 2. RUTA PARA GENERAR LOTE (Protegida y Profesional)
+// 2. RUTA PARA GENERAR LOTE (Corregida para que no se mezclen)
 app.post('/api/generar-lote-seguro', (req, res) => {
     try {
-        const { cantidad, tipo } = req.body;
+        const { cantidad, tipo, lote_id } = req.body; // <--- Capturamos el lote_id que mandás del frontend
         const nuevosIDs = [];
         const crypto = require('crypto');
-
-        // Creamos un ID de lote único para esta tanda
         const ahora = new Date();
-        const loteId = `LOTE-${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}`;
+
+        // Si el frontend mandó un nombre (con milisegundos), lo usamos. 
+        // Si no, creamos uno nuevo que INCLUYA SEGUNDOS para que no se repita.
+        const nombreFinalLote = lote_id || `LOTE-${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
 
         for (let i = 0; i < cantidad; i++) {
             const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -361,18 +362,18 @@ app.post('/api/generar-lote-seguro', (req, res) => {
             
             nuevosIDs.push(idPro);
             
-            // AGREGAMOS EL lote_id AQUÍ
             baseDeDatosSimulada.push({
                 id_qr: idPro,
                 tipo: tipo,
                 activado: false,
-                lote_id: loteId, // <--- Importante para el frontend
+                lote_id: nombreFinalLote, // <--- Ahora sí usamos el nombre único
                 fecha_creacion: ahora,
                 seguridad: "Nivel Criptográfico"
             });
         }
-        res.json({ ids: nuevosIDs, lote: loteId });
+        res.json({ ids: nuevosIDs, lote: nombreFinalLote });
     } catch (e) {
+        console.error("Error al generar lote:", e);
         res.status(500).send("Error");
     }
 });

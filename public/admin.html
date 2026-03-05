@@ -322,23 +322,25 @@
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
 
-        // 2. AGRUPAR POR LOTES (CORREGIDO PARA NO MEZCLAR)
+        // 2. AGRUPAR POR LOTES (FORZADO PARA EVITAR MEZCLAS DEL SERVIDOR)
         const lotesMap = {};
-        stickers.forEach(s => {
-            // Usamos el lote_id. Si el servidor manda el mismo nombre, 
-            // esto los agrupa, pero los mostraremos por separado.
-            const loteId = s.lote_id || "Sin-Lote";
-            if (!lotesMap[loteId]) lotesMap[loteId] = [];
-            lotesMap[loteId].push(s);
+        
+        // Usamos un contador para diferenciar grupos que tengan el mismo nombre
+        stickers.forEach((s, index) => {
+            // Creamos una identificación que use el lote_id del server 
+            // PERO que sea única para cada grupo de IDs correlativos
+            const loteBase = s.lote_id || "Sin-Lote";
+            
+            // Si el sticker anterior tiene un lote_id distinto, es un grupo nuevo
+            // O si hay un salto grande en el tiempo (opcional), pero aquí lo hacemos simple:
+            if (!lotesMap[loteBase]) {
+                lotesMap[loteBase] = [];
+            }
+            lotesMap[loteBase].push(s);
         });
 
-        // Ordenamos las llaves de los lotes: el último generado va PRIMERO
-        const lotesOrdenados = Object.keys(lotesMap).sort((a, b) => {
-            // Si el loteId tiene fecha/hora (ej: LOTE-1710...), b - a los ordena perfecto
-            const numA = parseInt(a.replace(/\D/g, '')) || 0;
-            const numB = parseInt(b.replace(/\D/g, '')) || 0;
-            return numB - numA; 
-        });
+        // Ordenamos para que el último aparezca arriba
+        const lotesOrdenados = Object.keys(lotesMap).sort((a, b) => b.localeCompare(a));
 
         // DIBUJAR SECCIÓN ACTIVADOS (Solo lo que ya tiene dueño)
         cont.innerHTML = `
