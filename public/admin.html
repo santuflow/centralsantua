@@ -375,7 +375,8 @@
                     </div>
                     // BUSCÁ ESTA PARTE DENTRO DEL RENDER Y REEMPLAZALA:
 <button onclick="event.stopPropagation(); event.preventDefault(); reimprimirLote('${loteId}');" 
-        style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
+        class="btn-cmd" 
+        style="background:#007bff; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
     <i class="fas fa-print"></i> REIMPRIMIR LOTE
 </button>
                 </summary>
@@ -634,60 +635,22 @@ function generarHTMLImpresion(listaIDs, tipo) {
 }
 
 function reimprimirLote(loteId) {
+    if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
+    
+    // 1. Buscamos los stickers de ese lote
     const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
     if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
 
+    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
+    const tipoDetectado = stickersDelLote[0].tipo || 'moto';
+    
     const listaIDs = stickersDelLote.map(s => s.id_qr);
-    const esAuto = confirm("¿Imprimir en formato AUTO? (Aceptar = AUTO / Cancelar = MOTO)");
-    const tipo = esAuto ? 'auto' : 'moto';
 
+    // 3. Abrimos la ventana sin preguntar nada
     const win = window.open('', '_blank');
     if (!win) return alert("El navegador bloqueó la ventana emergente.");
 
-    win.document.write(`
-        <html>
-        <head>
-            <title>SANTUA | REIMPRESIÓN ${loteId}</title>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
-                body { font-family: 'Archivo Black', sans-serif; margin: 0; padding: 10mm; background: #fff; }
-                .contenedor-impresion { display: flex; flex-direction: column; align-items: center; gap: 10mm; }
-                .sticker-auto-full { width: 300mm; height: 100mm; display: flex; justify-content: center; gap: 4mm; page-break-after: always; box-sizing: border-box; }
-                .mitad-sticker { width: 148mm; height: 100mm; background: #dcdcdc; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 15px; border: 6px solid #ff0000; box-sizing: border-box; }
-                .sticker-moto-full { width: 170mm; height: 170mm; background: #dcdcdc; border: 8px solid #ff0000; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px; page-break-after: always; box-sizing: border-box; }
-                .header-txt { background: #000; color: #fff; width: 95%; text-align: center; padding: 10px 0; font-size: 1.5rem; border-radius: 4px; }
-                .qr-box { background: #fff; padding: 10px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; }
-                .id-tag { background: #000; color: #ffff00; font-size: 2.2rem; padding: 5px 25px; letter-spacing: 2px; }
-                .footer-txt { text-align: center; color: #000; font-size: 0.9rem; font-weight: 900; line-height: 1.2; }
-            </style>
-        </head>
-        <body>
-            <div class="contenedor-impresion">
-                ${listaIDs.map(id => {
-                    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent('https://centralsantua.com.ar/index.html?id=' + id)}`;
-                    if (tipo === 'auto') {
-                        const sHtml = `
-                            <div class="mitad-sticker">
-                                <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
-                                <div class="qr-box"><img src="${qr}" width="140"></div>
-                                <div class="id-tag">${id}</div>
-                                <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
-                            </div>`;
-                        return `<div class="sticker-auto-full">${sHtml}${sHtml}</div>`;
-                    } else {
-                        return `
-                            <div class="sticker-moto-full">
-                                <div class="header-txt" style="font-size: 2.2rem;">🛡️ PATENTE PROTEGIDA</div>
-                                <div class="qr-box"><img src="${qr}" width="280"></div>
-                                <div class="id-tag" style="font-size: 3.8rem;">${id}</div>
-                                <div class="footer-txt" style="font-size: 1.3rem;">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>WWW.CENTRALSANTUA.COM.AR</div>
-                            </div>`;
-                    }
-                }).join('')}
-            </div>
-        </body>
-        </html>
-    `);
+    win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
 }
 
