@@ -304,40 +304,42 @@
     const listaLotesDiv = document.getElementById('lista-lotes-acordeon');
     if (!cont || !listaLotesDiv) return;
 
+    // --- PASO 1: GUARDAR QUÉ LOTE ESTÁ ABIERTO AHORA ---
+    const lotesAbiertos = Array.from(document.querySelectorAll('details[open]')).map(d => d.id);
+
     const query = (currentView === 's') 
         ? (document.getElementById('buscador-id')?.value.toUpperCase() || "")
         : (document.getElementById('bus')?.value.toUpperCase() || "");
 
-    // LIMPIEZA INICIAL
     cont.innerHTML = "";
     listaLotesDiv.innerHTML = "";
 
     if (currentView === 's') {
         const stickers = db.stickers || [];
         
-        // 1. FILTRAR ACTIVADOS (Los que ya tienen dueño)
+        // 1. FILTRAR ACTIVADOS
         const activados = stickers.filter(s => 
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
 
-        // 2. AGRUPAR POR LOTES
+        // 2. AGRUPAR POR LOTES (ESTRICTO)
         const lotesMap = {};
         stickers.forEach(s => {
-            const loteNombre = s.lote_id || "Sin Lote";
-            if (!lotesMap[loteNombre]) lotesMap[loteNombre] = [];
-            lotesMap[loteNombre].push(s);
+            const loteId = s.lote_id || "Sin-Lote";
+            if (!lotesMap[loteId]) lotesMap[loteId] = [];
+            lotesMap[loteId].push(s);
         });
 
-        // DIBUJAR SECCIÓN ACTIVADOS
+        // DIBUJAR SECCIÓN ACTIVADOS (Solo lo que ya tiene dueño)
         cont.innerHTML = `
             <div style="grid-column: 1/-1; width: 100%;">
                 <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
                     <i class="fas fa-user-check"></i> DUEÑOS ACTIVOS (${activados.length})
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom:30px;">
-                    ${activados.length === 0 ? '<p style="color:#555;">No hay activados con ese criterio.</p>' : 
+                    ${activados.length === 0 ? '<p style="color:#555;">No hay activados.</p>' : 
                     activados.reverse().map(s => `
-                        <div class="card" style="border-left: 5px solid var(--success); background: #0a0a0a; position:relative;">
+                        <div class="card" style="border-left: 5px solid var(--success); background: #0a0a0a;">
                             <span class="nro-id">${s.id_qr}</span>
                             <p style="font-size:0.85rem; margin:10px 0; color:#eee;">
                                 <b>👤 ${s.alias || 'S/D'}</b><br>
@@ -346,67 +348,59 @@
                             <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa">
                                 <i class="fab fa-whatsapp"></i> CONTACTAR
                             </a>
-                        </div>
-                    `).join('')}
+                        </div>`).join('')}
                 </div>
                 <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-                    <i class="fas fa-boxes"></i> HISTORIAL DE PRODUCCIÓN (LOTES)
+                    <i class="fas fa-boxes"></i> HISTORIAL POR LOTES SEPARADOS
                 </h3>
             </div>`;
 
-        // DIBUJAR CARPETAS DE LOTES
+        // 3. DIBUJAR CADA LOTE POR SEPARADO
         const htmlLotes = Object.keys(lotesMap).sort().reverse().map(loteId => {
             if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
             
-            // Filtramos los stickers del lote según la búsqueda
             const todosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
             if (todosDelLote.length === 0) return '';
 
             const visibles = todosDelLote.slice(0, limitePorLote[loteId]);
             const hayMas = todosDelLote.length > limitePorLote[loteId];
+            
+            // Si el lote estaba abierto, le ponemos 'open' para que NO se cierre solo
+            const checkOpen = lotesAbiertos.includes(`details-${loteId}`) ? 'open' : '';
 
             return `
-            <details id="details-${loteId}" style="margin-bottom: 15px; background: #080808; border: 1px solid #222; border-radius: 8px; overflow:hidden;">
+            <details id="details-${loteId}" ${checkOpen} style="margin-bottom: 15px; background: #080808; border: 1px solid #222; border-radius: 8px; overflow:hidden;">
                 <summary style="padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #111;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <i class="fas fa-folder" style="color:var(--accent); font-size:1.2rem;"></i>
-                        <span style="font-weight:bold; letter-spacing:1px;">LOTE: ${loteId}</span>
-                        <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} unidades)</span>
+                        <span style="font-weight:bold;">LOTE: ${loteId}</span>
+                        <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
                     </div>
                     <button onclick="event.stopPropagation(); reimprimirLote('${loteId}')" 
-                            style="background:var(--success); color:black; border:none; padding:6px 12px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold; text-transform:uppercase;">
-                        <i class="fas fa-print"></i> Reimprimir PDF
+                            style="background:var(--success); color:black; border:none; padding:6px 12px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold;">
+                        PDF LOTE
                     </button>
                 </summary>
-                
                 <div style="padding: 10px;">
-                    <table style="width:100%; border-collapse: collapse; table-layout: fixed;">
-                        <thead style="background: rgba(255,255,255,0.02); color:var(--primary); font-size:0.7rem;">
-                            <tr>
-                                <th style="padding:10px; text-align:left; width:40%;">ID QR</th>
-                                <th style="padding:10px; text-align:center; width:30%;">ESTADO</th>
-                                <th style="padding:10px; text-align:right; width:30%;">LINK</th>
-                            </tr>
-                        </thead>
+                    <table style="width:100%; border-collapse: collapse;">
                         <tbody>
                             ${visibles.map(s => `
                             <tr style="border-bottom: 1px solid #111;">
-                                <td style="padding:12px; font-family:monospace; color:#fff;">${s.id_qr}</td>
-                                <td style="padding:12px; text-align:center;">
-                                    ${s.activado ? '<span style="color:var(--success)">● ACTIVO</span>' : '<span style="color:#444">○ STOCK</span>'}
+                                <td style="padding:10px; font-family:monospace; color:#fff;">${s.id_qr}</td>
+                                <td style="padding:10px; text-align:center; font-size:0.7rem;">
+                                    ${s.activado ? '<span style="color:var(--success)">ACTIVO</span>' : '<span style="color:#444">STOCK</span>'}
                                 </td>
-                                <td style="padding:12px; text-align:right;">
-                                    <i class="fas fa-external-link-alt" style="cursor:pointer; color:var(--primary); opacity:0.7;" 
+                                <td style="padding:10px; text-align:right;">
+                                    <i class="fas fa-external-link-alt" style="cursor:pointer; color:var(--primary);" 
                                        onclick="window.open('https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
                                 </td>
-                            </tr>
-                            `).join('')}
+                            </tr>`).join('')}
                         </tbody>
                     </table>
                     ${hayMas ? `
-                        <button onclick="verMas('${loteId}')" 
-                                style="width:100%; margin-top:10px; background:rgba(255,255,255,0.03); border:1px dashed #333; color:#888; cursor:pointer; padding:12px; border-radius:4px; font-size:0.8rem;">
-                            Mostrar ${todosDelLote.length - limitePorLote[loteId]} unidades más de este lote...
+                        <button onclick="verMasLote(event, '${loteId}')" 
+                                style="width:100%; margin-top:10px; background:rgba(255,255,255,0.05); border:1px solid #333; color:#fff; cursor:pointer; padding:12px; border-radius:4px;">
+                            Cargar más de este lote (+50)
                         </button>` : ''}
                 </div>
             </details>`;
@@ -414,44 +408,19 @@
         
         listaLotesDiv.innerHTML = htmlLotes;
     } else {
-        // LÓGICA DE HALLAZGOS / BÚSQUEDAS / MATCHES
-        const list = currentView === 'm' ? [] : (currentView === 'h' ? db.hallazgos : db.busquedas);
-        
-        if (currentView === 'm') {
-            db.hallazgos.forEach(h => {
-                const b = db.busquedas.find(x => x.nro === h.nro);
-                if(b && h.nro.includes(query)) {
-                    cont.innerHTML += `<div class="card match"><span class="nro-id">${h.nro}</span><p>MATCH DETECTADO</p><button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button></div>`;
-                }
-            });
-        } else if (list) {
-            list.forEach(item => {
-                if(item.nro.includes(query) || (item.contacto && item.contacto.includes(query))) {
-                    cont.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between"><span class="nro-id">${item.nro}</span><i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i></div><p style="font-size:0.75rem; color:#888">Tel: ${item.contacto}</p><a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a></div>`;
-                }
-            });
-        }
+        // Lógica de Hallazgos/Búsquedas (Mantenela como la tenías)
+        // ...
     }
 }
 
-// ESTA FUNCIÓN DEBE IR DEBAJO DE RENDER
-function verMas(loteId) {
-    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓN
+function verMasLote(event, loteId) {
+    event.preventDefault(); // Evita que el navegador haga scroll raro
+    event.stopPropagation(); // Evita que el 'details' se cierre
+    if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
     limitePorLote[loteId] += 50; 
     render(); 
 }
-    function toggleProtocol() {
-        const m = document.getElementById('protocol-modal');
-        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    function exportDB() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-        const a = document.createElement('a');
-        a.setAttribute("href", dataStr);
-        a.setAttribute("download", "santua_backup.json");
-        a.click();
-    }
 
     loadData();
 setInterval(loadData, 90000);
