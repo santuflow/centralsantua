@@ -158,42 +158,24 @@
 
     </div>
 
-    <div class="stat-box" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.8); border: 1px solid var(--primary); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-    
-    <span class="stat-label" style="color: var(--primary); font-weight: bold; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
-        <i class="fas fa-qrcode"></i> Producción de Stickers Premium
-    </span>
-    
-    <div style="display: flex; gap: 15px; align-items: flex-end; margin-top: 15px; flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 20px;">
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label style="font-size: 0.75rem; color: #888;">CANTIDAD</label>
-            <input type="number" id="cant-qr" placeholder="Ej: 100" 
-                   style="background: #000; border: 1px solid #444; color: var(--primary); padding: 10px; border-radius: 6px; width: 120px; font-weight: bold;">
-        </div>
+    <div class="stat-box" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.6); border: 1px dashed var(--primary);">
+    <span class="stat-label"><i class="fas fa-qrcode"></i> Producción de Stickers</span>
+    <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+        <input type="number" id="cant-qr" placeholder="Cantidad (Ej: 100)" 
+               style="background: #000; border: 1px solid var(--border); color: var(--primary); padding: 8px; border-radius: 4px; width: 150px;">
         
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label style="font-size: 0.75rem; color: #888;">FORMATO</label>
-            <select id="tipo-qr" style="background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; cursor: pointer;">
-                <option value="moto">🏍️ Moto (17x17 cm)</option>
-                <option value="auto">🚗 Auto (30x10 cm)</option>
-            </select>
-        </div>
+        <select id="tipo-qr" style="background: #000; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 4px;">
+            <option value="moto">Moto (17x17 cm)</option>
+            <option value="auto">Auto (30x10 cm)</option>
+        </select>
 
-        <button class="btn-cmd" style="border-color: var(--success); color: var(--success); height: 42px; padding: 0 20px; font-weight: bold; transition: all 0.3s;" onclick="prepararLote()">
-            <i class="fas fa-rocket"></i> GENERAR E IMPRIMIR
+        <button class="btn-cmd" style="border-color: var(--success); color: var(--success);" onclick="prepararLote()">
+            <i class="fas fa-plus-circle"></i> GENERAR LOTE
         </button>
     </div>
-
-    <div style="margin-top: 20px;">
-        <div style="position: relative;">
-            <i class="fas fa-search" style="position: absolute; left: 15px; top: 12px; color: #666;"></i>
-            <input type="text" id="buscador-id" placeholder="BUSCAR POR ID O DUEÑO (Ej: SANT-A12)..." onkeyup="filtrarStickers()" 
-                   style="width: 100%; padding: 12px 12px 12px 45px; background: #111; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: 'Roboto Mono', monospace;">
-        </div>
-    </div>
+    
+    <div id="print-area" style="display:none;"></div>
 </div>
-
-<div id="lista-lotes-acordeon" style="margin-bottom: 25px;"></div>
 
     <div class="search-container">
         <i class="fas fa-search"></i>
@@ -226,35 +208,30 @@
     }, 1000);
 
     async function loadData() {
-        // 1. Carga de registros operativos (Hallazgos, Búsquedas, Stickers)
+        // Carga de registros operativos
         try {
-            const resData = await fetch('/api/admin/data');
-            if (resData.ok) {
-                db = await resData.json();
+            const res = await fetch('/api/admin/data');
+            if (res.ok) {
+                db = await res.json();
                 updateStats();
                 render();
             }
-        } catch(e) { console.error("Error en datos operativos:", e); }
+        } catch(e) { console.error("Error en datos"); }
 
-        // 2. Carga de contadores de QR (Generados y Activados)
-        try {
-            const resStatsQR = await fetch('/api/stats');
-            if (resStatsQR.ok) {
-                const stats = await resStatsQR.json();
-                document.getElementById('s-gen').innerText = stats.generados || 0;
-                document.getElementById('s-act').innerText = stats.activados || 0;
-            }
-        } catch(e) { console.error("Error en stats de QR:", e); }
+        const resStats = await fetch('/api/stats');
+const stats = await resStats.json();
+document.getElementById('s-gen').innerText = stats.generados;
+document.getElementById('s-act').innerText = stats.activados;
 
-        // 3. Carga de tráfico (Online y Visitas)
+        // Carga de tráfico (independiente)
         try {
-            const resTraffic = await fetch('/api/admin/stats');
-            if (resTraffic.ok) {
-                const s = await resTraffic.json();
+            resStats = await fetch('/api/admin/stats');
+            if (resStats.ok) {
+                const s = await resStats.json();
                 document.getElementById('s-online').innerText = s.online || 0;
                 document.getElementById('s-visitas').innerText = s.visitas || 0;
             }
-        } catch(e) { console.error("Error en tráfico:", e); }
+        } catch(e) { }
     }
 
     function updateStats() {
@@ -301,145 +278,161 @@
 
     function render() {
     const cont = document.getElementById('cont');
-    const listaLotesDiv = document.getElementById('lista-lotes-acordeon');
-    if (!cont || !listaLotesDiv) return;
-
-    // --- PASO 1: GUARDAR QUÉ LOTE ESTÁ ABIERTO AHORA ---
-    const lotesAbiertos = Array.from(document.querySelectorAll('details[open]')).map(d => d.id);
-
-    const query = (currentView === 's') 
-        ? (document.getElementById('buscador-id')?.value.toUpperCase() || "")
-        : (document.getElementById('bus')?.value.toUpperCase() || "");
-
+    if (!cont) return;
+    const query = document.getElementById('bus').value.toUpperCase();
     cont.innerHTML = "";
-    listaLotesDiv.innerHTML = "";
 
+    // ==========================================
+    // 1. ZONA DE STICKERS (POR LOTES CON PAGINACIÓN)
+    // ==========================================
     if (currentView === 's') {
         const stickers = db.stickers || [];
+        const activados = stickers.filter(s => s.activado);
         
-        // 1. FILTRAR ACTIVADOS
-        const activados = stickers.filter(s => 
-            s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
-        );
-
-        // 2. AGRUPAR POR LOTES (FORZADO PARA EVITAR MEZCLAS DEL SERVIDOR)
+        // Agrupamos por lote
         const lotesMap = {};
-        
-        // Usamos un contador para diferenciar grupos que tengan el mismo nombre
-        stickers.forEach((s, index) => {
-            // Creamos una identificación que use el lote_id del server 
-            // PERO que sea única para cada grupo de IDs correlativos
-            const loteBase = s.lote_id || "Sin-Lote";
-            
-            // Si el sticker anterior tiene un lote_id distinto, es un grupo nuevo
-            // O si hay un salto grande en el tiempo (opcional), pero aquí lo hacemos simple:
-            if (!lotesMap[loteBase]) {
-                lotesMap[loteBase] = [];
-            }
-            lotesMap[loteBase].push(s);
+        stickers.forEach(s => {
+            const loteNombre = s.lote_id || "Sin Lote";
+            if (!lotesMap[loteNombre]) lotesMap[loteNombre] = [];
+            lotesMap[loteNombre].push(s);
         });
 
-        // Ordenamos para que el último aparezca arriba
-        const lotesOrdenados = Object.keys(lotesMap).sort((a, b) => b.localeCompare(a));
-
-        // DIBUJAR SECCIÓN ACTIVADOS (Solo lo que ya tiene dueño)
         cont.innerHTML = `
-            <div style="grid-column: 1/-1; width: 100%;">
-                <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-                    <i class="fas fa-user-check"></i> DUEÑOS ACTIVOS (${activados.length})
+        <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 25px; width: 100%;">
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-user-check"></i> Stickers Activados (${activados.length})
                 </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom:30px;">
-                    ${activados.length === 0 ? '<p style="color:#555;">No hay activados.</p>' : 
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    ${activados.length === 0 ? '<p style="color:#888; grid-column:1/-1;">No hay stickers activados.</p>' : 
                     activados.reverse().map(s => `
-                        <div class="card" style="border-left: 5px solid var(--success); background: #0a0a0a;">
-                            <span class="nro-id">${s.id_qr}</span>
-                            <p style="font-size:0.85rem; margin:10px 0; color:#eee;">
-                                <b>👤 ${s.alias || 'S/D'}</b><br>
-                                <span style="color:#888;">📞 ${s.telefono || 'S/D'}</span>
-                            </p>
-                            <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa">
-                                <i class="fab fa-whatsapp"></i> CONTACTAR
-                            </a>
-                        </div>`).join('')}
+                        <div class="card" style="border-left: 5px solid var(--success); margin:0; background: var(--card);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="nro-id">${s.id_qr}</span>
+                                <span style="color:var(--success); font-weight:bold; font-size:0.6rem;">PAGO CONFIRMADO</span>
+                            </div>
+                            <div style="margin:10px 0; font-size:0.8rem; color:#aaa;">
+                                <p><strong>👤 Usuario:</strong> ${s.alias || 'Pendiente'}</p>
+                                <p><strong>📞 Tel:</strong> ${s.telefono || 'Sin datos'}</p>
+                            </div>
+                            <a href="https://wa.me/${s.telefono}" target="_blank" class="btn-action btn-wa" style="padding:5px; font-size:0.6rem;">WHATSAPP</a>
+                        </div>
+                    `).join('')}
                 </div>
-                <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-                    <i class="fas fa-boxes"></i> HISTORIAL POR LOTES SEPARADOS
-                </h3>
-            </div>`;
+            </div>
 
-        // 3. DIBUJAR CADA LOTE POR SEPARADO
-        const htmlLotes = Object.keys(lotesMap).sort().reverse().map(loteId => {
-            if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
-            
-            const todosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
-            if (todosDelLote.length === 0) return '';
+            <hr style="border:0; border-top:1px solid var(--border); margin: 10px 0;">
 
-            const visibles = todosDelLote.slice(0, limitePorLote[loteId]);
-            const hayMas = todosDelLote.length > limitePorLote[loteId];
-            
-            // Si el lote estaba abierto, le ponemos 'open' para que NO se cierre solo
-            const checkOpen = lotesAbiertos.includes(`details-${loteId}`) ? 'open' : '';
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:20px; font-size:1.2rem;"><i class="fas fa-boxes"></i> Gestión por Lotes</h3>
+                ${Object.keys(lotesMap).sort().reverse().map(loteId => {
+                    // --- LÓGICA DE PAGINACIÓN ---
+                    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+                    
+                    const todosLosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
+                    const visibles = todosLosDelLote.slice(0, limitePorLote[loteId]);
+                    const hayMas = todosLosDelLote.length > limitePorLote[loteId];
+                    // ----------------------------
 
-            return `
-            <details id="details-${loteId}" ${checkOpen} style="margin-bottom: 15px; background: #080808; border: 1px solid #222; border-radius: 8px; overflow:hidden;">
-                <summary style="padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #111;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <i class="fas fa-folder" style="color:var(--accent); font-size:1.2rem;"></i>
-                        <span style="font-weight:bold;">LOTE: ${loteId}</span>
-                        <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
+                    return `
+                    <div style="margin-bottom: 30px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-tag"></i> LOTE: ${loteId} (${todosLosDelLote.length} unidades)</h4>
+                        <div style="background:var(--card); border-radius:4px; overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                                <thead style="background:rgba(79, 172, 254, 0.1);">
+                                    <tr>
+                                        <th style="padding:10px; text-align:left;">ID QR</th>
+                                        <th style="padding:10px; text-align:left;">ESTADO</th>
+                                        <th style="padding:10px; text-align:center;">QR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${visibles.map(s => `
+                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:10px;"><strong style="color:var(--primary)">${s.id_qr}</strong></td>
+                                            <td style="padding:10px;">${s.activado ? '<span style="color:var(--success)">Activo</span>' : '<span style="color:#555">Stock</span>'}</td>
+                                            <td style="padding:10px; text-align:center;">
+                                                <i class="fas fa-qrcode" style="cursor:pointer; color:var(--primary)" onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${hayMas ? `
+                            <button onclick="verMas('${loteId}')" style="width:100%; margin-top:10px; padding:10px; background:transparent; border:1px dashed var(--primary); color:var(--primary); cursor:pointer; font-weight:bold; text-transform:uppercase; font-size:0.7rem;">
+                                <i class="fas fa-plus-circle"></i> Mostrar más (+${todosLosDelLote.length - limitePorLote[loteId]} restantes)
+                            </button>
+                        ` : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    } 
+    // ==========================================
+    // 2. VISTA DE MATCHES
+    // ==========================================
+    else if (currentView === 'm') {
+        db.hallazgos.forEach(h => {
+            const b = db.busquedas.find(x => x.nro === h.nro);
+            if(b && h.nro.includes(query)) {
+                cont.innerHTML += `
+                <div class="card match">
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="nro-id">${h.nro}</span>
+                        <span style="color:var(--success); font-size:0.7rem; font-weight:bold;">MATCH</span>
                     </div>
-                    <button onclick="event.stopPropagation(); reimprimirLote('${loteId}')" 
-                            style="background:var(--success); color:black; border:none; padding:6px 12px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold;">
-                        PDF LOTE
-                    </button>
-                </summary>
-                <div style="padding: 10px;">
-                    <table style="width:100%; border-collapse: collapse;">
-                        <tbody>
-                            ${visibles.map(s => `
-                            <tr style="border-bottom: 1px solid #111;">
-                                <td style="padding:10px; font-family:monospace; color:#fff;">${s.id_qr}</td>
-                                <td style="padding:10px; text-align:center; font-size:0.7rem;">
-                                    ${s.activado ? '<span style="color:var(--success)">ACTIVO</span>' : '<span style="color:#444">STOCK</span>'}
-                                </td>
-                                <td style="padding:10px; text-align:right;">
-                                    <i class="fas fa-external-link-alt" style="cursor:pointer; color:var(--primary);" 
-                                       onclick="window.open('https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
-                                </td>
-                            </tr>`).join('')}
-                        </tbody>
-                    </table>
-                    ${hayMas ? `
-                        <button onclick="verMasLote(event, '${loteId}')" 
-                                style="width:100%; margin-top:10px; background:rgba(255,255,255,0.05); border:1px solid #333; color:#fff; cursor:pointer; padding:12px; border-radius:4px;">
-                            Cargar más de este lote (+50)
-                        </button>` : ''}
-                </div>
-            </details>`;
-        }).join('');
-        
-        listaLotesDiv.innerHTML = htmlLotes;
-    } else {
-        // Lógica de Hallazgos/Búsquedas (Mantenela como la tenías)
-        // ...
+                    <p style="font-size:0.75rem; color:#888">Poseedor: ${h.contacto} | Reclama: ${b.contacto}</p>
+                    <a href="https://wa.me/${h.contacto}" target="_blank" class="btn-action btn-wa">WHATSAPP</a>
+                    <button class="btn-action btn-done" onclick="borrar('match', '${h.nro}')">FINALIZAR</button>
+                </div>`;
+            }
+        });
+    } 
+    // ==========================================
+    // 3. VISTA DE HALLAZGOS / BUSQUEDAS
+    // ==========================================
+    else {
+        const list = currentView === 'h' ? db.hallazgos : db.busquedas;
+        if (list) {
+            list.forEach(item => {
+                if(item.nro.includes(query) || item.contacto.includes(query)) {
+                    cont.innerHTML += `
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="nro-id">${item.nro}</span>
+                            <i class="fas fa-trash" style="cursor:pointer; color:#333" onclick="borrar('${currentView}', '${item.nro}')"></i>
+                        </div>
+                        <p style="font-size:0.75rem; color:#888">Contacto: ${item.contacto}<br>Cat: ${item.categoria || 'S/D'}</p>
+                        <a href="https://wa.me/${item.contacto}" target="_blank" class="btn-action btn-wa">CONTACTAR</a>
+                    </div>`;
+                }
+            });
+        }
     }
 }
 
-// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓN
-function verMasLote(event, loteId) {
-    event.preventDefault(); // Evita que el navegador haga scroll raro
-    event.stopPropagation(); // Evita que el 'details' se cierre
-    if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
+// ESTA FUNCIÓN DEBE IR DEBAJO DE RENDER
+function verMas(loteId) {
+    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
     limitePorLote[loteId] += 50; 
     render(); 
 }
+    function toggleProtocol() {
+        const m = document.getElementById('protocol-modal');
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function exportDB() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const a = document.createElement('a');
+        a.setAttribute("href", dataStr);
+        a.setAttribute("download", "santua_backup.json");
+        a.click();
+    }
 
     loadData();
-setInterval(loadData, 90000);
-
-function filtrarStickers() {
-    render();
-}
+    setInterval(loadData, 5000);
 
     async function prepararLote() {
     const cantInput = document.getElementById('cant-qr');
@@ -449,190 +442,219 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
-    const ahora = new Date();
-    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
-    const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
-
-    const btn = document.querySelector('button[onclick="prepararLote()"]');
-    const originalText = btn.innerHTML;
-
     try {
+        const btn = document.querySelector('button[onclick="prepararLote()"]');
+        const originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                cantidad: cant, 
-                tipo: tipo, 
-                lote_id: nuevoLoteId 
-            })
+            body: JSON.stringify({ cantidad: cant, tipo: tipo })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
-        
         const data = await response.json();
         const listaIDs = data.ids; 
 
         const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
-        
-        win.document.write(contenidoHTML);
+        win.document.write(`
+            <html>
+            <head>
+                <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
+                    
+                    * { box-sizing: border-box; }
+
+                    body { 
+                        font-family: 'Archivo Black', sans-serif; 
+                        margin: 0; padding: 10mm; background: #fff; 
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+
+                    .contenedor-impresion {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 10mm;
+                    }
+
+                    /* AUTO: Diseño de dos mitades */
+                    .sticker-auto-full {
+                        width: 300mm;
+                        height: 100mm;
+                        display: flex;
+                        justify-content: center;
+                        gap: 4mm;
+                        background: transparent;
+                        position: relative;
+                    }
+
+                    .mitad-sticker {
+                        width: 148mm; 
+                        height: 100mm;
+                        background: #dcdcdc;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: space-around;
+                        padding: 15px;
+                        position: relative;
+                        border: 6px solid #ff0000;
+                    }
+
+                    .mitad-sticker::before {
+                        content: "";
+                        position: absolute;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        border: 4px solid #ffff00;
+                        pointer-events: none;
+                    }
+
+                    .mitad-sticker::after {
+                        content: "";
+                        position: absolute;
+                        top: 4px; left: 4px; right: 4px; bottom: 4px;
+                        border: 4px solid #ff0000;
+                        pointer-events: none;
+                    }
+
+                    /* MOTO: Triple borde Premium */
+                    .sticker-moto-full {
+                        width: 170mm;
+                        height: 170mm;
+                        background: #dcdcdc;
+                        border: 8px solid #ff0000;
+                        position: relative;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: space-around;
+                        padding: 20px;
+                    }
+
+                    .sticker-moto-full::before {
+                        content: "";
+                        position: absolute;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        border: 6px solid #ffff00;
+                        pointer-events: none;
+                    }
+
+                    .sticker-moto-full::after {
+                        content: "";
+                        position: absolute;
+                        top: 6px; left: 6px; right: 6px; bottom: 6px;
+                        border: 6px solid #ff0000;
+                        pointer-events: none;
+                    }
+
+                    .header-txt, .qr-box, .id-tag, .footer-txt {
+                        z-index: 10;
+                        position: relative;
+                    }
+
+                    .header-txt {
+                        background: #000 !important;
+                        color: #fff !important;
+                        width: 90%;
+                        text-align: center;
+                        padding: 8px 0;
+                        font-size: 1.3rem;
+                        border-radius: 4px;
+                    }
+
+                    .qr-box {
+                        background: #fff;
+                        padding: 8px;
+                        border: 2px solid #000;
+                    }
+
+                    .id-tag {
+                        background: #000 !important;
+                        color: #ffff00 !important;
+                        font-family: 'Roboto Mono', monospace;
+                        font-size: 2rem;
+                        padding: 5px 20px;
+                        border-radius: 3px;
+                        letter-spacing: 2px;
+                    }
+
+                    .footer-txt {
+                        text-align: center;
+                        color: #000;
+                        font-size: 0.8rem;
+                        line-height: 1.1;
+                        font-weight: 900;
+                    }
+
+                    @media print {
+                        body { padding: 0; margin: 0; }
+                        .sticker-auto-full, .sticker-moto-full { 
+                            page-break-after: always; 
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="contenedor-impresion">
+        `);
+
+        listaIDs.forEach(idUnico => {
+            // CORRECCIÓN DE RUTA: Apunta al index para que se active tu lógica de escaneo
+            const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+
+            if (tipo === 'auto') {
+                win.document.write(`
+                    <div class="sticker-auto-full">
+                        <div class="mitad-sticker">
+                            <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                            <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                            <div class="id-tag">${idUnico}</div>
+                            <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
+                        </div>
+                        <div class="mitad-sticker">
+                            <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                            <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                            <div class="id-tag">${idUnico}</div>
+                            <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
+                        </div>
+                    </div>
+                `);
+            } else {
+                win.document.write(`
+                    <div class="sticker-moto-full">
+                        <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="280"></div>
+                        <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.2rem;">
+                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                            WWW.CENTRALSANTUA.COM.AR
+                        </div>
+                    </div>
+                `);
+            }
+        });
+
+        win.document.write('</div></body></html>');
         win.document.close();
         
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
-            setTimeout(loadData, 1000); 
-        }
-
-    } catch (error) {
-        alert("ERROR: " + error.message);
-    } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+    } catch (error) {
+        alert("ERROR: " + error.message);
     }
 }
 
-/**
- * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
- */
-function generarHTMLImpresion(listaIDs, tipo) {
-    let stickersHTML = '';
-
-    listaIDs.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-
-        if (tipo === 'auto') {
-            stickersHTML += `
-                <div class="sticker-auto-full">
-                    <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
-                    </div>
-                    <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
-                    </div>
-                </div>`;
-        } else {
-            stickersHTML += `
-                <div class="sticker-moto-full">
-                    <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="280"></div>
-                    <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.2rem;">
-                        ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                        WWW.CENTRALSANTUA.COM.AR
-                    </div>
-                </div>`;
-        }
-    });
-
-    return `
-        <html>
-        <head>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
-                * { box-sizing: border-box; }
-                body { 
-                    font-family: 'Archivo Black', sans-serif; 
-                    margin: 0; padding: 10mm; background: #fff; 
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                .contenedor-impresion {
-                    display: flex; flex-direction: column; align-items: center; gap: 10mm;
-                }
-                .sticker-auto-full {
-                    width: 300mm; height: 100mm; display: flex; justify-content: center; gap: 4mm;
-                    background: transparent; position: relative;
-                }
-                .mitad-sticker {
-                    width: 148mm; height: 100mm; background: #dcdcdc;
-                    display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
-                }
-                .mitad-sticker::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 4px solid #ffff00; pointer-events: none;
-                }
-                .mitad-sticker::after {
-                    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-                    border: 4px solid #ff0000; pointer-events: none;
-                }
-                .sticker-moto-full {
-                    width: 170mm; height: 170mm; background: #dcdcdc; border: 8px solid #ff0000;
-                    position: relative; display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 20px;
-                }
-                .sticker-moto-full::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 6px solid #ffff00; pointer-events: none;
-                }
-                .sticker-moto-full::after {
-                    content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
-                    border: 6px solid #ff0000; pointer-events: none;
-                }
-                .header-txt, .qr-box, .id-tag, .footer-txt { z-index: 10; position: relative; }
-                .header-txt {
-                    background: #000 !important; color: #fff !important; width: 90%;
-                    text-align: center; padding: 8px 0; font-size: 1.3rem; border-radius: 4px;
-                }
-                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; }
-                .id-tag {
-                    background: #000 !important; color: #ffff00 !important;
-                    font-family: 'Roboto Mono', monospace; font-size: 2rem;
-                    padding: 5px 20px; border-radius: 3px; letter-spacing: 2px;
-                }
-                .footer-txt { text-align: center; color: #000; font-size: 0.8rem; line-height: 1.1; font-weight: 900; }
-                @media print {
-                    body { padding: 0; margin: 0; }
-                    .sticker-auto-full, .sticker-moto-full { page-break-after: always; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="contenedor-impresion">
-                ${stickersHTML}
-            </div>
-        </body>
-        </html>`;
-}
-
-function reimprimirLote(loteId) {
-    // 1. Buscamos los stickers que pertenecen a este lote en tu variable 'db'
-    const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
-    
-    if (stickersDelLote.length === 0) {
-        alert("No se encontraron datos para el lote: " + loteId);
-        return;
-    }
-
-    // 2. Extraemos solo los IDs para pasárselos a tu función de impresión
-    const listaIDs = stickersDelLote.map(s => s.id_qr);
-    
-    // 3. Preguntamos el formato (Auto o Moto)
-    const esAuto = confirm("¿Imprimir en formato AUTO? (Aceptar = AUTO / Cancelar = MOTO)");
-    const tipo = esAuto ? 'auto' : 'moto';
-
-    // 4. Abrimos la ventana nueva y usamos tu función 'generarHTMLImpresion' que ya tenés
-    const win = window.open('', '_blank');
-    if (win) {
-        win.document.write(generarHTMLImpresion(listaIDs, tipo));
-        win.document.close();
-    } else {
-        alert("El navegador bloqueó la ventana emergente. Permitila para imprimir.");
-    }
+function verMas(loteId) {
+    // Si no existe, lo inicializamos en 20, si existe sumamos 50
+    if (!limitePorLote[loteId]) limitePorLote[loteId] = 20;
+    limitePorLote[loteId] += 50; 
+    render(); // Volvemos a dibujar para que muestre los nuevos
 }
 
 </script>
