@@ -322,27 +322,17 @@
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
 
-        // 2. AGRUPAR POR LOTES (FORZADO PARA EVITAR MEZCLAS DEL SERVIDOR)
+        // 2. AGRUPAR POR LOTES
         const lotesMap = {};
-        
-        // Usamos un contador para diferenciar grupos que tengan el mismo nombre
-        stickers.forEach((s, index) => {
-            // Creamos una identificación que use el lote_id del server 
-            // PERO que sea única para cada grupo de IDs correlativos
+        stickers.forEach((s) => {
             const loteBase = s.lote_id || "Sin-Lote";
-            
-            // Si el sticker anterior tiene un lote_id distinto, es un grupo nuevo
-            // O si hay un salto grande en el tiempo (opcional), pero aquí lo hacemos simple:
             if (!lotesMap[loteBase]) {
                 lotesMap[loteBase] = [];
             }
             lotesMap[loteBase].push(s);
         });
 
-        // Ordenamos para que el último aparezca arriba
-        const lotesOrdenados = Object.keys(lotesMap).sort((a, b) => b.localeCompare(a));
-
-        // DIBUJAR SECCIÓN ACTIVADOS (Solo lo que ya tiene dueño)
+        // DIBUJAR SECCIÓN ACTIVADOS
         cont.innerHTML = `
             <div style="grid-column: 1/-1; width: 100%;">
                 <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
@@ -368,7 +358,7 @@
             </div>`;
 
         // 3. DIBUJAR CADA LOTE POR SEPARADO
-        const htmlLotes = Object.keys(lotesMap).sort().reverse().map(loteId => {
+        listaLotesDiv.innerHTML = Object.keys(lotesMap).sort().reverse().map(loteId => {
             if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
             
             const todosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
@@ -376,8 +366,6 @@
 
             const visibles = todosDelLote.slice(0, limitePorLote[loteId]);
             const hayMas = todosDelLote.length > limitePorLote[loteId];
-            
-            // Si el lote estaba abierto, le ponemos 'open' para que NO se cierre solo
             const checkOpen = lotesAbiertos.includes(`details-${loteId}`) ? 'open' : '';
 
             return `
@@ -418,7 +406,7 @@
             </details>`;
         }).join('');
 
-        } else {
+    } else {
         // --- LÓGICA DE OPERATIVOS (HALLAZGOS / BÚSQUEDAS / MATCHES) ---
         let data = [];
         if (currentView === 'h') data = db.hallazgos || [];
