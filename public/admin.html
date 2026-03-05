@@ -319,7 +319,7 @@
     if (currentView === 's') {
         const stickers = db.stickers || [];
         
-        // --- VISTA DE STICKERS ---
+        // --- VISTA DE STICKERS ACTIVOS (DUEÑOS) ---
         const activados = stickers.filter(s => 
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
@@ -355,6 +355,7 @@
                 </div>
             </div>`;
 
+        // --- GESTIÓN POR LOTES (ACORDEÓN) ---
         listaLotesDiv.innerHTML = Object.keys(lotesMap).sort().reverse().map(loteId => {
             if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
             const todosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
@@ -372,7 +373,8 @@
                         <span style="font-weight:bold;">LOTE: ${loteId}</span>
                         <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
                     </div>
-                    <button onclick="reimprimirLote('${loteId}')" style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
+                    <button onclick="event.stopPropagation(); event.preventDefault(); const soloEsteLote = db.stickers.filter(st => st.lote_id === '${loteId}'); imprimirStickers(soloEsteLote);" 
+                            style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
                         <i class="fas fa-print"></i> REIMPRIMIR LOTE
                     </button>
                 </summary>
@@ -386,8 +388,8 @@
                                     ${s.activado ? '<span style="color:var(--success)">ACTIVO</span>' : '<span style="color:#444">STOCK</span>'}
                                 </td>
                                 <td style="padding:10px; text-align:right;">
-                                    <i class="fas fa-external-link-alt" style="cursor:pointer; color:var(--primary);" 
-                                        onclick="window.open('https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
+                                    <i class="fas fa-qrcode" style="cursor:pointer; color:var(--primary);" 
+                                        onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://centralsantua.com.ar/index.html?id=${s.id_qr}')"></i>
                                 </td>
                             </tr>`).join('')}
                         </tbody>
