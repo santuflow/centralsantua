@@ -304,35 +304,33 @@
     const listaLotesDiv = document.getElementById('lista-lotes-acordeon');
     if (!cont || !listaLotesDiv) return;
 
-    // --- PASO 1: GUARDAR QUÉ LOTE ESTÁ ABIERTO AHORA ---
+    // 1. Guardar qué lotes están abiertos para que no se cierren al recargar
     const lotesAbiertos = Array.from(document.querySelectorAll('details[open]')).map(d => d.id);
 
+    // 2. Definir el buscador según la vista
     const query = (currentView === 's') 
         ? (document.getElementById('buscador-id')?.value.toUpperCase() || "")
         : (document.getElementById('bus')?.value.toUpperCase() || "");
 
+    // Limpiamos los contenedores antes de dibujar
     cont.innerHTML = "";
     listaLotesDiv.innerHTML = "";
 
     if (currentView === 's') {
         const stickers = db.stickers || [];
         
-        // 1. FILTRAR ACTIVADOS
+        // --- VISTA DE STICKERS ---
         const activados = stickers.filter(s => 
             s.activado && (s.id_qr.includes(query) || (s.alias && s.alias.toUpperCase().includes(query)))
         );
 
-        // 2. AGRUPAR POR LOTES
         const lotesMap = {};
         stickers.forEach((s) => {
             const loteBase = s.lote_id || "Sin-Lote";
-            if (!lotesMap[loteBase]) {
-                lotesMap[loteBase] = [];
-            }
+            if (!lotesMap[loteBase]) lotesMap[loteBase] = [];
             lotesMap[loteBase].push(s);
         });
 
-        // DIBUJAR SECCIÓN ACTIVADOS
         cont.innerHTML = `
             <div style="grid-column: 1/-1; width: 100%;">
                 <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
@@ -352,15 +350,10 @@
                             </a>
                         </div>`).join('')}
                 </div>
-                <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-                    <i class="fas fa-boxes"></i> HISTORIAL POR LOTES SEPARADOS
-                </h3>
             </div>`;
 
-        // 3. DIBUJAR CADA LOTE POR SEPARADO
         listaLotesDiv.innerHTML = Object.keys(lotesMap).sort().reverse().map(loteId => {
             if (!limitePorLote[loteId]) limitePorLote[loteId] = 10;
-            
             const todosDelLote = lotesMap[loteId].filter(s => s.id_qr.includes(query));
             if (todosDelLote.length === 0) return '';
 
@@ -376,10 +369,6 @@
                         <span style="font-weight:bold;">LOTE: ${loteId}</span>
                         <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
                     </div>
-                    <button onclick="event.stopPropagation(); reimprimirLote('${loteId}')" 
-                            style="background:var(--success); color:black; border:none; padding:6px 12px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold;">
-                        PDF LOTE
-                    </button>
                 </summary>
                 <div style="padding: 10px;">
                     <table style="width:100%; border-collapse: collapse;">
@@ -397,17 +386,13 @@
                             </tr>`).join('')}
                         </tbody>
                     </table>
-                    ${hayMas ? `
-                        <button onclick="verMasLote(event, '${loteId}')" 
-                                style="width:100%; margin-top:10px; background:rgba(255,255,255,0.05); border:1px solid #333; color:#fff; cursor:pointer; padding:12px; border-radius:4px;">
-                            Cargar más de este lote (+50)
-                        </button>` : ''}
+                    ${hayMas ? `<button onclick="verMasLote(event, '${loteId}')" style="width:100%; margin-top:10px; background:rgba(255,255,255,0.05); border:1px solid #333; color:#fff; padding:12px; border-radius:4px;">Cargar más (+50)</button>` : ''}
                 </div>
             </details>`;
         }).join('');
 
     } else {
-        // --- LÓGICA DE OPERATIVOS (HALLAZGOS / BÚSQUEDAS / MATCHES) ---
+        // --- LÓGICA DE HALLAZGOS / BÚSQUEDAS / MATCHES ---
         let data = [];
         if (currentView === 'h') data = db.hallazgos || [];
         if (currentView === 'b') data = db.busquedas || [];
@@ -444,8 +429,6 @@
         });
     }
 }
-        
-        listaLotesDiv.innerHTML = htmlLotes;
 
 // ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓN
 function verMasLote(event, loteId) {
