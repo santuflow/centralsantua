@@ -373,10 +373,11 @@
                         <span style="font-weight:bold;">LOTE: ${loteId}</span>
                         <span style="color:#666; font-size:0.8rem;">(${todosDelLote.length} QRs)</span>
                     </div>
-                    <button onclick="event.stopPropagation(); event.preventDefault(); const soloEsteLote = db.stickers.filter(st => st.lote_id === '${loteId}'); imprimirStickers(soloEsteLote);" 
-                            style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
-                        <i class="fas fa-print"></i> REIMPRIMIR LOTE
-                    </button>
+                    // BUSCÁ ESTA PARTE DENTRO DEL RENDER Y REEMPLAZALA:
+<button onclick="event.stopPropagation(); event.preventDefault(); reimprimirLote('${loteId}');" 
+        style="background:var(--primary); color:black; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
+    <i class="fas fa-print"></i> REIMPRIMIR LOTE
+</button>
                 </summary>
                 <div style="padding: 10px;">
                     <table style="width:100%; border-collapse: collapse;">
