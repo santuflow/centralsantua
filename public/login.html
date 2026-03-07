@@ -344,6 +344,13 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // 1. Bloqueamos el botón para evitar que el usuario haga clics múltiples
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Verificando...";
+
             const email = form.querySelector('input[type="email"]').value.toLowerCase().trim();
             const password = form.querySelector('input[type="password"]').value;
 
@@ -353,19 +360,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                
                 const data = await response.json();
 
                 if (response.ok) {
+                    // 2. Guardamos los datos de sesión
                     localStorage.setItem('usuarioNombre', data.username || 'Usuario');
-                    redirigirUsuario();
+                    localStorage.setItem('estaLogueado', 'true');
+
+                    // 3. RETARDO CLAVE: Esperamos 400ms para que la Cookie se guarde bien 
+                    // antes de saltar al index, evitando que el index te vea como "no logueado".
+                    setTimeout(() => {
+                        redirigirUsuario();
+                    }, 400);
                 } else {
                     alert(data.message || "Credenciales incorrectas");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
                 }
             } catch (err) {
-                alert("Error de conexión.");
+                alert("Error de conexión con Central Santua.");
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
         });
-        
+
         // Lanzar chequeo de Google
         chequearSesionGoogle();
     };

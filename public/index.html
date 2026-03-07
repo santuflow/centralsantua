@@ -217,33 +217,34 @@
         }
 
 /**
- * GESTIÓN DE INTERFAZ - CENTRAL SANTUA
- * Diseñado para ser infalible ante retardos de carga o de sesión (OAuth/Gmail).
+ * GESTIÓN DE INTERFAZ - CENTRAL SANTUA (VERSIÓN UNIFICADA)
  */
-function gestionarInterfaz() {
-    const logueado = localStorage.getItem('estaLogueado') === 'true';
+async function gestionarInterfaz() {
     const authContainer = document.getElementById('auth-buttons');
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
-
-    // Salida de seguridad: si el DOM aún no está listo, no hace nada
     if (!authContainer || !botonMenuPrivado) return;
 
-    if (logueado) {
-        // ESTADO: LOGUEADO
-        authContainer.style.setProperty('display', 'none', 'important');
+    // Prioridad 1: ¿Qué dice el servidor REALMENTE? (Evita el delay de Google)
+    try {
+        const res = await fetch('/api/usuario_actual?t=' + Date.now());
+        const data = await res.json();
         
-        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
-        botonMenuPrivado.style.visibility = 'visible';
-        botonMenuPrivado.style.opacity = '1';
+        if (data.logueado) {
+            localStorage.setItem('estaLogueado', 'true'); // Sincronizamos
+            authContainer.style.setProperty('display', 'none', 'important');
+            botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+            return; // Salimos, ya está resuelto
+        }
+    } catch (e) {
+        console.warn("Falla de red, usando localStorage...");
+    }
 
-        // Asegurar visibilidad de las barritas del menú
-        const barritas = botonMenuPrivado.querySelectorAll('.barrita');
-        barritas.forEach(b => {
-            b.style.backgroundColor = 'white';
-            b.style.display = 'block';
-        });
+    // Prioridad 2: Si el servidor falla, usamos el LocalStorage
+    const logueado = localStorage.getItem('estaLogueado') === 'true';
+    if (logueado) {
+        authContainer.style.setProperty('display', 'none', 'important');
+        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
     } else {
-        // ESTADO: NO LOGUEADO
         authContainer.style.setProperty('display', 'flex', 'important');
         botonMenuPrivado.style.setProperty('display', 'none', 'important');
     }
