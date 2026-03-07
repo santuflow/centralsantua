@@ -221,42 +221,46 @@ async function gestionarInterfaz() {
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
     if (!authContainer || !botonMenuPrivado) return;
 
-    // 1. Detección inmediata por URL (para login rápido de Google)
+    // 1. Detección inmediata por URL o LocalStorage
     const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'success') {
+    const vieneDeLogin = params.get('login') === 'success';
+    
+    if (vieneDeLogin) {
         localStorage.setItem('estaLogueado', 'true');
     }
 
-    // 2. Aplicar estado visual inicial basado en LocalStorage (Velocidad)
     const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
+
+    // 2. APLICAR CAMBIOS VISUALES (Usamos setProperty para forzar el !important)
     if (logueadoLocal) {
-        authContainer.style.display = 'none';
-        botonMenuPrivado.style.display = 'flex';
+        authContainer.style.setProperty('display', 'none', 'important');
+        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
     } else {
-        authContainer.style.display = 'flex';
-        botonMenuPrivado.style.display = 'none';
+        authContainer.style.setProperty('display', 'flex', 'important');
+        botonMenuPrivado.style.setProperty('display', 'none', 'important');
     }
 
-    // 3. Verificación REAL con el servidor (Seguridad)
+    // 3. Verificación de respaldo con el servidor
     try {
         const res = await fetch('/api/usuario_actual?t=' + Date.now());
         const data = await res.json();
         
-        if (data.logueado) {
-            localStorage.setItem('estaLogueado', 'true');
-            authContainer.style.display = 'none';
-            botonMenuPrivado.style.display = 'flex';
-        } else {
-            // SI EL SERVIDOR DICE QUE NO: Limpieza total obligatoria
+        if (!data.logueado && !vieneDeLogin) {
+            // Si el servidor dice que no estamos logueados y NO acabamos de entrar...
             localStorage.removeItem('estaLogueado');
-            localStorage.removeItem('usuarioNombre');
-            authContainer.style.display = 'flex';
-            botonMenuPrivado.style.display = 'none';
+            authContainer.style.setProperty('display', 'flex', 'important');
+            botonMenuPrivado.style.setProperty('display', 'none', 'important');
         }
     } catch (e) {
-        console.warn("Sin conexión con el servidor.");
+        console.warn("Modo offline.");
     }
 }
+
+// Inicialización limpia
+document.addEventListener("DOMContentLoaded", () => {
+    gestionarInterfaz(); 
+    // ... acá seguí con tu lógica de idEscaneado que ya tenías ...
+});
 
 // 2. Escucha de cambios en tiempo real (Storage Event)
 // Si otra pestaña o el popup de Google cambia el login, esto lo detecta al instante.
@@ -268,9 +272,6 @@ window.addEventListener('storage', (event) => {
 document.addEventListener("DOMContentLoaded", gestionarInterfaz);
 
 document.addEventListener("DOMContentLoaded", () => {
-    // REFUERZO: Doble chequeo por si el login (especialmente con Gmail) tarda en responder
-    setTimeout(gestionarInterfaz, 100);
-    setTimeout(gestionarInterfaz, 500);
 
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
@@ -340,23 +341,20 @@ function toggleMenu() {
     }
 }
 
-async function cerrarSesion() {
+async function cerrarSesionTotal() {
     try {
-        // 1. LE AVISAMOS AL SERVIDOR (Importante para que mate la sesión)
-        await fetch('/api/logout'); 
+        const res = await fetch('/api/logout');
+        if (res.ok) {
+            // LIMPIEZA ABSOLUTA DEL NAVEGADOR
+            localStorage.removeItem('estaLogueado');
+            localStorage.removeItem('usuarioNombre');
+            
+            // Redirigir al inicio con una señal de limpieza
+            window.location.replace('index.html?logout=success');
+        }
     } catch (err) {
-        console.error("Error al contactar servidor para logout");
+        console.error("Error al salir:", err);
     }
-
-    // 2. LIMPIAR NAVEGADOR
-    localStorage.clear(); 
-
-    // 3. CERRAR EL MENÚ VISUALMENTE
-    const menu = document.getElementById("side-menu");
-    if (menu) menu.style.width = "0";
-
-    // 4. RECARGAR LIMPIO
-    window.location.replace('index.html');
 }
 
 let html5QrCode; // Variable global para el control de la cámara

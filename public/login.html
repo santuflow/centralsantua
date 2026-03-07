@@ -304,16 +304,16 @@
 (function() {
     "use strict";
 
-   // REDIRECCIÓN SEGURA CON SEÑAL DE ÉXITO
-const redirigirUsuario = () => {
+  const redirigirUsuario = () => {
+    // Forzamos el guardado antes de salir
     localStorage.setItem('estaLogueado', 'true');
+    
     const pendiente = localStorage.getItem('qr_escaneado_pendiente');
     
-    // Si hay un QR pendiente (comerciante), vamos a pagar
+    // Usamos replace para que el usuario no pueda volver "atrás" al login con el botón del celular
     if (pendiente) {
         window.location.replace(`presentacion_pago.html?id=${pendiente}&login=success`);
     } else {
-        // Si no, volvemos al inicio con la señal de éxito
         window.location.replace('index.html?login=success');
     }
 };

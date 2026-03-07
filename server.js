@@ -563,11 +563,13 @@ app.get('/api/usuario_actual', (req, res) => {
     }
 });
 
-// 4. Cerrar sesión
+// 4. Cerrar sesión (Corregido para limpieza total)
 app.get('/api/logout', (req, res) => {
-    req.logout(() => {
-        // En lugar de redirect, enviamos un OK para que el frontend sepa que terminó
-        res.status(200).json({ status: "OK" }); 
+    req.session.destroy((err) => { // Destruye la sesión en el servidor
+        req.logout(() => {
+            res.clearCookie('connect.sid'); // Borra la cookie del navegador
+            res.status(200).json({ status: "OK" }); 
+        });
     });
 });
 
