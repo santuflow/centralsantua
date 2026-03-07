@@ -39,7 +39,7 @@
     <a href="tutorial.html">¿Cómo funciona?</a>
     <a href="ayuda.html">Ayuda</a>
     <a href="javascript:void(0)" onclick="abrirModalTerminos(event)">Términos y Condiciones</a>
-    <a href="javascript:void(0)" onclick="cerrarSesion()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
+    <a href="javascript:void(0)" onclick="cerrarSesionTotal()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
 </div>
 
 <main class="container">
@@ -345,15 +345,17 @@ async function cerrarSesionTotal() {
     try {
         const res = await fetch('/api/logout');
         if (res.ok) {
-            // LIMPIEZA ABSOLUTA DEL NAVEGADOR
-            localStorage.removeItem('estaLogueado');
-            localStorage.removeItem('usuarioNombre');
+            // LIMPIEZA ABSOLUTA
+            localStorage.clear(); // <--- Esto borra 'estaLogueado' y cualquier otra cosa de una
             
             // Redirigir al inicio con una señal de limpieza
             window.location.replace('index.html?logout=success');
         }
     } catch (err) {
         console.error("Error al salir:", err);
+        // Si el servidor falla, igual limpiamos localmente para que el usuario pueda salir
+        localStorage.clear();
+        window.location.replace('index.html');
     }
 }
 
