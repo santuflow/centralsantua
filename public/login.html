@@ -302,27 +302,59 @@
 
     <script>
     /**
-     * Finaliza el proceso de login asegurando que los datos se guarden 
-     * y redirigiendo al flujo correcto (Pago o Home).
+     * CENTRAL SANTUA - MOTOR DE REDIRECCIÓN SEGURO
      */
     function finalizarLoginYRedirigir() {
+        // 1. Forzamos la marca de fuego en el LocalStorage
+        localStorage.setItem('estaLogueado', 'true');
+        
         const pendiente = localStorage.getItem('qr_escaneado_pendiente');
         
-        // Disparamos un evento para que otras pestañas se enteren del login (opcional)
+        // 2. Avisamos a todas las pestañas abiertas que logueamos
         window.dispatchEvent(new Event('storage'));
 
-        // Pequeño delay para asegurar que el navegador asiente el LocalStorage
+        // 3. Redirigimos con un pequeño delay para que el navegador guarde bien
         setTimeout(() => {
             if (pendiente) {
-                window.location.href = `presentacion_pago.html?id=${pendiente}`;
+                window.location.replace(`presentacion_pago.html?id=${pendiente}`);
             } else {
-                window.location.href = 'index.html';
+                window.location.replace('index.html');
             }
-        }, 150);
+        }, 100);
     }
 
     /**
-     * Manejo de Login por Formulario (Email/Password)
+     * VERIFICACIÓN DE SESIÓN GOOGLE (EL SENSOR DE RETORNO)
+     */
+    async function verificarSesionGoogle() {
+        // Hacemos que la revisión sea persistente hasta que el servidor responda OK
+        const chequear = async () => {
+            try {
+                const res = await fetch('/api/usuario_actual');
+                const data = await res.json();
+                
+                if (data.logueado && data.user) {
+                    localStorage.setItem('usuarioNombre', data.user.username || 'Usuario');
+                    finalizarLoginYRedirigir();
+                    return true; // Corta el bucle
+                }
+            } catch (e) {
+                console.error("Esperando al servidor...");
+            }
+            return false;
+        };
+
+        // Si el servidor tarda, lo buscamos cada 800ms por 5 segundos
+        let intentos = 0;
+        const intervalo = setInterval(async () => {
+            const exito = await chequear();
+            intentos++;
+            if (exito || intentos > 7) clearInterval(intervalo);
+        }, 800);
+    }
+
+    /**
+     * MANEJO DE LOGIN MANUAL (FORMULARIO)
      */
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -339,49 +371,17 @@
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('usuarioNombre', data.username); 
-                localStorage.setItem('estaLogueado', 'true');
-                if (data.token) localStorage.setItem('token', data.token);
+                localStorage.setItem('usuarioNombre', data.username || 'Usuario');
                 finalizarLoginYRedirigir();
             } else {
                 alert("Error: " + (data.message || "Credenciales incorrectas"));
             }
         } catch (error) {
-            console.error("Error en login:", error);
-            alert("No se pudo conectar con el servidor.");
+            alert("Error de conexión con Central Santua.");
         }
     });
 
-    /**
-     * Verificación de Sesión de Google con Reintentos (Polling)
-     * Esto soluciona el problema de la primera vez que comentabas.
-     */
-    async function verificarSesionGoogle(intentos = 0) {
-        const MAX_INTENTOS = 5;
-        try {
-            const res = await fetch('/api/usuario_actual');
-            const data = await res.json();
-            
-            if (data.logueado) {
-                localStorage.setItem('usuarioNombre', data.user.username);
-                localStorage.setItem('estaLogueado', 'true');
-                console.log("Sesión confirmada satisfactoriamente.");
-                finalizarLoginYRedirigir();
-            } else {
-                // Si el servidor aún no procesó la sesión de Google, reintentamos
-                if (intentos < MAX_INTENTOS) {
-                    console.warn(`Sesión no detectada, reintentando... (${intentos + 1})`);
-                    setTimeout(() => verificarSesionGoogle(intentos + 1), 600);
-                }
-            }
-        } catch (e) {
-            if (intentos < MAX_INTENTOS) {
-                setTimeout(() => verificarSesionGoogle(intentos + 1), 600);
-            }
-        }
-    }
-
-    // Iniciar verificación al cargar
+    // Arrancamos la verificación apenas carga la página
     document.addEventListener('DOMContentLoaded', () => {
         verificarSesionGoogle();
     });
