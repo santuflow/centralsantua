@@ -261,13 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
     const logueado = localStorage.getItem('estaLogueado');
-    
-
-document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    let idEscaneado = params.get('id');
-    const logueado = localStorage.getItem('estaLogueado');
-    
+       
     const esRetornoPago = params.get('status') || params.get('preference_id');
 
     if (idEscaneado) {
