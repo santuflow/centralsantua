@@ -245,12 +245,12 @@ async function gestionarInterfaz() {
         const res = await fetch('/api/usuario_actual?t=' + Date.now());
         const data = await res.json();
         
-        if (!data.logueado && !vieneDeLogin) {
-            // Si el servidor dice que no estamos logueados y NO acabamos de entrar...
+       if (!data.logueado && !vieneDeLogin && logueadoLocal) {
+            // Solo si el servidor confirma el deslogueo total, limpiamos:
             localStorage.removeItem('estaLogueado');
-            authContainer.style.setProperty('display', 'flex', 'important');
-            botonMenuPrivado.style.setProperty('display', 'none', 'important');
+            location.reload(); // Recarga para actualizar los botones con seguridad
         }
+
     } catch (e) {
         console.warn("Modo offline.");
     }
