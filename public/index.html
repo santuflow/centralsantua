@@ -356,12 +356,28 @@ function toggleMenu() {
     }
 }
 
-function cerrarSesion() {
-    // Borra TODO lo que haya en la memoria del navegador de una sola vez
+async function cerrarSesion() {
+    // 1. AVISAR AL SERVIDOR (Esto es lo que faltaba)
+    // Sin esto, el servidor nunca se entera que te fuiste
+    try {
+        await fetch('/api/logout', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (e) {
+        console.error("Error al desconectar del servidor");
+    }
+
+    // 2. LIMPIAR NAVEGADOR
     localStorage.clear(); 
-    
-    // Redirige al inicio
-    window.location.href = 'index.html';
+    localStorage.setItem('estaLogueado', 'false');
+
+    // 3. CERRAR EL MENÚ VISUALMENTE (Por las dudas)
+    const menu = document.getElementById("side-menu");
+    if (menu) menu.style.width = "0";
+
+    // 4. RECARGAR PARA APLICAR CAMBIOS
+    window.location.replace('index.html');
 }
 
 let html5QrCode; // Variable global para el control de la cámara
