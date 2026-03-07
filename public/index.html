@@ -197,8 +197,9 @@
         <p>&copy; 2026 Central Santua - Gestión de Hallazgos con Responsabilidad Social</p>
     </footer>
 
-    <script>
-        function abrirGuia() {
+  <script>
+
+    function abrirGuia() {
             document.getElementById('modal-guia').style.display = 'flex';
             document.body.style.overflow = 'hidden'; // Evita scroll atrás
         }
@@ -214,9 +215,7 @@
                 cerrarGuia();
             }
         }
-    </script>
 
-  <script>
 function gestionarInterfaz() {
     const logueado = localStorage.getItem('estaLogueado');
     const authContainer = document.getElementById('auth-buttons');
@@ -251,6 +250,18 @@ function gestionarInterfaz() {
     }
 }
 
+// EJECUCIÓN INMEDIATA: Esto elimina el parpadeo visual antes de que cargue el resto
+gestionarInterfaz();
+
+document.addEventListener("DOMContentLoaded", () => {
+    // REFUERZO: Doble chequeo por si el login (especialmente con Gmail) tarda en responder
+    setTimeout(gestionarInterfaz, 100);
+    setTimeout(gestionarInterfaz, 500);
+
+    const params = new URLSearchParams(window.location.search);
+    let idEscaneado = params.get('id');
+    const logueado = localStorage.getItem('estaLogueado');
+    
 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
@@ -275,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // CASO A: El sticker ya está activo (Ya fue pagado)
                 // Se envía a recuperar siempre, sin importar si hay sesión o no.
                 if (data.status === "activado") {
-                    window.location.href = `recuperar.html?id=${idEscaneado}`;
+                    window.location.replace(`recuperar.html?id=${idEscaneado}`);
                 } 
                 
                 // CASO B: El sticker es nuevo (Stock del comerciante)
@@ -283,12 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (logueado === 'true') {
                         // Usuario logueado: va directo a pagar la activación
                         localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
-                        window.location.href = `presentacion_pago.html?id=${idEscaneado}`;
+                        window.location.replace(`presentacion_pago.html?id=${idEscaneado}`);
                     } else {
                         // Usuario no logueado: debe iniciar sesión o registrarse primero
                         alert("¡Sticker detectado! Para activarlo y proteger tu patente, primero debes Iniciar Sesión o Registrarte.");
                         localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
-                        window.location.href = "login.html";
+                        window.location.replace("login.html");
                     }
                 }
             })
