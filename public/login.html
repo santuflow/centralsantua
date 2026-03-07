@@ -266,10 +266,10 @@
                 <h3>Bienvenido</h3>
                 <p class="subtitle">Ingresá tus datos para continuar.</p>
 
-                <a href="/auth/google" class="btn-google">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
-                    Continuar con Google
-                </a>
+                <a href="/auth/google?prompt=select_account" class="btn-google">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
+    Continuar con Google
+</a>
 
                 <div class="divider">o ingresá con mail</div>
 
@@ -301,75 +301,90 @@
     </div>
 
     <script>
-    // 1. Función para redirección segura y manejo de QR pendiente
-function finalizarLoginYRedirigir() {
-    const pendiente = localStorage.getItem('qr_escaneado_pendiente');
-    
-    // Agregamos un pequeñísimo retraso de 100ms para asegurar que el LocalStorage se asiente
-    setTimeout(() => {
-        if (pendiente) {
-            // Si el usuario venía de escanear un sticker nuevo, lo mandamos directo al pago
-            window.location.href = `presentacion_pago.html?id=${pendiente}`;
-        } else {
-            // Si es un login común, a la home
-            window.location.href = 'index.html';
-        }
-    }, 100);
-}
-
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
-    const password = e.target.querySelector('input[type="password"]').value;
-
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // GUARDAMOS TODO ANTES DE SALIR
-            localStorage.setItem('usuarioNombre', data.username); 
-            localStorage.setItem('estaLogueado', 'true');
-            if (data.token) localStorage.setItem('token', data.token);
-
-            // Usamos la función de redirección corregida
-            finalizarLoginYRedirigir();
-        } else {
-            alert("Credenciales incorrectas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error en el login:", error);
-        alert("No se pudo conectar con el servidor.");
-    }
-});
-
-// --- Sincronización con Google ---
-async function verificarSesionGoogle() {
-    try {
-        const res = await fetch('/api/usuario_actual');
-        const data = await res.json();
+    /**
+     * Finaliza el proceso de login asegurando que los datos se guarden 
+     * y redirigiendo al flujo correcto (Pago o Home).
+     */
+    function finalizarLoginYRedirigir() {
+        const pendiente = localStorage.getItem('qr_escaneado_pendiente');
         
-        if (data.logueado) {
-            // Sincronizamos el estado antes de redirigir
-            localStorage.setItem('usuarioNombre', data.user.username);
-            localStorage.setItem('estaLogueado', 'true');
-            
-            // Usamos la función de redirección corregida
-            finalizarLoginYRedirigir();
-        }
-    } catch (e) {
-        console.log("No hay sesión activa de Google todavía");
-    }
-}
+        // Disparamos un evento para que otras pestañas se enteren del login (opcional)
+        window.dispatchEvent(new Event('storage'));
 
-// Ejecutar al cargar la página
-verificarSesionGoogle();
+        // Pequeño delay para asegurar que el navegador asiente el LocalStorage
+        setTimeout(() => {
+            if (pendiente) {
+                window.location.href = `presentacion_pago.html?id=${pendiente}`;
+            } else {
+                window.location.href = 'index.html';
+            }
+        }, 150);
+    }
+
+    /**
+     * Manejo de Login por Formulario (Email/Password)
+     */
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
+        const password = e.target.querySelector('input[type="password"]').value;
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('usuarioNombre', data.username); 
+                localStorage.setItem('estaLogueado', 'true');
+                if (data.token) localStorage.setItem('token', data.token);
+                finalizarLoginYRedirigir();
+            } else {
+                alert("Error: " + (data.message || "Credenciales incorrectas"));
+            }
+        } catch (error) {
+            console.error("Error en login:", error);
+            alert("No se pudo conectar con el servidor.");
+        }
+    });
+
+    /**
+     * Verificación de Sesión de Google con Reintentos (Polling)
+     * Esto soluciona el problema de la primera vez que comentabas.
+     */
+    async function verificarSesionGoogle(intentos = 0) {
+        const MAX_INTENTOS = 5;
+        try {
+            const res = await fetch('/api/usuario_actual');
+            const data = await res.json();
+            
+            if (data.logueado) {
+                localStorage.setItem('usuarioNombre', data.user.username);
+                localStorage.setItem('estaLogueado', 'true');
+                console.log("Sesión confirmada satisfactoriamente.");
+                finalizarLoginYRedirigir();
+            } else {
+                // Si el servidor aún no procesó la sesión de Google, reintentamos
+                if (intentos < MAX_INTENTOS) {
+                    console.warn(`Sesión no detectada, reintentando... (${intentos + 1})`);
+                    setTimeout(() => verificarSesionGoogle(intentos + 1), 600);
+                }
+            }
+        } catch (e) {
+            if (intentos < MAX_INTENTOS) {
+                setTimeout(() => verificarSesionGoogle(intentos + 1), 600);
+            }
+        }
+    }
+
+    // Iniciar verificación al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+        verificarSesionGoogle();
+    });
     </script>
 
 </body>
