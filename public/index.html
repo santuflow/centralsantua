@@ -255,6 +255,7 @@ function gestionarInterfaz() {
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     let idEscaneado = params.get('id');
+    const logueado = localStorage.getItem('estaLogueado');
     
     const esRetornoPago = params.get('status') || params.get('preference_id');
 
@@ -264,38 +265,47 @@ document.addEventListener("DOMContentLoaded", () => {
             return; 
         }
 
-        // --- CORRECCIÓN AQUÍ ---
+        // 1. Consultamos el estado del sticker al servidor
         fetch(`/api/validar-qr/${idEscaneado}`)
             .then(res => {
-                // Si la respuesta no es OK (ej. 404), saltamos directo al catch
-                if (!res.ok) throw new Error("ID no reconocido por el servidor");
+                if (!res.ok) throw new Error("ID no reconocido");
                 return res.json();
             })
             .then(data => {
-                // Si el servidor nos da una ruta, vamos ahí (recuperar.html)
-                if (data && data.redirect) {
-                    window.location.href = data.redirect;
-                } else {
-                    // Si no hay ruta en el JSON, disparamos el error para ir al respaldo
-                    throw new Error("Respuesta de servidor incompleta");
+                // CASO A: El sticker ya está activo (Ya fue pagado)
+                // Se envía a recuperar siempre, sin importar si hay sesión o no.
+                if (data.status === "activado") {
+                    window.location.href = `recuperar.html?id=${idEscaneado}`;
+                } 
+                
+                // CASO B: El sticker es nuevo (Stock del comerciante)
+                else {
+                    if (logueado === 'true') {
+                        // Usuario logueado: va directo a pagar la activación
+                        localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
+                        window.location.href = `presentacion_pago.html?id=${idEscaneado}`;
+                    } else {
+                        // Usuario no logueado: debe iniciar sesión o registrarse primero
+                        alert("¡Sticker detectado! Para activarlo y proteger tu patente, primero debes Iniciar Sesión o Registrarte.");
+                        localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
+                        window.location.href = "login.html";
+                    }
                 }
             })
             .catch(err => {
+                // LÓGICA DE RESPALDO (Mantiene lo que ya tenías funcionando)
                 console.warn("Redirigiendo por lógica de respaldo:", err);
-                
-                // LÓGICA DE RESPALDO (Esto salva el segundo teléfono)
                 let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
                 const yaEsMio = misStickers.find(s => s.id === idEscaneado);
 
                 if (yaEsMio) {
                     window.location.href = `perfil.html?id=${idEscaneado}`;
                 } else {
-                    // IMPORTANTE: Aquí es donde el segundo teléfono es enviado a recuperar.html
                     window.location.href = `recuperar.html?id=${idEscaneado}`;
                 }
             });
         
-        return; // Evita que se cargue la home mientras decide
+        return; // Evita carga de la home mientras decide
     }
     
     if (typeof gestionarInterfaz === 'function') gestionarInterfaz();
