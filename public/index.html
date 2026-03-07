@@ -217,36 +217,41 @@
         }
 
 /**
- * GESTIÓN DE INTERFAZ - CENTRAL SANTUA (VERSIÓN UNIFICADA)
+ * GESTIÓN DE INTERFAZ - CENTRAL SANTUA (VERSIÓN CORREGIDA)
  */
 async function gestionarInterfaz() {
     const authContainer = document.getElementById('auth-buttons');
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
     if (!authContainer || !botonMenuPrivado) return;
 
-    // Prioridad 1: ¿Qué dice el servidor REALMENTE? (Evita el delay de Google)
+    // 1. CHEQUEO LOCAL (Manda sobre el servidor para el Logout)
+    const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
+
+    if (!logueadoLocal) {
+        // Si el navegador dice que no está logueado, mostramos botones de ingreso y CORTAMOS ACÁ
+        authContainer.style.setProperty('display', 'flex', 'important');
+        botonMenuPrivado.style.setProperty('display', 'none', 'important');
+        return; 
+    }
+
+    // 2. SOLO SI PARECE LOGUEADO, verificamos con el servidor
     try {
         const res = await fetch('/api/usuario_actual?t=' + Date.now());
         const data = await res.json();
         
         if (data.logueado) {
-            localStorage.setItem('estaLogueado', 'true'); // Sincronizamos
             authContainer.style.setProperty('display', 'none', 'important');
             botonMenuPrivado.style.setProperty('display', 'flex', 'important');
-            return; // Salimos, ya está resuelto
+        } else {
+            // Si el servidor dice que no, sincronizamos el local y ocultamos menú
+            localStorage.setItem('estaLogueado', 'false');
+            authContainer.style.setProperty('display', 'flex', 'important');
+            botonMenuPrivado.style.setProperty('display', 'none', 'important');
         }
     } catch (e) {
-        console.warn("Falla de red, usando localStorage...");
-    }
-
-    // Prioridad 2: Si el servidor falla, usamos el LocalStorage
-    const logueado = localStorage.getItem('estaLogueado') === 'true';
-    if (logueado) {
+        // Si falla el servidor, le creemos a lo que ya teníamos en local (que es true)
         authContainer.style.setProperty('display', 'none', 'important');
         botonMenuPrivado.style.setProperty('display', 'flex', 'important');
-    } else {
-        authContainer.style.setProperty('display', 'flex', 'important');
-        botonMenuPrivado.style.setProperty('display', 'none', 'important');
     }
 }
 
