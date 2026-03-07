@@ -30,15 +30,14 @@ app.set('trust proxy', 1);
 // 2. CONFIGURACIÓN DE SESIÓN PROFESIONAL
 app.use(session({
     secret: process.env.SESSION_SECRET || 'santua_secreto_777', 
-    resave: false,
+    resave: true, // Cambialo a true para forzar el guardado
     saveUninitialized: false,
-    name: 'santua_session', // Nombre personalizado para mayor seguridad (oculta que usas Express)
+    name: 'santua_session',
     cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días de duración
-        httpOnly: true, // Protege contra ataques XSS
-        // 'auto' hace que sea TRUE en Render (HTTPS) y FALSE en tu PC (HTTP)
-        secure: process.env.NODE_ENV === 'production', 
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        httpOnly: true,
+        secure: false, // Ponelo en false hasta que tengas SSL/HTTPS funcionando perfecto
+        sameSite: 'lax' // Más estable para navegadores móviles
     }
 }));
 
@@ -327,26 +326,21 @@ app.post('/api/registro', (req, res) => {
     res.status(200).json({ message: "Usuario guardado correctamente" });
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', (req, res, next) => {
     const email = req.body.email.toLowerCase().trim();
     const { password } = req.body;
 
     const usuarioEncontrado = usuariosDB.find(u => u.email === email && u.password === password);
 
     if (usuarioEncontrado) {
-        // --- LA PIEZA FALTANTE: GUARDAR EN LA SESIÓN ---
-        req.session.user = {
-            username: usuarioEncontrado.username,
-            email: usuarioEncontrado.email
-        };
-
-        console.log("Login exitoso para:", usuarioEncontrado.username);
-        
-        // Enviamos la respuesta
-        res.status(200).json({ 
-            message: "Bienvenido",
-            username: usuarioEncontrado.username,
-            logueado: true 
+        // LOGUEAR MANUALMENTE EN PASSPORT
+        req.login(usuarioEncontrado, (err) => {
+            if (err) return next(err);
+            return res.status(200).json({ 
+                message: "Bienvenido",
+                username: usuarioEncontrado.username,
+                logueado: true 
+            });
         });
     } else {
         res.status(401).json({ message: "Correo o contraseña incorrectos" });

@@ -248,7 +248,6 @@ async function gestionarInterfaz() {
        if (!data.logueado && !vieneDeLogin && logueadoLocal) {
             // Solo si el servidor confirma el deslogueo total, limpiamos:
             localStorage.removeItem('estaLogueado');
-            location.reload(); // Recarga para actualizar los botones con seguridad
         }
 
     } catch (e) {
