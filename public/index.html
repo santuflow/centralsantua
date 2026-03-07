@@ -221,16 +221,14 @@ async function gestionarInterfaz() {
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
     if (!authContainer || !botonMenuPrivado) return;
 
-    // Prioridad 1: ¿Vengo de un login exitoso de Google? 
-    // Si la URL trae datos de éxito, forzamos el login en LocalStorage inmediatamente
+    // 1. Detección inmediata por URL (para login rápido de Google)
     const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'success' || params.get('google_login') === 'true') {
+    if (params.get('login') === 'success') {
         localStorage.setItem('estaLogueado', 'true');
     }
 
+    // 2. Aplicar estado visual inicial basado en LocalStorage (Velocidad)
     const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
-
-    // Aplicar cambio visual inmediato (Sin esperar al servidor)
     if (logueadoLocal) {
         authContainer.style.display = 'none';
         botonMenuPrivado.style.display = 'flex';
@@ -239,7 +237,7 @@ async function gestionarInterfaz() {
         botonMenuPrivado.style.display = 'none';
     }
 
-    // Verificación en segundo plano con el servidor (opcional para seguridad)
+    // 3. Verificación REAL con el servidor (Seguridad)
     try {
         const res = await fetch('/api/usuario_actual?t=' + Date.now());
         const data = await res.json();
@@ -249,15 +247,14 @@ async function gestionarInterfaz() {
             authContainer.style.display = 'none';
             botonMenuPrivado.style.display = 'flex';
         } else {
-            // Si el servidor dice que NO, y no hay nada en local, limpiamos
-            if (!logueadoLocal) {
-                localStorage.setItem('estaLogueado', 'false');
-                authContainer.style.display = 'flex';
-                botonMenuPrivado.style.display = 'none';
-            }
+            // SI EL SERVIDOR DICE QUE NO: Limpieza total obligatoria
+            localStorage.removeItem('estaLogueado');
+            localStorage.removeItem('usuarioNombre');
+            authContainer.style.display = 'flex';
+            botonMenuPrivado.style.display = 'none';
         }
     } catch (e) {
-        console.warn("Servidor no responde, manteniendo estado local.");
+        console.warn("Sin conexión con el servidor.");
     }
 }
 
@@ -344,26 +341,21 @@ function toggleMenu() {
 }
 
 async function cerrarSesion() {
-    // 1. AVISAR AL SERVIDOR (Esto es lo que faltaba)
-    // Sin esto, el servidor nunca se entera que te fuiste
     try {
-        await fetch('/api/logout', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (e) {
-        console.error("Error al desconectar del servidor");
+        // 1. LE AVISAMOS AL SERVIDOR (Importante para que mate la sesión)
+        await fetch('/api/logout'); 
+    } catch (err) {
+        console.error("Error al contactar servidor para logout");
     }
 
     // 2. LIMPIAR NAVEGADOR
     localStorage.clear(); 
-    localStorage.setItem('estaLogueado', 'false');
 
-    // 3. CERRAR EL MENÚ VISUALMENTE (Por las dudas)
+    // 3. CERRAR EL MENÚ VISUALMENTE
     const menu = document.getElementById("side-menu");
     if (menu) menu.style.width = "0";
 
-    // 4. RECARGAR PARA APLICAR CAMBIOS
+    // 4. RECARGAR LIMPIO
     window.location.replace('index.html');
 }
 

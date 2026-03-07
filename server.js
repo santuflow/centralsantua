@@ -566,7 +566,8 @@ app.get('/api/usuario_actual', (req, res) => {
 // 4. Cerrar sesión
 app.get('/api/logout', (req, res) => {
     req.logout(() => {
-        res.redirect('/');
+        // En lugar de redirect, enviamos un OK para que el frontend sepa que terminó
+        res.status(200).json({ status: "OK" }); 
     });
 });
 
