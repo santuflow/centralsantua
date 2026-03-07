@@ -304,16 +304,19 @@
 (function() {
     "use strict";
 
-    // REDIRECCIÓN SEGURA
-    const redirigirUsuario = () => {
-        localStorage.setItem('estaLogueado', 'true');
-        const pendiente = localStorage.getItem('qr_escaneado_pendiente');
-        window.dispatchEvent(new Event('storage'));
-
-        setTimeout(() => {
-            window.location.replace(pendiente ? `presentacion_pago.html?id=${pendiente}` : 'index.html');
-        }, 100);
-    };
+   // REDIRECCIÓN SEGURA CON SEÑAL DE ÉXITO
+const redirigirUsuario = () => {
+    localStorage.setItem('estaLogueado', 'true');
+    const pendiente = localStorage.getItem('qr_escaneado_pendiente');
+    
+    // Si hay un QR pendiente (comerciante), vamos a pagar
+    if (pendiente) {
+        window.location.replace(`presentacion_pago.html?id=${pendiente}&login=success`);
+    } else {
+        // Si no, volvemos al inicio con la señal de éxito
+        window.location.replace('index.html?login=success');
+    }
+};
 
     // DETECTOR AGRESIVO PARA GOOGLE
     async function chequearSesionGoogle() {

@@ -216,52 +216,50 @@
             }
         }
 
-/**
- * GESTIÓN DE INTERFAZ - CENTRAL SANTUA (VERSIÓN CORREGIDA)
- */
 async function gestionarInterfaz() {
     const authContainer = document.getElementById('auth-buttons');
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
     if (!authContainer || !botonMenuPrivado) return;
 
-    // 1. CHEQUEO LOCAL (Manda sobre el servidor para el Logout)
-    const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
-
-    if (!logueadoLocal) {
-        // Si el navegador dice que no está logueado, mostramos botones de ingreso y CORTAMOS ACÁ
-        authContainer.style.setProperty('display', 'flex', 'important');
-        botonMenuPrivado.style.setProperty('display', 'none', 'important');
-        return; 
+    // Prioridad 1: ¿Vengo de un login exitoso de Google? 
+    // Si la URL trae datos de éxito, forzamos el login en LocalStorage inmediatamente
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'success' || params.get('google_login') === 'true') {
+        localStorage.setItem('estaLogueado', 'true');
     }
 
-    // 2. SOLO SI PARECE LOGUEADO, verificamos con el servidor
+    const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
+
+    // Aplicar cambio visual inmediato (Sin esperar al servidor)
+    if (logueadoLocal) {
+        authContainer.style.display = 'none';
+        botonMenuPrivado.style.display = 'flex';
+    } else {
+        authContainer.style.display = 'flex';
+        botonMenuPrivado.style.display = 'none';
+    }
+
+    // Verificación en segundo plano con el servidor (opcional para seguridad)
     try {
         const res = await fetch('/api/usuario_actual?t=' + Date.now());
         const data = await res.json();
         
         if (data.logueado) {
-            authContainer.style.setProperty('display', 'none', 'important');
-            botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+            localStorage.setItem('estaLogueado', 'true');
+            authContainer.style.display = 'none';
+            botonMenuPrivado.style.display = 'flex';
         } else {
-            // Si el servidor dice que no, sincronizamos el local y ocultamos menú
-            localStorage.setItem('estaLogueado', 'false');
-            authContainer.style.setProperty('display', 'flex', 'important');
-            botonMenuPrivado.style.setProperty('display', 'none', 'important');
+            // Si el servidor dice que NO, y no hay nada en local, limpiamos
+            if (!logueadoLocal) {
+                localStorage.setItem('estaLogueado', 'false');
+                authContainer.style.display = 'flex';
+                botonMenuPrivado.style.display = 'none';
+            }
         }
     } catch (e) {
-        // Si falla el servidor, le creemos a lo que ya teníamos en local (que es true)
-        authContainer.style.setProperty('display', 'none', 'important');
-        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+        console.warn("Servidor no responde, manteniendo estado local.");
     }
 }
-
-/**
- * MOTOR DE EJECUCIÓN ROBUSTA
- * No confiamos en un solo disparo; observamos y reintentamos inteligentemente.
- */
-
-// 1. Ejecución inmediata (para los que ya tienen sesión activa)
-gestionarInterfaz();
 
 // 2. Escucha de cambios en tiempo real (Storage Event)
 // Si otra pestaña o el popup de Google cambia el login, esto lo detecta al instante.
@@ -269,22 +267,8 @@ window.addEventListener('storage', (event) => {
     if (event.key === 'estaLogueado') gestionarInterfaz();
 });
 
-// 3. Sistema de "Polling" de seguridad (Reintentos controlados)
-// Ejecuta la lógica cada 500ms durante los primeros 4 segundos.
-// Esto soluciona el problema de tener que apretar botones manualmente.
-let ciclosDeCarga = 0;
-const monitorDeSesion = setInterval(() => {
-    gestionarInterfaz();
-    ciclosDeCarga++;
-    // Después de 8 intentos (4 segundos), dejamos de vigilar para ahorrar recursos.
-    if (ciclosDeCarga > 8) clearInterval(monitorDeSesion);
-}, 500);
-
 // 4. Integración con el DOMContentLoaded existente
 document.addEventListener("DOMContentLoaded", gestionarInterfaz);
-
-// EJECUCIÓN INMEDIATA: Esto elimina el parpadeo visual antes de que cargue el resto
-gestionarInterfaz();
 
 document.addEventListener("DOMContentLoaded", () => {
     // REFUERZO: Doble chequeo por si el login (especialmente con Gmail) tarda en responder
@@ -345,8 +329,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         return; // Evita carga de la home mientras decide
     }
-    
-    if (typeof gestionarInterfaz === 'function') gestionarInterfaz();
 });
 
 // Función para el menú lateral
@@ -488,7 +470,5 @@ function detenerEscaneo() {
         </button>
     </div>
 </div>
-
-    <script src="interfaz.js"></script>
 </body>
 </html>

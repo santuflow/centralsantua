@@ -316,19 +316,17 @@ app.post('/api/registro', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
-    // También pasamos a minúsculas lo que el usuario escribe al intentar entrar
     const email = req.body.email.toLowerCase().trim();
     const { password } = req.body;
 
-    // Buscamos al usuario en nuestra lista
     const usuarioEncontrado = usuariosDB.find(u => u.email === email && u.password === password);
 
     if (usuarioEncontrado) {
         console.log("Login exitoso para:", usuarioEncontrado.username);
-        // Enviamos el username de vuelta para que el frontend lo use
         res.status(200).json({ 
             message: "Bienvenido",
-            username: usuarioEncontrado.username 
+            username: usuarioEncontrado.username,
+            logueado: true // <--- AGREGÁ ESTA LÍNEA
         });
     } else {
         res.status(401).json({ message: "Correo o contraseña incorrectos" });
@@ -547,12 +545,12 @@ app.get('/admin.html', asegurarAdmin, (req, res) => {
 // 1. Dispara la ventana de Google
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// 2. Recibe al usuario de vuelta
+// 2. Recibe al usuario de vuelta de Google
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login.html' }),
     (req, res) => {
-        // Al loguearse con éxito, lo mandamos al panel
-        res.redirect('/index.html'); 
+        // MODIFICADO: Agregamos la señal para que index.html active el menú al toque
+        res.redirect('/index.html?login=success'); 
     }
 );
 
