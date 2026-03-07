@@ -301,91 +301,82 @@
     </div>
 
     <script>
-    /**
-     * CENTRAL SANTUA - MOTOR DE REDIRECCIÓN SEGURO
-     */
-    function finalizarLoginYRedirigir() {
-        // 1. Forzamos la marca de fuego en el LocalStorage
+(function() {
+    "use strict";
+
+    // 1. MOTOR DE REDIRECCIÓN (Veloz y seguro)
+    const finalizarLoginYRedirigir = () => {
         localStorage.setItem('estaLogueado', 'true');
-        
         const pendiente = localStorage.getItem('qr_escaneado_pendiente');
         
-        // 2. Avisamos a todas las pestañas abiertas que logueamos
+        // Sincroniza con otras pestañas
         window.dispatchEvent(new Event('storage'));
 
-        // 3. Redirigimos con un pequeño delay para que el navegador guarde bien
-        setTimeout(() => {
-            if (pendiente) {
-                window.location.replace(`presentacion_pago.html?id=${pendiente}`);
-            } else {
-                window.location.replace('index.html');
-            }
-        }, 100);
-    }
+        // Salto inmediato
+        const destino = pendiente ? `presentacion_pago.html?id=${pendiente}` : 'index.html';
+        window.location.replace(destino);
+    };
 
-    /**
-     * VERIFICACIÓN DE SESIÓN GOOGLE (EL SENSOR DE RETORNO)
-     */
+    // 2. DETECTOR DE GMAIL (Más agresivo)
     async function verificarSesionGoogle() {
-        // Hacemos que la revisión sea persistente hasta que el servidor responda OK
-        const chequear = async () => {
+        let intentos = 0;
+        const maxIntentos = 20; // 10 segundos de paciencia
+
+        const intervalo = setInterval(async () => {
+            intentos++;
             try {
-                const res = await fetch('/api/usuario_actual');
+                // El ?v= evita que el navegador use una respuesta vieja cacheada
+                const res = await fetch('/api/usuario_actual?v=' + Date.now());
                 const data = await res.json();
-                
+
                 if (data.logueado && data.user) {
+                    clearInterval(intervalo);
                     localStorage.setItem('usuarioNombre', data.user.username || 'Usuario');
                     finalizarLoginYRedirigir();
-                    return true; // Corta el bucle
                 }
             } catch (e) {
-                console.error("Esperando al servidor...");
+                console.warn("Esperando servidor...");
             }
-            return false;
-        };
 
-        // Si el servidor tarda, lo buscamos cada 800ms por 5 segundos
-        let intentos = 0;
-        const intervalo = setInterval(async () => {
-            const exito = await chequear();
-            intentos++;
-            if (exito || intentos > 7) clearInterval(intervalo);
-        }, 800);
+            if (intentos >= maxIntentos) clearInterval(intervalo);
+        }, 500); // Chequea cada medio segundo
     }
 
-    /**
-     * MANEJO DE LOGIN MANUAL (FORMULARIO)
-     */
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
-        const password = e.target.querySelector('input[type="password"]').value;
+    // 3. LOGIN MANUAL (Sin errores de llaves)
+    const initApp = () => {
+        const loginForm = document.getElementById('login-form');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginForm.querySelector('input[type="email"]').value.toLowerCase().trim();
+                const password = loginForm.querySelector('input[type="password"]').value;
 
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('usuarioNombre', data.username || 'Usuario');
+                        finalizarLoginYRedirigir();
+                    } else {
+                        alert(data.message || "Credenciales incorrectas");
+                    }
+                } catch (error) {
+                    alert("Error de conexión con Central Santua.");
+                }
             });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('usuarioNombre', data.username || 'Usuario');
-                finalizarLoginYRedirigir();
-            } else {
-                alert("Error: " + (data.message || "Credenciales incorrectas"));
-            }
-        } catch (error) {
-            alert("Error de conexión con Central Santua.");
         }
-    });
-
-    // Arrancamos la verificación apenas carga la página
-    document.addEventListener('DOMContentLoaded', () => {
+        
+        // Disparar chequeo de Google apenas carga
         verificarSesionGoogle();
-    });
-    </script>
+    };
 
-</body>
-</html>
+    document.addEventListener('DOMContentLoaded', initApp);
+})();
+</script>
