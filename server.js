@@ -24,10 +24,22 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// 1. IMPORTANTE: Agregá esto justo antes de la sesión para que Render (el proxy) pase las cookies correctamente
+app.set('trust proxy', 1); 
+
+// 2. CONFIGURACIÓN DE SESIÓN PROFESIONAL
 app.use(session({
     secret: process.env.SESSION_SECRET || 'santua_secreto_777', 
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    name: 'santua_session', // Nombre personalizado para mayor seguridad (oculta que usas Express)
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días de duración
+        httpOnly: true, // Protege contra ataques XSS
+        // 'auto' hace que sea TRUE en Render (HTTPS) y FALSE en tu PC (HTTP)
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    }
 }));
 
 app.use(passport.initialize());
@@ -322,11 +334,19 @@ app.post('/api/login', (req, res) => {
     const usuarioEncontrado = usuariosDB.find(u => u.email === email && u.password === password);
 
     if (usuarioEncontrado) {
+        // --- LA PIEZA FALTANTE: GUARDAR EN LA SESIÓN ---
+        req.session.user = {
+            username: usuarioEncontrado.username,
+            email: usuarioEncontrado.email
+        };
+
         console.log("Login exitoso para:", usuarioEncontrado.username);
+        
+        // Enviamos la respuesta
         res.status(200).json({ 
             message: "Bienvenido",
             username: usuarioEncontrado.username,
-            logueado: true // <--- AGREGÁ ESTA LÍNEA
+            logueado: true 
         });
     } else {
         res.status(401).json({ message: "Correo o contraseña incorrectos" });
