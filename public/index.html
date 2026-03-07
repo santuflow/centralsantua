@@ -216,39 +216,66 @@
             }
         }
 
+/**
+ * GESTIÓN DE INTERFAZ - CENTRAL SANTUA
+ * Diseñado para ser infalible ante retardos de carga o de sesión (OAuth/Gmail).
+ */
 function gestionarInterfaz() {
-    const logueado = localStorage.getItem('estaLogueado');
+    const logueado = localStorage.getItem('estaLogueado') === 'true';
     const authContainer = document.getElementById('auth-buttons');
     const botonMenuPrivado = document.getElementById('boton-menu-privado');
 
-    if (logueado === 'true') {
-        // 1. Ocultamos los botones de auth
-        if (authContainer) {
-            authContainer.style.setProperty('display', 'none', 'important');
-        }
+    // Salida de seguridad: si el DOM aún no está listo, no hace nada
+    if (!authContainer || !botonMenuPrivado) return;
 
-        // 2. Forzamos la aparición del botón de las 3 rayas
-        if (botonMenuPrivado) {
-            botonMenuPrivado.style.setProperty('display', 'flex', 'important');
-            botonMenuPrivado.style.visibility = 'visible';
-            botonMenuPrivado.style.opacity = '1';
-            
-            // Esto asegura que las barritas internas sean blancas y visibles
-            const barritas = botonMenuPrivado.querySelectorAll('.barrita');
-            barritas.forEach(b => {
-                b.style.backgroundColor = 'white';
-                b.style.display = 'block';
-            });
-        }
+    if (logueado) {
+        // ESTADO: LOGUEADO
+        authContainer.style.setProperty('display', 'none', 'important');
+        
+        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+        botonMenuPrivado.style.visibility = 'visible';
+        botonMenuPrivado.style.opacity = '1';
+
+        // Asegurar visibilidad de las barritas del menú
+        const barritas = botonMenuPrivado.querySelectorAll('.barrita');
+        barritas.forEach(b => {
+            b.style.backgroundColor = 'white';
+            b.style.display = 'block';
+        });
     } else {
-        if (authContainer) {
-            authContainer.style.setProperty('display', 'flex', 'important');
-        }
-        if (botonMenuPrivado) {
-            botonMenuPrivado.style.setProperty('display', 'none', 'important');
-        }
+        // ESTADO: NO LOGUEADO
+        authContainer.style.setProperty('display', 'flex', 'important');
+        botonMenuPrivado.style.setProperty('display', 'none', 'important');
     }
 }
+
+/**
+ * MOTOR DE EJECUCIÓN ROBUSTA
+ * No confiamos en un solo disparo; observamos y reintentamos inteligentemente.
+ */
+
+// 1. Ejecución inmediata (para los que ya tienen sesión activa)
+gestionarInterfaz();
+
+// 2. Escucha de cambios en tiempo real (Storage Event)
+// Si otra pestaña o el popup de Google cambia el login, esto lo detecta al instante.
+window.addEventListener('storage', (event) => {
+    if (event.key === 'estaLogueado') gestionarInterfaz();
+});
+
+// 3. Sistema de "Polling" de seguridad (Reintentos controlados)
+// Ejecuta la lógica cada 500ms durante los primeros 4 segundos.
+// Esto soluciona el problema de tener que apretar botones manualmente.
+let ciclosDeCarga = 0;
+const monitorDeSesion = setInterval(() => {
+    gestionarInterfaz();
+    ciclosDeCarga++;
+    // Después de 8 intentos (4 segundos), dejamos de vigilar para ahorrar recursos.
+    if (ciclosDeCarga > 8) clearInterval(monitorDeSesion);
+}, 500);
+
+// 4. Integración con el DOMContentLoaded existente
+document.addEventListener("DOMContentLoaded", gestionarInterfaz);
 
 // EJECUCIÓN INMEDIATA: Esto elimina el parpadeo visual antes de que cargue el resto
 gestionarInterfaz();
