@@ -532,20 +532,31 @@ app.post('/api/webhook-pagos', async (req, res) => {
 // RUTA DE REFUERZO: Activa el sticker si el usuario vuelve con éxito en la URL
 app.get('/api/verificar-y-activar/:id', (req, res) => {
     const id = req.params.id.toUpperCase().trim();
+    
+    // CAPTURAMOS EL EMAIL (Google o Manual) antes de procesar
+    const emailUsuario = (req.user && req.user.email) || (req.session.user && req.session.user.email) || "Sin Correo";
+
     let sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
 
     // Si por algún reinicio no existe en memoria, lo creamos
     if (!sticker) {
-        sticker = { id_qr: id, activado: true, pago_confirmado: true };
+        sticker = { 
+            id_qr: id, 
+            activado: true, 
+            pago_confirmado: true,
+            emailDuenio: emailUsuario // <--- Agregado: Vincula el mail al crear
+        };
         baseDeDatosSimulada.push(sticker);
-        console.log(`📡 Sticker creado y activado por retorno directo: ${id}`);
+        console.log(`📡 Sticker creado y vinculado a ${emailUsuario}: ${id}`);
         return res.json({ success: true, status: "activado" });
     }
 
     // Si existe, lo activamos
     sticker.activado = true;
     sticker.pago_confirmado = true;
-    console.log(`🚀 Sticker activado por refuerzo: ${id}`);
+    sticker.emailDuenio = emailUsuario; // <--- Agregado: Vincula el mail al activar existente
+    
+    console.log(`🚀 Sticker activado por refuerzo: ${id} para ${emailUsuario}`);
     res.json({ success: true, status: "activado" });
 });
 
