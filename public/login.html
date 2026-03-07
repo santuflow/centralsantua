@@ -301,59 +301,74 @@
     </div>
 
     <script>
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // 1. CAPTURAMOS LOS DATOS Y NORMALIZAMOS EL EMAIL
-        const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
-        const password = e.target.querySelector('input[type="password"]').value;
-
-        try {
-            // 2. CONEXIÓN AL SERVIDOR
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // 3. GUARDAMOS EN MEMORIA PARA QUE EL INDEX SEPA QUIÉN SOS
-                localStorage.setItem('usuarioNombre', data.username); 
-                localStorage.setItem('estaLogueado', 'true');
-                localStorage.setItem('token', data.token); // Por si usas tokens de seguridad
-
-                // 4. REDIRECCIÓN
-                window.location.href = 'index.html'; 
-            } else {
-                alert("Credenciales incorrectas: " + data.message);
-            }
-        } catch (error) {
-            console.error("Error en el login:", error);
-            alert("No se pudo conectar con el servidor.");
+    // 1. Función para redirección segura y manejo de QR pendiente
+function finalizarLoginYRedirigir() {
+    const pendiente = localStorage.getItem('qr_escaneado_pendiente');
+    
+    // Agregamos un pequeñísimo retraso de 100ms para asegurar que el LocalStorage se asiente
+    setTimeout(() => {
+        if (pendiente) {
+            // Si el usuario venía de escanear un sticker nuevo, lo mandamos directo al pago
+            window.location.href = `presentacion_pago.html?id=${pendiente}`;
+        } else {
+            // Si es un login común, a la home
+            window.location.href = 'index.html';
         }
-    });
+    }, 100);
+}
 
-    // --- NUEVO: Detectar si el usuario viene de un login exitoso con Google ---
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = e.target.querySelector('input[type="email"]').value.toLowerCase().trim();
+    const password = e.target.querySelector('input[type="password"]').value;
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // GUARDAMOS TODO ANTES DE SALIR
+            localStorage.setItem('usuarioNombre', data.username); 
+            localStorage.setItem('estaLogueado', 'true');
+            if (data.token) localStorage.setItem('token', data.token);
+
+            // Usamos la función de redirección corregida
+            finalizarLoginYRedirigir();
+        } else {
+            alert("Credenciales incorrectas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error en el login:", error);
+        alert("No se pudo conectar con el servidor.");
+    }
+});
+
+// --- Sincronización con Google ---
 async function verificarSesionGoogle() {
     try {
         const res = await fetch('/api/usuario_actual');
         const data = await res.json();
         
         if (data.logueado) {
-            // Si el servidor dice que estamos logueados, sincronizamos el localStorage
+            // Sincronizamos el estado antes de redirigir
             localStorage.setItem('usuarioNombre', data.user.username);
             localStorage.setItem('estaLogueado', 'true');
-            // Y lo mandamos al index
-            window.location.href = 'index.html';
+            
+            // Usamos la función de redirección corregida
+            finalizarLoginYRedirigir();
         }
     } catch (e) {
         console.log("No hay sesión activa de Google todavía");
     }
 }
-//nada
-// Ejecutar al cargar la página por si vuelve de Google
+
+// Ejecutar al cargar la página
 verificarSesionGoogle();
     </script>
 
