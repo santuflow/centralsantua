@@ -7,6 +7,37 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+// --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
+const mongoose = require('mongoose');
+
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+        console.log("------------------------------------------");
+        console.log("✅ CONEXIÓN EXITOSA: Central Santua está en la nube.");
+        console.log("------------------------------------------");
+    })
+    .catch(err => {
+        console.log("------------------------------------------");
+        console.log("❌ ERROR DE CONEXIÓN A MONGODB:");
+        console.log(err.message);
+        console.log("------------------------------------------");
+    });
+
+// Definimos el "Molde" de los Stickers para MongoDB
+const stickerSchema = new mongoose.Schema({
+    id_qr: { type: String, unique: true },
+    activado: { type: Boolean, default: false },
+    pago_confirmado: { type: Boolean, default: false },
+    emailDuenio: String,
+    alias: String,
+    telefono: String,
+    mensaje: String,
+    tipo: String,
+    fecha_creacion: { type: Date, default: Date.now }
+});
+
+const Sticker = mongoose.model('Sticker', stickerSchema);
+
 const app = express();
 
 // --- BASES DE DATOS EN MEMORIA ---
@@ -356,16 +387,14 @@ const client = new MercadoPagoConfig({
     accessToken: 'APP_USR-7751639628824719-021612-dbddd90a31825e1b6fa2cb41fa93b3e4-2118365527' 
 });
  
-// 2. RUTA PARA GENERAR LOTE (Corregida para que no se mezclen)
-app.post('/api/generar-lote-seguro', (req, res) => {
+// 2. RUTA PARA GENERAR LOTE (Actualizada con MongoDB y manteniendo compatibilidad)
+app.post('/api/generar-lote-seguro', async (req, res) => { // Agregamos async
     try {
-        const { cantidad, tipo, lote_id } = req.body; // <--- Capturamos el lote_id que mandás del frontend
+        const { cantidad, tipo, lote_id } = req.body; 
         const nuevosIDs = [];
         const crypto = require('crypto');
         const ahora = new Date();
 
-        // Si el frontend mandó un nombre (con milisegundos), lo usamos. 
-        // Si no, creamos uno nuevo que INCLUYA SEGUNDOS para que no se repita.
         const nombreFinalLote = lote_id || `LOTE-${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
 
         for (let i = 0; i < cantidad; i++) {
@@ -373,16 +402,26 @@ app.post('/api/generar-lote-seguro', (req, res) => {
             const idPro = `CS-${randomHex.slice(0, 4)}-${randomHex.slice(4, 8)}`;
             
             nuevosIDs.push(idPro);
-            
-            baseDeDatosSimulada.push({
+
+            // Objeto de datos que respeta tu estructura original
+            const datosSticker = {
                 id_qr: idPro,
                 tipo: tipo,
                 activado: false,
-                lote_id: nombreFinalLote, // <--- Ahora sí usamos el nombre único
+                lote_id: nombreFinalLote,
                 fecha_creacion: ahora,
                 seguridad: "Nivel Criptográfico"
-            });
+            };
+
+            // 1. GUARDAR EN MONGODB (Persistencia real)
+            const nuevoStickerDB = new Sticker(datosSticker);
+            await nuevoStickerDB.save();
+
+            // 2. GUARDAR EN LA BASE SIMULADA (Mantenemos esto para que nada se rompa)
+            baseDeDatosSimulada.push(datosSticker);
         }
+        
+        console.log(`✅ Lote ${nombreFinalLote} guardado en la nube y en memoria.`);
         res.json({ ids: nuevosIDs, lote: nombreFinalLote });
     } catch (e) {
         console.error("Error al generar lote:", e);
