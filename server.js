@@ -606,7 +606,7 @@ app.post('/api/generar-lote-seguro', async (req, res) => {
     }
 });
 
-// 3. RUTA DE ESTADÍSTICASs
+// 3. RUTA DE ESTADÍSTICASs1
 app.get('/api/stats', (req, res) => {
     const generados = baseDeDatosSimulada.length;
     const activados = baseDeDatosSimulada.filter(qr => qr.activado === true).length;
