@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (idNuevo && (status === 'approved' || status === 'exitosa')) {
         showToast("Verificando activación...");
         try {
-            const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`);
+            const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`, { credentials: 'include' });
             const verifyData = await verifyRes.json();
 
             if (verifyData.success) {
@@ -343,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 async function obtenerStickersDelServidor() {
     try {
-        const response = await fetch('/api/mis-stickers');
+        const response = await fetch('/api/mis-stickers', { credentials: 'include' });
         const data = await response.json();
 
         if (data.success) {
