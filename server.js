@@ -614,7 +614,7 @@ app.post("/crear-preferencia", async (req, res) => {
                 items: [{
                     title: `Activación Central Santua ID: ${id_qr}`,
                     quantity: 1,
-                    unit_price: 5000.00, 
+                    unit_price: 2.00, 
                     currency_id: "ARS"
                 }],
                 payment_methods: {
