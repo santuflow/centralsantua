@@ -474,15 +474,16 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
     const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
+
+    // --- 1. CAMBIO: Abrir la ventana INMEDIATAMENTE después del clic ---
+    // Esto evita que el navegador la bloquee por "demora del servidor"
+    const win = window.open('', '_blank');
 
     try {
         btn.disabled = true;
@@ -498,23 +499,30 @@ function filtrarStickers() {
             })
         });
 
-        if (!response.ok) throw new Error("Error en el servidor");
+        if (!response.ok) {
+            if(win) win.close(); // Cerramos la ventana si el server falló
+            throw new Error("Error en el servidor");
+        }
         
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+        // --- 2. CAMBIO: Verificación de seguridad para 'win' ---
+        if (win && !win.closed) {
+            const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+            win.document.write(contenidoHTML);
+            win.document.close();
+        } else {
+            // Si llegamos acá, es porque el navegador realmente la bloqueó
+            alert("⚠️ Ventana emergente bloqueada. Por favor, permití los pop-ups en este sitio para poder imprimir.");
+        }
         
-        win.document.write(contenidoHTML);
-        win.document.close();
-        
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
+        if (typeof loadData === "function") {
             setTimeout(loadData, 1000); 
         }
 
     } catch (error) {
+        if(win) win.close();
         alert("ERROR: " + error.message);
     } finally {
         btn.disabled = false;
