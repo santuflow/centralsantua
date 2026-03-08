@@ -62,12 +62,13 @@ const Busqueda = mongoose.model('Busqueda', busquedaSchema);
 // Molde para Usuarios (Email y Contraseña)
 const usuarioSchema = new mongoose.Schema({
     username: String,
-    email: { type: String, unique: true },
+    email: { type: String, unique: true, required: true },
     password: String, 
     google_id: String,
     foto: String
 });
 const Usuario = mongoose.model('Usuario', usuarioSchema);
+Usuario.createIndexes();
 
 const app = express();
 
@@ -106,38 +107,64 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Configuración de Passport para Google
+// Configuración de Passport para Google
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL,
-    proxy: true // <--- AGREGÁ ESTA LÍNEA (Es vital para Render)
-}, (accessToken, refreshToken, profile, done) => {
+    proxy: true 
+}, async (accessToken, refreshToken, profile, done) => {
     try {
-        // Extraemos el email con cuidado
+        // 1. Extraemos el email y lo limpiamos
         const email = (profile.emails && profile.emails.length > 0) 
-            ? profile.emails[0].value.toLowerCase() 
+            ? profile.emails[0].value.toLowerCase().trim() 
             : null;
 
-        if (!email) return done(new Error("No se obtuvo email de Google"));
+        if (!email) {
+            console.error("❌ Google no devolvió un email.");
+            return done(new Error("No se obtuvo email de Google"));
+        }
 
-        // Buscamos en tu lista
-        let usuario = usuariosDB.find(u => u.email === email);
+        // 2. BUSCAMOS EN LA BASE DE DATOS REAL (MongoDB)
+        let usuario = await Usuario.findOne({ email: email });
         
         if (!usuario) {
-            usuario = {
+            // 3. Si no existe, lo creamos de verdad en la nube
+            usuario = new Usuario({
                 username: profile.displayName || "Usuario Nuevo",
                 email: email,
                 foto: (profile.photos && profile.photos[0]) ? profile.photos[0].value : null,
                 google_id: profile.id 
-            };
-            usuariosDB.push(usuario);
+            });
+            await usuario.save();
+            console.log(`✅ NUEVO USUARIO GMAIL: ${email} guardado en MongoDB.`);
+        } else {
+            // 4. Si ya existía, nos aseguramos de que tenga el ID de Google vinculado
+            if (!usuario.google_id) {
+                usuario.google_id = profile.id;
+                await usuario.save();
+                console.log(`🔗 VINCULADO: Usuario previo (${email}) ahora usa Google.`);
+            }
         }
         
+        // Devolvemos el usuario de la base de datos
         return done(null, usuario);
+
     } catch (err) {
+        console.error("❌ ERROR CRÍTICO EN LOGIN GOOGLE:", err.message);
         return done(err, null);
     }
 }));
+
+// No olvides tener configurado el serialize y deserialize para que la sesión se mantenga
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((obj, done) => {
+    done(null, obj);
+});
+
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
