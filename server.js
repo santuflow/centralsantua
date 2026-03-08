@@ -753,6 +753,31 @@ async function cargarDatosDeNube() {
 // Ejecutamos la carga apenas arranca el server
 cargarDatosDeNube();
 
+// ESTA ES LA RUTA QUE LE FALTA A TU SERVIDOR
+app.get('/api/mis-stickers', async (req, res) => {
+    try {
+        // 1. Verificamos si hay un usuario logueado por Google
+        const emailUsuario = req.user ? req.user.email.toLowerCase() : null;
+
+        if (!emailUsuario) {
+            return res.json({ success: false, message: "No logueado", stickers: [] });
+        }
+
+        // 2. Buscamos en MongoDB SOLO los stickers que le pertenecen a este email
+        const misStickers = await Sticker.find({ emailDuenio: emailUsuario });
+
+        console.log(`Buscando stickers para: ${emailUsuario} - Encontrados: ${misStickers.length}`);
+
+        res.json({ 
+            success: true, 
+            stickers: misStickers 
+        });
+    } catch (error) {
+        console.error("Error al obtener stickers:", error);
+        res.status(500).json({ success: false, stickers: [] });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);

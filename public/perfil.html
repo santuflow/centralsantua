@@ -489,6 +489,7 @@ if (!telValue) {
         await fetch('/api/sticker/configurar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(nuevosDatos)
         });
         showToast("Sincronizado con éxito");
