@@ -33,6 +33,7 @@ const stickerSchema = new mongoose.Schema({
     telefono: String,
     mensaje: String,
     tipo: String,
+    lote_id: String,
     fecha_creacion: { type: Date, default: Date.now }
 });
 
