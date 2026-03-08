@@ -43,6 +43,7 @@ const hallazgoSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
+    telefono: String,
     detalles: Object, // Guarda el resto de los datos del formulario
     idInterno: { type: Number, unique: true }
 });
@@ -53,14 +54,24 @@ const busquedaSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
+    telefono: String,
     detalles: Object
 });
 const Busqueda = mongoose.model('Busqueda', busquedaSchema);
 
+// Molde para Usuarios (Email y Contraseña)
+const usuarioSchema = new mongoose.Schema({
+    username: String,
+    email: { type: String, unique: true },
+    password: String, 
+    google_id: String,
+    foto: String
+});
+const Usuario = mongoose.model('Usuario', usuarioSchema);
+
 const app = express();
 
 // --- BASES DE DATOS EN MEMORIA ---
-let usuariosDB = [];
 let hallazgos = []; 
 let busquedas = []; 
 let baseDeDatosSimulada = [];
@@ -174,7 +185,7 @@ function asegurarAdmin(req, res, next) {
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
 app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el 'async'
-    const { nro, categoria } = req.body; 
+    const { nro, categoria, telefono } = req.body;
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
@@ -185,7 +196,8 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
         const nuevo = { 
             ...req.body, 
             nro: nroLimpio, 
-            categoria: catFija, 
+            categoria: catFija,
+            telefono: telefono, 
             fecha: new Date().toLocaleString(),
             idInterno: Date.now() 
         };
@@ -240,7 +252,7 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
 app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
-    const { nro, categoria } = req.body;
+    const { nro, categoria, telefono } = req.body;
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
@@ -257,6 +269,7 @@ app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
             ...req.body, 
             nro: nroLimpio, 
             categoria: catFija,
+            telefono: telefono,
             fecha: new Date().toLocaleString() 
         };
         busquedas.push(busqueda);
@@ -405,42 +418,59 @@ app.get('/api/contadores', (req, res) => {
     });
 });
 
-app.post('/api/registro', (req, res) => {
+app.post('/api/registro', async (req, res) => { // Agregamos 'async' para poder usar la base de datos
     const { username, password } = req.body;
-    // Forzamos el mail a minúsculas antes de guardarlo
     const email = req.body.email.toLowerCase().trim();
 
-    // Verificamos si el usuario ya existe
-    const existe = usuariosDB.find(u => u.email === email);
-    if (existe) {
-        return res.status(400).json({ message: "El correo ya está registrado" });
-    }
+    try {
+        // 1. Buscamos en MongoDB si ya existe (en lugar de usuariosDB)
+        const existe = await Usuario.findOne({ email: email });
+        
+        if (existe) {
+            return res.status(400).json({ message: "El correo ya está registrado" });
+        }
 
-    // Guardamos el nuevo usuario en nuestra lista
-    usuariosDB.push({ username, email, password });
-    
-    console.log("Usuario registrado con éxito:", username, "(" + email + ")");
-    res.status(200).json({ message: "Usuario guardado correctamente" });
+        // 2. Guardamos el nuevo usuario en MongoDB (Persistencia real)
+        const nuevoUsuario = new Usuario({ username, email, password });
+        await nuevoUsuario.save();
+        
+        console.log("✅ Usuario registrado con éxito en NUBE:", username, "(" + email + ")");
+        res.status(200).json({ message: "Usuario guardado correctamente" });
+
+    } catch (error) {
+        console.error("Error al registrar en MongoDB:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
 });
 
-app.post('/api/login', (req, res, next) => {
+app.post('/api/login', async (req, res, next) => { // Agregamos async
     const email = req.body.email.toLowerCase().trim();
     const { password } = req.body;
 
-    const usuarioEncontrado = usuariosDB.find(u => u.email === email && u.password === password);
+    try {
+        // BUSCAMOS EN LA NUBE (En lugar de usuariosDB)
+        const usuarioEncontrado = await Usuario.findOne({ email: email, password: password });
 
-    if (usuarioEncontrado) {
-        // LOGUEAR MANUALMENTE EN PASSPORT
-        req.login(usuarioEncontrado, (err) => {
-            if (err) return next(err);
-            return res.status(200).json({ 
-                message: "Bienvenido",
-                username: usuarioEncontrado.username,
-                logueado: true 
+        if (usuarioEncontrado) {
+            // LOGUEAR MANUALMENTE EN PASSPORT (Tal como lo tenías)
+            req.login(usuarioEncontrado, (err) => {
+                if (err) return next(err);
+
+                // Aseguramos que la sesión guarde el email para los stickers
+                req.session.user = { email: usuarioEncontrado.email }; 
+
+                return res.status(200).json({ 
+                    message: "Bienvenido",
+                    username: usuarioEncontrado.username,
+                    logueado: true 
+                });
             });
-        });
-    } else {
-        res.status(401).json({ message: "Correo o contraseña incorrectos" });
+        } else {
+            res.status(401).json({ message: "Correo o contraseña incorrectos" });
+        }
+    } catch (error) {
+        console.error("Error en login:", error);
+        res.status(500).json({ message: "Error interno" });
     }
 });
 
