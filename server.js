@@ -553,7 +553,7 @@ const client = new MercadoPagoConfig({
 });
  
 // 2. RUTA PARA GENERAR LOTE (Actualizada con MongoDB y manteniendo compatibilidad)
-app.post('/api/generar-lote-seguro', async (req, res) => { // Agregamos async
+app.post('/api/generar-lote-seguro', async (req, res) => {
     try {
         const { cantidad, tipo, lote_id } = req.body; 
         const nuevosIDs = [];
@@ -562,35 +562,47 @@ app.post('/api/generar-lote-seguro', async (req, res) => { // Agregamos async
 
         const nombreFinalLote = lote_id || `LOTE-${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
 
-        for (let i = 0; i < cantidad; i++) {
-            const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
-            const idPro = `CS-${randomHex.slice(0, 4)}-${randomHex.slice(4, 8)}`;
-            
-            nuevosIDs.push(idPro);
+        // CONFIGURACIÓN DE VELOCIDAD: Procesamos de a 500 en 500
+        const CHUNK_SIZE = 500;
 
-            // Objeto de datos que respeta tu estructura original
-            const datosSticker = {
-                id_qr: idPro,
-                tipo: tipo,
-                activado: false,
-                lote_id: nombreFinalLote,
-                fecha_creacion: ahora,
-                seguridad: "Nivel Criptográfico"
-            };
+        for (let i = 0; i < cantidad; i += CHUNK_SIZE) {
+            const stickersParaChunk = [];
+            const limite = Math.min(i + CHUNK_SIZE, cantidad);
 
-            // 1. GUARDAR EN MONGODB (Persistencia real)
-            const nuevoStickerDB = new Sticker(datosSticker);
-            await nuevoStickerDB.save();
+            for (let j = i; j < limite; j++) {
+                const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
+                const idPro = `CS-${randomHex.slice(0, 4)}-${randomHex.slice(4, 8)}`;
+                
+                nuevosIDs.push(idPro);
 
-            // 2. GUARDAR EN LA BASE SIMULADA (Mantenemos esto para que nada se rompa)
-            baseDeDatosSimulada.push(datosSticker);
+                const datosSticker = {
+                    id_qr: idPro,
+                    tipo: tipo,
+                    activado: false,
+                    lote_id: nombreFinalLote,
+                    fecha_creacion: ahora,
+                    seguridad: "Nivel Criptográfico"
+                };
+
+                stickersParaChunk.push(datosSticker);
+                
+                // Mantenemos la base simulada por si la usás en otro lado
+                if (typeof baseDeDatosSimulada !== 'undefined') {
+                    baseDeDatosSimulada.push(datosSticker);
+                }
+            }
+
+            // GUARDADO MASIVO: Inserta 500 de un solo viaje a la nube
+            await Sticker.insertMany(stickersParaChunk);
+            console.log(`[${nombreFinalLote}] -> Guardados ${limite} de ${cantidad}...`);
         }
         
-        console.log(`✅ Lote ${nombreFinalLote} guardado en la nube y en memoria.`);
+        console.log(`✅ Lote ${nombreFinalLote} completado con éxito.`);
         res.json({ ids: nuevosIDs, lote: nombreFinalLote });
+
     } catch (e) {
-        console.error("Error al generar lote:", e);
-        res.status(500).send("Error");
+        console.error("Error al generar lote grande:", e);
+        res.status(500).json({ error: "Error al procesar el lote", detalle: e.message });
     }
 });
 
