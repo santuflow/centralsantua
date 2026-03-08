@@ -617,6 +617,11 @@ app.post("/crear-preferencia", async (req, res) => {
                     unit_price: 2.00, 
                     currency_id: "ARS"
                 }],
+                payment_methods: {
+                    excluded_payment_types: [], // No bloqueamos nada: permite crédito y débito.
+                    installments: 12,           // Permite hasta 12 cuotas.
+                    default_payment_method_id: null // No fuerza ninguno, deja que el usuario elija.
+                },
                 external_reference: id_qr, 
                 notification_url: `https://centralsantua.com.ar/api/webhook-pagos`, 
                 back_urls: {
