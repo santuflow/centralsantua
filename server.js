@@ -38,6 +38,25 @@ const stickerSchema = new mongoose.Schema({
 
 const Sticker = mongoose.model('Sticker', stickerSchema);
 
+// Molde para Hallazgos (Encontré algo)
+const hallazgoSchema = new mongoose.Schema({
+    nro: String,
+    categoria: String,
+    fecha: String,
+    detalles: Object, // Guarda el resto de los datos del formulario
+    idInterno: { type: Number, unique: true }
+});
+const Hallazgo = mongoose.model('Hallazgo', hallazgoSchema);
+
+// Molde para Búsquedas (Perdí algo)
+const busquedaSchema = new mongoose.Schema({
+    nro: String,
+    categoria: String,
+    fecha: String,
+    detalles: Object
+});
+const Busqueda = mongoose.model('Busqueda', busquedaSchema);
+
 const app = express();
 
 // --- BASES DE DATOS EN MEMORIA ---
@@ -65,7 +84,7 @@ app.use(session({
     saveUninitialized: false,
     name: 'santua_session',
     cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 30,
+        maxAge: 1000 * 60 * 60 * 24 * 365,
         httpOnly: true,
         secure: false, // Ponelo en false hasta que tengas SSL/HTTPS funcionando perfecto
         sameSite: 'lax' // Más estable para navegadores móviles
@@ -154,19 +173,14 @@ function asegurarAdmin(req, res, next) {
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
-app.post('/api/reportar', (req, res) => {
+app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el 'async'
     const { nro, categoria } = req.body; 
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-    // 1. BUSCAMOS SI YA EXISTE EN EL ADMIN
     const yaExisteEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
-
-    // 2. BUSCAMOS SI ALGUIEN LO ESTÁ BUSCANDO (MATCH)
     const alguienLoBusca = busquedas.find(b => b.nro === nroLimpio && b.categoria === catFija);
 
-    // --- LÓGICA DE REGISTRO EN ADMIN ---
-    // Si NO existe en el admin, lo guardamos siempre (sea match o no)
     if (!yaExisteEnAdmin) {
         const nuevo = { 
             ...req.body, 
@@ -176,12 +190,13 @@ app.post('/api/reportar', (req, res) => {
             idInterno: Date.now() 
         };
         hallazgos.push(nuevo);
-        console.log(`✅ HALLAZGO REGISTRADO EN ADMIN: [${catFija}] ${nroLimpio}`);
+
+        // --- SOLO AGREGAMOS ESTO ---
+        await new Hallazgo(nuevo).save(); 
+        console.log(`✅ NUBE: Hallazgo guardado en base de datos: ${nroLimpio}`);
+        // ---------------------------
     }
 
-    // --- LÓGICA DE RESPUESTA AL USUARIO ---
-    
-    // SI HAY MATCH: Prioridad absoluta, siempre responde Match
     if (alguienLoBusca) {
         return res.json({ 
             success: true, 
@@ -189,6 +204,20 @@ app.post('/api/reportar', (req, res) => {
             datosDuenio: alguienLoBusca 
         });
     }
+
+    if (yaExisteEnAdmin) {
+        return res.json({ 
+            success: false, 
+            error: "repetido",
+            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
+        });
+    }
+
+    res.json({ 
+        success: true, 
+        matchInmediato: false, 
+        datosDuenio: null 
+    });
 
     // SI NO HAY MATCH Y YA EXISTÍA: Entonces avisamos que es repetido
     if (yaExisteEnAdmin) {
@@ -210,7 +239,7 @@ app.post('/api/reportar', (req, res) => {
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
-app.post('/api/buscar', (req, res) => {
+app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
     const { nro, categoria } = req.body;
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
@@ -231,7 +260,12 @@ app.post('/api/buscar', (req, res) => {
             fecha: new Date().toLocaleString() 
         };
         busquedas.push(busqueda);
-        console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN: [${catFija}] ${nroLimpio}`);
+
+        // --- SOLO AGREGAMOS ESTO PARA LA NUBE ---
+        await new Busqueda(busqueda).save(); 
+        // ----------------------------------------
+
+        console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN Y NUBE: [${catFija}] ${nroLimpio}`);
     }
 
     // --- LÓGICA DE RESPUESTA AL USUARIO ---
@@ -291,17 +325,29 @@ app.get('/api/admin/stats', (req, res) => {
 // 4. RUTAS DE BORRADO (CORREGIDAS PARA MATCH)
 // =========================================
 
-// Borrar ambos cuando es un MATCH
-app.delete('/api/admin/borrar/match/:nro', (req, res) => {
+// Borrar ambos cuando es un MATCH (Memoria + Nube)
+app.delete('/api/admin/borrar/match/:nro', async (req, res) => { // <--- Agregamos async
     const nroABorrar = req.params.nro;
     
+    // 1. Mantenemos tus contadores para la respuesta
     const hallazgosAntes = hallazgos.length;
     const busquedasAntes = busquedas.length;
 
+    // 2. BORRADO EN LA NUBE (Nuevo)
+    try {
+        await Hallazgo.deleteMany({ nro: nroABorrar });
+        await Busqueda.deleteMany({ nro: nroABorrar });
+    } catch (err) {
+        console.log("Error borrando en nube:", err.message);
+    }
+
+    // 3. BORRADO EN MEMORIA (Tu código original intacto)
     hallazgos = hallazgos.filter(h => h.nro !== nroABorrar);
     busquedas = busquedas.filter(b => b.nro !== nroABorrar);
 
-    console.log(`🧹 LIMPIEZA TOTAL DE MATCH: ${nroABorrar}`);
+    console.log(`🧹 LIMPIEZA TOTAL DE MATCH (NUBE Y MEMORIA): ${nroABorrar}`);
+    
+    // 4. Tu respuesta original sin cambios
     res.json({ 
         success: true, 
         eliminadosH: hallazgosAntes - hallazgos.length,
@@ -309,23 +355,43 @@ app.delete('/api/admin/borrar/match/:nro', (req, res) => {
     });
 });
 
-// Borrar solo Hallazgo
-app.delete('/api/admin/borrar/hallazgo/:nro', (req, res) => {
+// Borrar solo Hallazgo (Nube + Memoria)
+app.delete('/api/admin/borrar/hallazgo/:nro', async (req, res) => { // <--- Agregamos async
     const nroABorrar = req.params.nro;
+
+    // 1. Intentamos borrar en la Nube
+    try {
+        await Hallazgo.deleteOne({ nro: nroABorrar });
+    } catch (err) {
+        console.log("Error borrando hallazgo en nube:", err.message);
+    }
+
+    // 2. Tu lógica original de Memoria (Intacta)
     const index = hallazgos.findIndex(h => h.nro === nroABorrar);
     if (index !== -1) {
         hallazgos.splice(index, 1);
+        console.log(`🧹 Hallazgo eliminado de Nube y Memoria: ${nroABorrar}`);
         return res.json({ success: true });
     }
     res.status(404).json({ success: false });
 });
 
-// Borrar solo Búsqueda
-app.delete('/api/admin/borrar/busqueda/:nro', (req, res) => {
+// Borrar solo Búsqueda (Nube + Memoria)
+app.delete('/api/admin/borrar/busqueda/:nro', async (req, res) => { // <--- Agregamos async
     const nroABorrar = req.params.nro;
+
+    // 1. Intentamos borrar en la Nube
+    try {
+        await Busqueda.deleteOne({ nro: nroABorrar });
+    } catch (err) {
+        console.log("Error borrando búsqueda en nube:", err.message);
+    }
+
+    // 2. Tu lógica original de Memoria (Intacta)
     const index = busquedas.findIndex(b => b.nro === nroABorrar);
     if (index !== -1) {
         busquedas.splice(index, 1);
+        console.log(`🧹 Búsqueda eliminada de Nube y Memoria: ${nroABorrar}`);
         return res.json({ success: true });
     }
     res.status(404).json({ success: false });
@@ -494,25 +560,37 @@ app.get("/api/validar-qr/:id", (req, res) => {
 
 
 // REEMPLAZA TU RUTA /api/sticker/configurar POR ESTA:
-app.post('/api/sticker/configurar', (req, res) => {
+app.post('/api/sticker/configurar', async (req, res) => { // <--- Agregamos async
     const { id, alias, telefono, mensaje, tipo } = req.body;
     const nroID = id.toUpperCase().trim();
 
-    const sticker = baseDeDatosSimulada.find(s => s.id_qr === nroID);
+    try {
+        // 1. ACTUALIZAMOS EN LA NUBE (MongoDB)
+        const stickerDB = await Sticker.findOneAndUpdate(
+            { id_qr: nroID },
+            { alias, telefono, mensaje, tipo },
+            { new: true }
+        );
 
-    // BLINDAJE: Solo dejamos configurar si el sistema ya lo activó por pago
-    if (sticker && sticker.activado === true) {
-        sticker.alias = alias;
-        sticker.telefono = telefono;
-        sticker.mensaje = mensaje;
-        sticker.tipo = tipo;
-        
-        console.log(`✅ Datos guardados para ${nroID}`);
-        res.json({ success: true });
-    } else {
-        // Si no está activado, el frontend no puede "forzar" la activación
-        console.log(`❌ Intento de configuración sin pago: ${nroID}`);
-        res.status(403).json({ success: false, message: "El sticker no ha sido pagado todavía." });
+        if (stickerDB && stickerDB.activado) {
+            // 2. ACTUALIZAMOS EN MEMORIA (Para que el Panel Admin lo vea al toque)
+            const stickerMemoria = baseDeDatosSimulada.find(s => s.id_qr === nroID);
+            if (stickerMemoria) {
+                stickerMemoria.alias = alias;
+                stickerMemoria.telefono = telefono;
+                stickerMemoria.mensaje = mensaje;
+                stickerMemoria.tipo = tipo;
+            }
+            
+            console.log(`✅ NUBE: Datos guardados para sticker ${nroID}`);
+            res.json({ success: true });
+        } else {
+            console.log(`❌ Intento de configuración sin pago o inexistente: ${nroID}`);
+            res.status(403).json({ success: false, message: "El sticker no ha sido pagado todavía." });
+        }
+    } catch (error) {
+        console.error("Error al configurar sticker:", error);
+        res.status(500).json({ success: false });
     }
 });
 
@@ -552,13 +630,22 @@ app.post('/api/webhook-pagos', async (req, res) => {
             if (data.status === "approved") {
                 const idQR = data.external_reference; // El ID que guardamos al crear la preferencia
                 
-                // 3. Buscamos el sticker en nuestra base de datos y lo ACTIVAMOS
-                const index = baseDeDatosSimulada.findIndex(s => s.id_qr === idQR);
-                if (index !== -1) {
-                    baseDeDatosSimulada[index].activado = true;
-                    baseDeDatosSimulada[index].pago_confirmado = true; // Marca de seguridad extra
-                    console.log(`⭐⭐⭐ SEGURIDAD: Sticker ${idQR} ACTIVADO POR PAGO REAL`);
+                // 3. Buscamos y activamos directamente en MongoDB (Base real)
+            const stickerDB = await Sticker.findOneAndUpdate(
+                { id_qr: idQR }, 
+                { activado: true, pago_confirmado: true },
+                { new: true }
+            );
+
+            if (stickerDB) {
+                console.log(`⭐⭐⭐ SEGURIDAD: Sticker ${idQR} ACTIVADO EN MONGODB POR PAGO REAL`);
+                // Actualizamos también la memoria para el panel admin actual
+                const indexMemoria = baseDeDatosSimulada.findIndex(s => s.id_qr === idQR);
+                if (indexMemoria !== -1) {
+                    baseDeDatosSimulada[indexMemoria].activado = true;
+                    baseDeDatosSimulada[indexMemoria].pago_confirmado = true;
                 }
+            }
             }
         } catch (error) {
             console.error("Error validando pago:", error.message);
@@ -568,35 +655,35 @@ app.post('/api/webhook-pagos', async (req, res) => {
     res.sendStatus(200);
 });
 
-// RUTA DE REFUERZO: Activa el sticker si el usuario vuelve con éxito en la URL
-app.get('/api/verificar-y-activar/:id', (req, res) => {
+// RUTA DE REFUERZO: Activa el sticker en MongoDB y Memoria
+app.get('/api/verificar-y-activar/:id', async (req, res) => { // <--- Importante el async
     const id = req.params.id.toUpperCase().trim();
-    
-    // CAPTURAMOS EL EMAIL (Google o Manual) antes de procesar
     const emailUsuario = (req.user && req.user.email) || (req.session.user && req.session.user.email) || "Sin Correo";
 
-    let sticker = baseDeDatosSimulada.find(s => s.id_qr === id);
+    try {
+        // 1. Grabamos en la Nube (MongoDB)
+        const stickerDB = await Sticker.findOneAndUpdate(
+            { id_qr: id },
+            { activado: true, pago_confirmado: true, emailDuenio: emailUsuario },
+            { new: true, upsert: true } // Lo crea si no existe
+        );
 
-    // Si por algún reinicio no existe en memoria, lo creamos
-    if (!sticker) {
-        sticker = { 
-            id_qr: id, 
-            activado: true, 
-            pago_confirmado: true,
-            emailDuenio: emailUsuario // <--- Agregado: Vincula el mail al crear
-        };
-        baseDeDatosSimulada.push(sticker);
-        console.log(`📡 Sticker creado y vinculado a ${emailUsuario}: ${id}`);
-        return res.json({ success: true, status: "activado" });
+        // 2. Sincronizamos la memoria para el Panel Admin
+        const index = baseDeDatosSimulada.findIndex(s => s.id_qr === id);
+        if (index !== -1) {
+            baseDeDatosSimulada[index].activado = true;
+            baseDeDatosSimulada[index].pago_confirmado = true;
+            baseDeDatosSimulada[index].emailDuenio = emailUsuario;
+        } else {
+            baseDeDatosSimulada.push(stickerDB);
+        }
+
+        console.log(`📡 NUBE: Sticker ${id} blindado para ${emailUsuario}`);
+        res.json({ success: true, status: "activado" });
+    } catch (error) {
+        console.error("Error en refuerzo:", error);
+        res.status(500).json({ success: false });
     }
-
-    // Si existe, lo activamos
-    sticker.activado = true;
-    sticker.pago_confirmado = true;
-    sticker.emailDuenio = emailUsuario; // <--- Agregado: Vincula el mail al activar existente
-    
-    console.log(`🚀 Sticker activado por refuerzo: ${id} para ${emailUsuario}`);
-    res.json({ success: true, status: "activado" });
 });
 
 // RUTA PROTEGIDA: Solo deja leer el archivo si sos el admin
@@ -636,6 +723,35 @@ app.get('/api/logout', (req, res) => {
         });
     });
 });
+
+// FUNCIÓN PARA BAJAR TODO DE LA NUBE AL EMPEZAR EL SERVIDOR
+async function cargarDatosDeNube() {
+    try {
+        // Bajamos los 3 tipos de datos al mismo tiempo
+        const [stickersEnNube, hallazgosEnNube, busquedasEnNube] = await Promise.all([
+            Sticker.find({}),
+            Hallazgo.find({}),
+            Busqueda.find({})
+        ]);
+
+        // Llenamos las listas de memoria con lo que habia en la nube
+        baseDeDatosSimulada = stickersEnNube;
+        hallazgos = hallazgosEnNube;
+        busquedas = busquedasEnNube;
+
+        console.log("------------------------------------------");
+        console.log(`☁️  SANTUA CLOUD SYNC COMPLETA:`);
+        console.log(`   ✅ Stickers: ${baseDeDatosSimulada.length}`);
+        console.log(`   ✅ Hallazgos: ${hallazgos.length}`);
+        console.log(`   ✅ Búsquedas: ${busquedas.length}`);
+        console.log("------------------------------------------");
+    } catch (err) {
+        console.log("❌ Error en sincronización inicial:", err.message);
+    }
+}
+
+// Ejecutamos la carga apenas arranca el server
+cargarDatosDeNube();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {

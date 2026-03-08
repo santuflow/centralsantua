@@ -314,7 +314,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const idNuevo = params.get('id');
     const status = params.get('status') || params.get('collection_status') || params.get('activacion');
 
-    let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+    // 1. Primero mostramos lo que haya en LocalStorage para que no tarde en cargar
+    renderLista();
 
     if (idNuevo && (status === 'approved' || status === 'exitosa')) {
         showToast("Verificando activación...");
@@ -323,27 +324,50 @@ document.addEventListener("DOMContentLoaded", async () => {
             const verifyData = await verifyRes.json();
 
             if (verifyData.success) {
-                const yaExiste = misStickers.some(s => s.id === idNuevo);
-                if (!yaExiste) {
-                    const stickerNuevo = {
-                        id: idNuevo,
-                        alias: "Nuevo Objeto",
-                        tipo: "directo",
-                        telefono: "",
-                        mensaje: "Si encontraste esto, por favor contáctame."
-                    };
-                    misStickers.push(stickerNuevo);
-                    localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
-                    showToast("¡Etiqueta activada!");
-                }
+                showToast("¡Etiqueta activada!");
+                // 2. En lugar de agregarlo a mano al localStorage, 
+                // le pedimos al servidor la lista actualizada
+                await obtenerStickersDelServidor(); 
             }
         } catch (e) {
             console.error("Error:", e);
         }
         window.history.replaceState({}, document.title, "perfil.html");
+    } else {
+        // 3. Si es un ingreso normal (sin compra), sincronizamos con la nube
+        await obtenerStickersDelServidor();
     }
-    renderLista(misStickers);
 });
+document.addEventListener("DOMContentLoaded", async () => {
+    const params = new URLSearchParams(window.location.search);
+    const idNuevo = params.get('id');
+    const status = params.get('status') || params.get('collection_status') || params.get('activacion');
+
+    // 1. Intentamos renderizar lo que haya en LocalStorage para que no se vea vacío un segundo
+    renderLista();
+
+    // 2. Si venimos de una compra exitosa, activamos el nuevo sticker
+    if (idNuevo && (status === 'approved' || status === 'exitosa')) {
+        showToast("Verificando activación...");
+        try {
+            const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`);
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+                showToast("¡Etiqueta activada!");
+                // Forzamos la recarga desde el servidor para traer el nuevo
+                await obtenerStickersDelServidor();
+            }
+        } catch (e) {
+            console.error("Error:", e);
+        }
+        window.history.replaceState({}, document.title, "perfil.html");
+    } else {
+        // 3. Si es un ingreso normal, sincronizamos con la nube
+        await obtenerStickersDelServidor();
+    }
+});
+
 
 function renderLista(datos = null) {
     const listaAMostrar = datos || JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
