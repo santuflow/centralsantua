@@ -341,6 +341,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         await obtenerStickersDelServidor();
     }
 });
+async function obtenerStickersDelServidor() {
+    try {
+        const response = await fetch('/api/mis-stickers');
+        const data = await response.json();
+
+        if (data.success) {
+            // "Traducimos" lo que viene de MongoDB para que tu HTML lo entienda
+            const listaFormateada = data.stickers.map(s => ({
+                id: s.id_qr || s.id, 
+                alias: s.alias || "Objeto sin nombre",
+                telefono: s.telefono || "",
+                mensaje: s.mensaje || "",
+                tipo: s.tipo || "intermediario"
+            }));
+
+            // Guardamos la verdad de la base de datos en el navegador
+            localStorage.setItem('mis_stickers_santua', JSON.stringify(listaFormateada));
+            
+            // Dibujamos la lista actualizada en pantalla
+            renderLista(listaFormateada);
+        }
+    } catch (error) {
+        console.error("Error sincronizando con MongoDB:", error);
+    }
+}
 
 function renderLista(datos = null) {
     const listaAMostrar = datos || JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
