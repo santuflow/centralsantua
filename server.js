@@ -418,47 +418,86 @@ app.get('/api/contadores', (req, res) => {
     });
 });
 
-app.post('/api/registro', async (req, res) => { // Agregamos 'async' para poder usar la base de datos
-    const { username, password } = req.body;
-    const email = req.body.email.toLowerCase().trim();
-
+// --- RUTA DE REGISTRO PROFESIONAL Y SEGURA ---
+app.post('/api/registro', async (req, res) => {
     try {
-        // 1. Buscamos en MongoDB si ya existe (en lugar de usuariosDB)
-        const existe = await Usuario.findOne({ email: email });
+        // 1. Extraemos y limpiamos los datos de entrada
+        const { username, password } = req.body;
         
-        if (existe) {
-            return res.status(400).json({ message: "El correo ya está registrado" });
+        // Verificamos que el email exista antes de transformarlo para evitar errores
+        if (!req.body.email || !username || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Todos los campos son obligatorios" 
+            });
         }
 
-        // 2. Guardamos el nuevo usuario en MongoDB (Persistencia real)
-        const nuevoUsuario = new Usuario({ username, email, password });
+        const email = req.body.email.toLowerCase().trim();
+
+        // 2. Buscamos en la base de datos real (MongoDB)
+        // Esto bloquea tanto a los que ya existen como a los que entraron por Google
+        const usuarioExistente = await Usuario.findOne({ email: email });
+        
+        if (usuarioExistente) {
+            console.log(`⚠️ Intento de duplicado para el correo: ${email}`);
+            return res.status(400).json({ 
+                success: false, 
+                message: "Este correo ya está registrado en Central Santua" 
+            });
+        }
+
+        // 3. Creamos el nuevo usuario con el modelo de Mongoose
+        const nuevoUsuario = new Usuario({ 
+            username: username.trim(), 
+            email: email, 
+            password: password // En el futuro podrías usar bcrypt aquí para más pro
+        });
+
+        // 4. Guardamos en la nube (Persistencia total)
         await nuevoUsuario.save();
         
-        console.log("✅ Usuario registrado con éxito en NUBE:", username, "(" + email + ")");
-        res.status(200).json({ message: "Usuario guardado correctamente" });
+        console.log("------------------------------------------");
+        console.log(`✅ REGISTRO EXITOSO: ${username} (${email})`);
+        console.log("------------------------------------------");
+
+        // 5. Respuesta profesional al frontend
+        return res.status(201).json({ 
+            success: true, 
+            message: "Usuario creado con éxito. Ya podés iniciar sesión." 
+        });
 
     } catch (error) {
-        console.error("Error al registrar en MongoDB:", error);
-        res.status(500).json({ message: "Error interno del servidor" });
+        // Manejo de errores detallado para el log, pero genérico para el usuario (seguridad)
+        console.error("❌ ERROR CRÍTICO EN REGISTRO:", error.message);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Error técnico en el servidor. Reintentá en unos minutos." 
+        });
     }
 });
 
-app.post('/api/login', async (req, res, next) => { // Agregamos async
-    const email = req.body.email.toLowerCase().trim();
-    const { password } = req.body;
-
+app.post('/api/login', async (req, res, next) => {
     try {
-        // BUSCAMOS EN LA NUBE (En lugar de usuariosDB)
+        // 1. VALIDACIÓN DE ENTRADA: Evita que el server trabaje con datos nulos
+        if (!req.body.email || !req.body.password) {
+            return res.status(400).json({ message: "Email y contraseña son requeridos" });
+        }
+
+        const email = req.body.email.toLowerCase().trim();
+        const { password } = req.body;
+
+        // 2. BUSQUEDA EN NUBE: Usamos el modelo Usuario de MongoDB
         const usuarioEncontrado = await Usuario.findOne({ email: email, password: password });
 
         if (usuarioEncontrado) {
-            // LOGUEAR MANUALMENTE EN PASSPORT (Tal como lo tenías)
+            // 3. LOGUEAR EN PASSPORT: Mantenemos tu flujo original
             req.login(usuarioEncontrado, (err) => {
                 if (err) return next(err);
 
-                // Aseguramos que la sesión guarde el email para los stickers
+                // 4. PERSISTENCIA DE SESIÓN: Para que sus QR aparezcan en su perfil
                 req.session.user = { email: usuarioEncontrado.email }; 
 
+                console.log(`✅ Login exitoso: ${email}`);
                 return res.status(200).json({ 
                     message: "Bienvenido",
                     username: usuarioEncontrado.username,
@@ -466,11 +505,13 @@ app.post('/api/login', async (req, res, next) => { // Agregamos async
                 });
             });
         } else {
-            res.status(401).json({ message: "Correo o contraseña incorrectos" });
+            // Error de credenciales (No cambiamos el mensaje para no confundir al usuario)
+            return res.status(401).json({ message: "Correo o contraseña incorrectos" });
         }
     } catch (error) {
-        console.error("Error en login:", error);
-        res.status(500).json({ message: "Error interno" });
+        // Manejo de errores profesional
+        console.error("❌ Error crítico en login:", error.message);
+        return res.status(500).json({ message: "Error interno del servidor" });
     }
 });
 
