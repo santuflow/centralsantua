@@ -386,6 +386,12 @@
         style="background:#007bff; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
     <i class="fas fa-print"></i> REIMPRIMIR LOTE
 </button>
+
+<button onclick="event.stopPropagation(); event.preventDefault(); descargarLotePDF('${loteId}');" 
+        class="btn-cmd" 
+        style="background:#28a745; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer; margin-left: 5px;">
+    <i class="fas fa-file-pdf"></i> DESCARGAR PDF
+</button>
                 </summary>
                 <div style="padding: 10px;">
                     <table style="width:100%; border-collapse: collapse;">
@@ -674,38 +680,143 @@ function reimprimirLote(loteId) {
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
 }
-//Funcion descargar lote PDF
-function descargarLotePDF() {
-    // Buscamos el contenedor donde se generaron los stickers
-    const elemento = document.querySelector('.contenedor-impresion');
-    
-    if (!elemento || elemento.innerHTML === "") {
-        alert("Primero generá un lote con el botón 'GENERAR E IMPRIMIR'");
+// Función descargar lote PDF (Corregida para lotes históricos)
+async function descargarLotePDF(loteId) {
+    // 1. Buscamos los datos en el localStorage
+    const lotesGuardados = JSON.parse(localStorage.getItem('lotesGuardados') || "[]");
+    const lote = lotesGuardados.find(l => l.id === loteId);
+
+    if (!lote) {
+        alert("No se encontró la información del lote seleccionado.");
         return;
     }
 
-    // Detectamos el tipo de sticker para ajustar la hoja del PDF
-    const esAuto = elemento.innerHTML.includes('sticker-auto-full');
-    const anchoHoja = esAuto ? 350 : 180; // Medidas en mm (un poco más para margen)
+    // 2. Creamos un contenedor temporal invisible para armar el PDF
+    const tempDiv = document.createElement('div');
+    tempDiv.style.width = lote.tipo === 'auto' ? '340mm' : '170mm';
+    tempDiv.style.background = "white"; // Fondo limpio para el PDF
 
+    // 3. Generamos los stickers (usando las medidas perfectas que definimos antes)
+    let htmlStickers = "";
+    lote.ids.forEach(idUnico => {
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+        
+        if (tipo === 'auto') {
+            stickersHTML += `
+                <div class="sticker-auto-full">
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                            WWW.CENTRALSANTUA.COM.AR
+                        </div>
+                    </div>
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                            WWW.CENTRALSANTUA.COM.AR
+                        </div>
+                    </div>
+                </div>`;
+        } else {
+            stickersHTML += `
+                <div class="sticker-moto-full">
+                    <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
+                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                        ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                        WWW.CENTRALSANTUA.COM.AR
+                    </div>
+                </div>`;
+        }
+    });
+
+    tempDiv.innerHTML = htmlStickers;
+
+    // 4. Configuración del PDF (Optimizado para que no se corte)
     const opciones = {
-        margin: 5,
-        filename: `Lote_CentralSantua_${esAuto ? 'AUTOS' : 'MOTOS'}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { 
-            scale: 2, // Calidad alta para que el QR sea escaneable
-            useCORS: true 
-        },
+        margin: 0,
+        filename: `CentralSantua_Lote_${lote.tipo.toUpperCase()}_${loteId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { 
             unit: 'mm', 
-            format: [anchoHoja, 165], 
+            format: lote.tipo === 'auto' ? [340, 150] : [170, 150], 
             orientation: 'landscape' 
-        },
-        pagebreak: { mode: 'avoid-all', before: esAuto ? '.sticker-auto-full' : '.sticker-moto-full' }
+        }
     };
 
-    // Lanzar la descarga
-    html2pdf().set(opciones).from(elemento).save();
+    // 5. Ejecutar descarga
+    html2pdf().set(opciones).from(tempDiv).save();
+}
+
+async function descargarLotePDF(loteId) {
+    // 1. Buscamos el lote en tu almacenamiento (asumo que se llama lotesGuardados)
+    const lotes = JSON.parse(localStorage.getItem('lotesGuardados') || "[]");
+    const lote = lotes.find(l => l.id === loteId);
+
+    if (!lote) {
+        alert("No se encontró la información del lote.");
+        return;
+    }
+
+    // 2. Creamos un contenedor "invisible" para procesar el PDF
+    const tempDiv = document.createElement('div');
+    tempDiv.className = 'contenedor-impresion';
+    tempDiv.style.width = lote.tipo === 'auto' ? '340mm' : '170mm';
+    
+    // 3. Generamos el contenido (usando la misma lógica que ya tenés)
+    let htmlStickers = "";
+    lote.ids.forEach(idUnico => {
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+        
+        if (lote.tipo === 'auto') {
+            htmlStickers += `
+                <div class="sticker-auto-full" style="display:flex; gap:2mm; width:340mm; height:150mm; margin-bottom:1mm;">
+                    <div class="mitad-sticker" style="text-align:center; width:170mm;">
+                        <div style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div><img src="${qrImg}" width="280"></div>
+                        <div style="font-size: 3.5rem; font-weight:bold;">${idUnico}</div>
+                        <div style="font-size: 1.1rem;">WWW.CENTRALSANTUA.COM.AR</div>
+                    </div>
+                    <div class="mitad-sticker" style="text-align:center; width:170mm;">
+                        <div style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div><img src="${qrImg}" width="280"></div>
+                        <div style="font-size: 3.5rem; font-weight:bold;">${idUnico}</div>
+                        <div style="font-size: 1.1rem;">WWW.CENTRALSANTUA.COM.AR</div>
+                    </div>
+                </div>`;
+        } else {
+            htmlStickers += `
+                <div class="sticker-moto-full" style="text-align:center; width:170mm; height:150mm; margin-bottom:1mm;">
+                    <div style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
+                    <div><img src="${qrImg}" width="300"></div>
+                    <div style="font-size: 3.5rem; font-weight:bold;">${idUnico}</div>
+                    <div style="font-size: 1.1rem;">WWW.CENTRALSANTUA.COM.AR</div>
+                </div>`;
+        }
+    });
+    tempDiv.innerHTML = htmlStickers;
+
+    // 4. Configuración del PDF
+    const opt = {
+        margin: 0,
+        filename: `CentralSantua_Lote_${loteId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: lote.tipo === 'auto' ? [342, 155] : [172, 155], orientation: 'landscape' }
+    };
+
+    // 5. Descargar
+    html2pdf().set(opt).from(tempDiv).save();
 }
 
 </script>
