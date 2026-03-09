@@ -174,8 +174,8 @@
         <div style="display: flex; flex-direction: column; gap: 5px;">
             <label style="font-size: 0.75rem; color: #888;">FORMATO</label>
             <select id="tipo-qr" style="background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; cursor: pointer;">
-                <option value="moto">🏍️ Moto (17x17 cm)</option>
-                <option value="auto">🚗 Auto (30x10 cm)</option>
+                <option value="moto">🏍️ Moto (17x15 cm)</option>
+                <option value="auto">🚗 Auto (34x15 cm)</option>
             </select>
         </div>
 
@@ -536,25 +536,31 @@ function generarHTMLImpresion(listaIDs, tipo) {
             stickersHTML += `
                 <div class="sticker-auto-full">
                     <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                            WWW.CENTRALSANTUA.COM.AR
+                        </div>
                     </div>
                     <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
+                            WWW.CENTRALSANTUA.COM.AR
+                        </div>
                     </div>
                 </div>`;
         } else {
             stickersHTML += `
                 <div class="sticker-moto-full">
                     <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="280"></div>
-                    <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.2rem;">
+                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
+                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
                         ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
                         WWW.CENTRALSANTUA.COM.AR
                     </div>
@@ -579,7 +585,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     display: flex; flex-direction: column; align-items: center; gap: 10mm;
                 }
                 .sticker-auto-full {
-                    width: 300mm; height: 100mm; display: flex; justify-content: center; gap: 4mm;
+                    width: 300mm; height: 100mm; display: flex; justify-content: center; gap: 1mm;
                     background: transparent; position: relative;
                 }
                 .mitad-sticker {
