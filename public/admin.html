@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -179,10 +181,15 @@
             </select>
         </div>
 
-        <button class="btn-cmd" style="border-color: var(--success); color: var(--success); height: 42px; padding: 0 20px; font-weight: bold; transition: all 0.3s;" onclick="prepararLote()">
-            <i class="fas fa-rocket"></i> GENERAR E IMPRIMIR
-        </button>
-    </div>
+<div style="display: flex; gap: 10px; align-items: flex-end;">
+    <button class="btn-cmd" style="border-color: var(--success); color: var(--success); height: 42px; padding: 0 20px; font-weight: bold;" onclick="generarHTMLImpresion()">
+        <i class="fas fa-rocket"></i> GENERAR E IMPRIMIR
+    </button>
+    
+    <button class="btn-cmd" style="border-color: var(--primary); color: var(--primary); height: 42px; padding: 0 20px; font-weight: bold;" onclick="descargarLotePDF()">
+        <i class="fas fa-file-pdf"></i> DESCARGAR PDF
+    </button>
+</div>
 
     <div style="margin-top: 20px;">
         <div style="position: relative;">
@@ -666,6 +673,39 @@ function reimprimirLote(loteId) {
 
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
+}
+//Funcion descargar lote PDF
+function descargarLotePDF() {
+    // Buscamos el contenedor donde se generaron los stickers
+    const elemento = document.querySelector('.contenedor-impresion');
+    
+    if (!elemento || elemento.innerHTML === "") {
+        alert("Primero generá un lote con el botón 'GENERAR E IMPRIMIR'");
+        return;
+    }
+
+    // Detectamos el tipo de sticker para ajustar la hoja del PDF
+    const esAuto = elemento.innerHTML.includes('sticker-auto-full');
+    const anchoHoja = esAuto ? 350 : 180; // Medidas en mm (un poco más para margen)
+
+    const opciones = {
+        margin: 5,
+        filename: `Lote_CentralSantua_${esAuto ? 'AUTOS' : 'MOTOS'}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { 
+            scale: 2, // Calidad alta para que el QR sea escaneable
+            useCORS: true 
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: [anchoHoja, 165], 
+            orientation: 'landscape' 
+        },
+        pagebreak: { mode: 'avoid-all', before: esAuto ? '.sticker-auto-full' : '.sticker-moto-full' }
+    };
+
+    // Lanzar la descarga
+    html2pdf().set(opciones).from(elemento).save();
 }
 
 </script>
