@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -176,12 +174,10 @@
         <div style="display: flex; flex-direction: column; gap: 5px;">
             <label style="font-size: 0.75rem; color: #888;">FORMATO</label>
             <select id="tipo-qr" style="background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; cursor: pointer;">
-                <option value="moto">🏍️ Moto (17x15 cm)</option>
-                <option value="auto">🚗 Auto (34x15 cm)</option>
+                <option value="moto">🏍️ Moto (17x17 cm)</option>
+                <option value="auto">🚗 Auto (30x10 cm)</option>
             </select>
         </div>
-
-</div>
 
         <button class="btn-cmd" style="border-color: var(--success); color: var(--success); height: 42px; padding: 0 20px; font-weight: bold; transition: all 0.3s;" onclick="prepararLote()">
             <i class="fas fa-rocket"></i> GENERAR E IMPRIMIR
@@ -381,13 +377,7 @@
 <button onclick="event.stopPropagation(); event.preventDefault(); reimprimirLote('${loteId}');" 
         class="btn-cmd" 
         style="background:#007bff; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
-    <i class="fas fa-print"></i> VER LOTE
-</button>
-
-<button onclick="event.stopPropagation(); event.preventDefault(); descargarLotePDF('${loteId}');" 
-        class="btn-cmd" 
-        style="background:#28a745; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer; margin-left: 5px;">
-    <i class="fas fa-file-pdf"></i> DESCARGAR PDF
+    <i class="fas fa-print"></i> REIMPRIMIR LOTE
 </button>
                 </summary>
                 <div style="padding: 10px;">
@@ -484,16 +474,15 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
+    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
+    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
     const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
+    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
-
-    // --- 1. CAMBIO: Abrir la ventana INMEDIATAMENTE después del clic ---
-    // Esto evita que el navegador la bloquee por "demora del servidor"
-    const win = window.open('', '_blank');
 
     try {
         btn.disabled = true;
@@ -509,30 +498,23 @@ function filtrarStickers() {
             })
         });
 
-        if (!response.ok) {
-            if(win) win.close(); // Cerramos la ventana si el server falló
-            throw new Error("Error en el servidor");
-        }
+        if (!response.ok) throw new Error("Error en el servidor");
         
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        // --- 2. CAMBIO: Verificación de seguridad para 'win' ---
-        if (win && !win.closed) {
-            const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
-            win.document.write(contenidoHTML);
-            win.document.close();
-        } else {
-            // Si llegamos acá, es porque el navegador realmente la bloqueó
-            alert("⚠️ Ventana emergente bloqueada. Por favor, permití los pop-ups en este sitio para poder imprimir.");
-        }
+        const win = window.open('', '_blank');
+        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
         
-        if (typeof loadData === "function") {
+        win.document.write(contenidoHTML);
+        win.document.close();
+        
+        if (typeof render === "function") {
+            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
             setTimeout(loadData, 1000); 
         }
 
     } catch (error) {
-        if(win) win.close();
         alert("ERROR: " + error.message);
     } finally {
         btn.disabled = false;
@@ -554,31 +536,25 @@ function generarHTMLImpresion(listaIDs, tipo) {
             stickersHTML += `
                 <div class="sticker-auto-full">
                     <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                            WWW.CENTRALSANTUA.COM.AR
-                        </div>
+                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                        <div class="id-tag">${idUnico}</div>
+                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
                     </div>
                     <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                            WWW.CENTRALSANTUA.COM.AR
-                        </div>
+                        <div class="header-txt">🛡️ PATENTE PROTEGIDA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="140"></div>
+                        <div class="id-tag">${idUnico}</div>
+                        <div class="footer-txt">ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>CENTRALSANTUA.COM.AR</div>
                     </div>
                 </div>`;
         } else {
             stickersHTML += `
                 <div class="sticker-moto-full">
                     <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                    <div class="qr-box"><img src="${qrImg}" width="280"></div>
+                    <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
+                    <div class="footer-txt" style="font-size: 1.2rem;">
                         ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
                         WWW.CENTRALSANTUA.COM.AR
                     </div>
@@ -603,11 +579,11 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     display: flex; flex-direction: column; align-items: center; gap: 10mm;
                 }
                 .sticker-auto-full {
-                    width: 340mm; height: 150mm; display: flex; justify-content: center; gap: 1mm;
+                    width: 300mm; height: 100mm; display: flex; justify-content: center; gap: 4mm;
                     background: transparent; position: relative;
                 }
                 .mitad-sticker {
-                    width: 170mm; height: 150mm; background: #dcdcdc;
+                    width: 148mm; height: 100mm; background: #dcdcdc;
                     display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
                 }
@@ -620,7 +596,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     border: 4px solid #ff0000; pointer-events: none;
                 }
                 .sticker-moto-full {
-                    width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                    width: 170mm; height: 170mm; background: #dcdcdc; border: 8px solid #ff0000;
                     position: relative; display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 20px;
                 }
@@ -677,83 +653,6 @@ function reimprimirLote(loteId) {
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
 }
-// Función descargar lote PDF (Corregida para lotes históricos)
-async function descargarLotePDF(loteId) {
-    // 1. Buscamos los datos en el localStorage
-    const lotesGuardados = JSON.parse(localStorage.getItem('lotesGuardados') || "[]");
-    const lote = lotesGuardados.find(l => l.id === loteId);
-
-    if (!lote) {
-        alert("No se encontró la información del lote seleccionado.");
-        return;
-    }
-
-    // 2. Creamos un contenedor temporal invisible para armar el PDF
-    const tempDiv = document.createElement('div');
-    tempDiv.style.width = lote.tipo === 'auto' ? '340mm' : '170mm';
-    tempDiv.style.background = "white"; // Fondo limpio para el PDF
-
-    // 3. Generamos los stickers (usando las medidas perfectas que definimos antes)
-    let htmlStickers = "";
-    lote.ids.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-        
-        if (tipo === 'auto') {
-            stickersHTML += `
-                <div class="sticker-auto-full">
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                            WWW.CENTRALSANTUA.COM.AR
-                        </div>
-                    </div>
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ PATENTE PROTEGIDA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                            WWW.CENTRALSANTUA.COM.AR
-                        </div>
-                    </div>
-                </div>`;
-        } else {
-            stickersHTML += `
-                <div class="sticker-moto-full">
-                    <div class="header-txt" style="font-size: 2rem;">🛡️ PATENTE PROTEGIDA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                        ESCANEAME PARA CONTACTO Y DEVOLUCIÓN<br>
-                        WWW.CENTRALSANTUA.COM.AR
-                    </div>
-                </div>`;
-        }
-    });
-
-    tempDiv.innerHTML = htmlStickers;
-
-    // 4. Configuración del PDF (Optimizado para que no se corte)
-    const opciones = {
-        margin: 0,
-        filename: `CentralSantua_Lote_${lote.tipo.toUpperCase()}_${loteId}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { 
-            unit: 'mm', 
-            format: lote.tipo === 'auto' ? [340, 150] : [170, 150], 
-            orientation: 'landscape' 
-        }
-    };
-
-    // 5. Ejecutar descarga
-    html2pdf().set(opciones).from(tempDiv).save();
-}
-
 
 </script>
 </body>
