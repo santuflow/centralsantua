@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conseguir Stickers - Central Santua</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #0b0e11; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        
+        /* Contenedor Principal */
+        .compra-container { max-width: 1000px; margin: 40px auto; padding: 20px; text-align: center; }
+        
+        /* Sección de Fotos de Stickers */
+        .galeria-stickers { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 50px; }
+        .sticker-card { background: #15191d; border-radius: 15px; padding: 15px; border: 1px solid #00ff8833; width: 280px; }
+        .sticker-card img { width: 100%; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
+        .sticker-card p { font-size: 0.9rem; color: #00ff88; font-weight: bold; margin: 5px 0; }
+
+        /* Selector de Perfil */
+        .titulo-pregunta { font-size: 1.8rem; margin-bottom: 30px; color: #fff; }
+        .opciones-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        
+        .opcion-card { 
+            background: #15191d; border: 2px solid #222; border-radius: 20px; 
+            padding: 40px 20px; width: 350px; transition: 0.3s; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .opcion-card:hover { border-color: #00ff88; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,136,0.1); }
+        .opcion-card i { font-size: 50px; color: #00ff88; margin-bottom: 20px; }
+        .opcion-card h3 { margin: 10px 0; font-size: 1.5rem; }
+        .opcion-card p { color: #999; line-height: 1.5; font-size: 0.95rem; }
+        
+        .btn-comenzar { 
+            background: #00ff88; color: #000; border: none; padding: 12px 30px; 
+            border-radius: 50px; font-weight: bold; margin-top: 25px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">CENTRAL<span>SANTUA</span></div>
+        <div class="menu-hamburguesa" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
+        <nav id="nav-menu">
+            <a href="index.html">Inicio</a>
+            <a href="comprar_sticker.html" class="active">Conseguir Stickers</a>
+            <a href="login.html">Iniciar Sesión</a>
+        </nav>
+    </header>
+
+    <div class="compra-container">
+        <h2 class="titulo-pregunta">Protección Inteligente para tu Vehículo</h2>
+        
+        <div class="galeria-stickers">
+            <div class="sticker-card">
+                <img src="img/sticker_moto_ejemplo.jpg" alt="Sticker Moto">
+                <p>FORMATO MOTO (17x17 cm)</p>
+            </div>
+            <div class="sticker-card">
+                <img src="img/sticker_auto_ejemplo.jpg" alt="Sticker Auto">
+                <p>FORMATO AUTO (30x10 cm)</p>
+            </div>
+        </div>
+
+        <p style="color: #888; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
+            Nuestros stickers utilizan un sistema de vinculación segura que permite a quien encuentre tu documentación contactarte de inmediato, protegiendo siempre tu privacidad.
+        </p>
+
+        <h3 class="titulo-pregunta">¿Cómo querés tus stickers?</h3>
+
+        <div class="opciones-grid">
+            <div class="opcion-card" onclick="irAWhatsApp('usuario')">
+                <i class="fas fa-user-check"></i>
+                <h3>Para mi uso personal</h3>
+                <p>Comprá 1 o más stickers para tus vehículos. Incluye envío y acceso de por vida a la plataforma de recuperación.</p>
+                <button class="btn-comenzar">PEDIR MI STICKER</button>
+            </div>
+
+            <div class="opcion-card" onclick="irAWhatsApp('negocio')">
+                <i class="fas fa-handshake"></i>
+                <h3>Para mi Negocio</h3>
+                <p>Accedé a precios mayoristas y convertite en un punto de venta oficial. Ganá dinero activando stickers en tu zona.</p>
+                <button class="btn-comenzar" style="background: #fff;">INFO MAYORISTA</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('nav-menu');
+            menu.classList.toggle('active');
+        }
+
+        function irAWhatsApp(tipo) {
+            const tel = "54911XXXXXXXX"; // Tu número de WhatsApp de atención
+            let msg = "";
+            
+            if(tipo === 'usuario') {
+                msg = "¡Hola Central Santua! 👋 Quiero comprar un sticker para proteger mi vehículo. ¿Me pasan info de precios y envío?";
+            } else {
+                msg = "¡Hola! 💼 Me interesa el pack mayorista para vender los stickers en mi negocio. ¿Cómo son las condiciones para revendedores?";
+            }
+            
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
