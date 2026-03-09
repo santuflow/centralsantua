@@ -3,109 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conseguir Stickers - Central Santua</title>
-    <link rel="stylesheet" href="style.css"> 
+    <title>Conseguir Stickers | Central Santua</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { background-color: #0b0e11; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        
-        /* Contenedor Principal */
-        .compra-container { max-width: 1000px; margin: 40px auto; padding: 20px; text-align: center; }
-        
-        /* Sección de Fotos de Stickers */
-        .galeria-stickers { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 50px; }
-        .sticker-card { background: #15191d; border-radius: 15px; padding: 15px; border: 1px solid #00ff8833; width: 280px; }
-        .sticker-card img { width: 100%; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
-        .sticker-card p { font-size: 0.9rem; color: #00ff88; font-weight: bold; margin: 5px 0; }
-
-        /* Selector de Perfil */
-        .titulo-pregunta { font-size: 1.8rem; margin-bottom: 30px; color: #fff; }
-        .opciones-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        
-        .opcion-card { 
-            background: #15191d; border: 2px solid #222; border-radius: 20px; 
-            padding: 40px 20px; width: 350px; transition: 0.3s; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center;
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00cc6e;
+            --bg-dark: #0b0e11;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --sidebar-width: 250px;
         }
-        .opcion-card:hover { border-color: #00ff88; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,136,0.1); }
-        .opcion-card i { font-size: 50px; color: #00ff88; margin-bottom: 20px; }
-        .opcion-card h3 { margin: 10px 0; font-size: 1.5rem; }
-        .opcion-card p { color: #999; line-height: 1.5; font-size: 0.95rem; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(11, 14, 17, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; text-transform: uppercase; }
+        .logo span { color: var(--primary); }
+
+        .menu-toggle { color: var(--primary); cursor: pointer; font-size: 1.5rem; }
+
+        /* SIDEBAR / MENU LATERAL */
+        .sidebar {
+            position: fixed;
+            top: 0; right: -100%; /* Oculto por defecto */
+            width: var(--sidebar-width);
+            height: 100%;
+            background: #111;
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.active { right: 0; }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover, .sidebar a.active { color: var(--primary); }
+
+        .close-menu { align-self: flex-end; font-size: 1.5rem; cursor: pointer; color: var(--text-dim); }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-container { padding-top: 80px; }
+
+        .hero {
+            padding: 4rem 5% 2rem;
+            text-align: center;
+            background: radial-gradient(circle at top, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+        }
+
+        .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+        .hero p { color: var(--text-dim); max-width: 600px; margin: 0 auto; }
+
+        /* GALERÍA */
+        .preview-section {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 2rem 5%;
+            flex-wrap: wrap;
+        }
+
+        .sticker-preview {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 280px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+
+        .img-placeholder {
+            width: 100%; height: 180px;
+            background: #1a1f26; border-radius: 12px;
+            margin-bottom: 1rem; overflow: hidden;
+        }
         
-        .btn-comenzar { 
-            background: #00ff88; color: #000; border: none; padding: 12px 30px; 
-            border-radius: 50px; font-weight: bold; margin-top: 25px; cursor: pointer;
+        .img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+
+        .sticker-preview span { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
+
+        /* TARJETAS DE ACCIÓN */
+        .options-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 5% 5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: 0.4s;
+        }
+
+        .option-card:hover { border-color: var(--primary); transform: translateY(-10px); background: rgba(0, 255, 136, 0.02); }
+
+        .icon-box {
+            width: 70px; height: 70px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .icon-box i { font-size: 2rem; color: var(--primary); }
+
+        .btn-cta {
+            width: 100%;
+            padding: 1.1rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 10px 20px rgba(0,255,136,0.3); }
+
+        .btn-secondary { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+        .btn-secondary:hover { border-color: #fff; background: rgba(255,255,255,0.05); }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .preview-section { gap: 1rem; }
+            .sticker-preview { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <header class="navbar">
+    <nav class="navbar">
         <div class="logo">CENTRAL<span>SANTUA</span></div>
-        <div class="menu-hamburguesa" onclick="toggleMenu()">
+        <div class="menu-toggle" onclick="toggleMenu()">
             <i class="fas fa-bars"></i>
         </div>
-        <nav id="nav-menu">
-            <a href="index.html">Inicio</a>
-            <a href="comprar_sticker.html" class="active">Conseguir Stickers</a>
-            <a href="login.html">Iniciar Sesión</a>
-        </nav>
-    </header>
+    </nav>
 
-    <div class="compra-container">
-        <h2 class="titulo-pregunta">Protección Inteligente para tu Vehículo</h2>
-        
-        <div class="galeria-stickers">
-            <div class="sticker-card">
-                <img src="img/sticker_moto_ejemplo.jpg" alt="Sticker Moto">
-                <p>FORMATO MOTO (17x17 cm)</p>
+    <div class="sidebar" id="sidebar">
+        <div class="close-menu" onclick="toggleMenu()">&times;</div>
+        <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+        <a href="comprar_sticker.html" class="active"><i class="fas fa-shopping-cart"></i> Conseguir Stickers</a>
+        <a href="perdi.html"><i class="fas fa-search"></i> Perdí algo</a>
+        <a href="encontre.html"><i class="fas fa-hands-helping"></i> Encontré algo</a>
+        <hr style="border: 0; border-top: 1px solid #333;">
+        <a href="login.html"><i class="fas fa-user-circle"></i> Mi Panel</a>
+    </div>
+
+    <div class="main-container">
+        <section class="hero">
+            <h1>Elegí tu nivel de protección</h1>
+            <p>Un sistema simple para que tus documentos vuelvan siempre a vos. Elegí el formato ideal para tu vehículo.</p>
+        </section>
+
+        <div class="preview-section">
+            <div class="sticker-preview">
+                <div class="img-placeholder">
+                    <img src="img/sticker-moto.jpg" alt="Sticker Moto">
+                </div>
+                <span>Formato Moto</span>
+                <p>17 x 17 cm - Ideal Patentes</p>
             </div>
-            <div class="sticker-card">
-                <img src="img/sticker_auto_ejemplo.jpg" alt="Sticker Auto">
-                <p>FORMATO AUTO (30x10 cm)</p>
+            <div class="sticker-preview">
+                <div class="img-placeholder">
+                    <img src="img/sticker-auto.jpg" alt="Sticker Auto">
+                </div>
+                <span>Formato Auto</span>
+                <p>30 x 10 cm - Ideal Vidrios</p>
             </div>
         </div>
 
-        <p style="color: #888; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
-            Nuestros stickers utilizan un sistema de vinculación segura que permite a quien encuentre tu documentación contactarte de inmediato, protegiendo siempre tu privacidad.
-        </p>
-
-        <h3 class="titulo-pregunta">¿Cómo querés tus stickers?</h3>
-
-        <div class="opciones-grid">
-            <div class="opcion-card" onclick="irAWhatsApp('usuario')">
-                <i class="fas fa-user-check"></i>
-                <h3>Para mi uso personal</h3>
-                <p>Comprá 1 o más stickers para tus vehículos. Incluye envío y acceso de por vida a la plataforma de recuperación.</p>
-                <button class="btn-comenzar">PEDIR MI STICKER</button>
+        <div class="options-section">
+            <div class="option-card">
+                <div class="icon-box">
+                    <i class="fas fa-motorcycle"></i>
+                </div>
+                <h3>Uso Personal</h3>
+                <p>Protegé tu moto o auto. Incluye activación de por vida en nuestra red de recuperación.</p>
+                <a href="javascript:void(0)" onclick="contactarWA('personal')" class="btn-cta btn-primary">Conseguir mi sticker</a>
             </div>
 
-            <div class="opcion-card" onclick="irAWhatsApp('negocio')">
-                <i class="fas fa-handshake"></i>
+            <div class="option-card">
+                <div class="icon-box">
+                    <i class="fas fa-store"></i>
+                </div>
                 <h3>Para mi Negocio</h3>
-                <p>Accedé a precios mayoristas y convertite en un punto de venta oficial. Ganá dinero activando stickers en tu zona.</p>
-                <button class="btn-comenzar" style="background: #fff;">INFO MAYORISTA</button>
+                <p>Sumate como punto de venta oficial. Accedé a precios mayoristas y ganá con cada activación.</p>
+                <a href="javascript:void(0)" onclick="contactarWA('negocio')" class="btn-cta btn-secondary">Consultar Mayorista</a>
             </div>
         </div>
     </div>
 
     <script>
         function toggleMenu() {
-            const menu = document.getElementById('nav-menu');
-            menu.classList.toggle('active');
+            document.getElementById('sidebar').classList.toggle('active');
         }
 
-        function irAWhatsApp(tipo) {
-            const tel = "54911XXXXXXXX"; // Tu número de WhatsApp de atención
-            let msg = "";
-            
-            if(tipo === 'usuario') {
-                msg = "¡Hola Central Santua! 👋 Quiero comprar un sticker para proteger mi vehículo. ¿Me pasan info de precios y envío?";
+        function contactarWA(tipo) {
+            const tel = "54911XXXXXXXX"; // TU NUMERO AQUI
+            let msj = "";
+            if(tipo === 'personal') {
+                msj = "¡Hola Central Santua! 👋 Vengo de la web y quiero conseguir mi sticker para proteger mi vehículo.";
             } else {
-                msg = "¡Hola! 💼 Me interesa el pack mayorista para vender los stickers en mi negocio. ¿Cómo son las condiciones para revendedores?";
+                msj = "¡Hola! 💼 Me interesa el pack mayorista para vender stickers en mi negocio. ¿Me pasan info?";
             }
-            
-            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msj)}`, '_blank');
         }
     </script>
 </body>
