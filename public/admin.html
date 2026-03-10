@@ -472,6 +472,10 @@ function filtrarStickers() {
  * 1 PDF de Base + 1 PDF con todos los QR/IDs (Paginado)
  */
 
+/**
+ * GENERADOR CENTRAL SANTUA - DISEÑO ORIGINAL SEPARADO
+ */
+
 async function prepararLote() {
     const { jsPDF } = window.jspdf;
     const cantInput = document.getElementById('cant-qr');
@@ -488,7 +492,6 @@ async function prepararLote() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO LOTE...';
 
-        // 1. Pedir los IDs únicos al servidor
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -497,47 +500,113 @@ async function prepararLote() {
         const data = await response.json();
         const listaIDs = data.ids;
 
-        // Medidas: Auto 240x110mm, Moto 120x110mm
         const ancho = (tipo === 'auto') ? 240 : 120;
         const alto = 110;
 
-        // --- PASO 1: GENERAR PDF DE LA BASE (1 sola página) ---
+        // --- PASO 1: LA BASE (Diseño Original Central Santua) ---
         const pdfBase = new jsPDF('l', 'mm', [ancho, alto]);
         const htmlBase = crearHTML_Base(tipo);
         const canvasBase = await renderToCanvas(htmlBase, tipo, true);
         pdfBase.addImage(canvasBase.toDataURL('image/png'), 'PNG', 0, 0, ancho, alto);
-        pdfBase.save(`BASE_PARA_IMPRENTA_${tipo.toUpperCase()}.pdf`);
+        pdfBase.save(`1_BASE_DISENO_${tipo.toUpperCase()}.pdf`);
 
-        // --- PASO 2: GENERAR PDF CON TODOS LOS QR E IDS (Paginado) ---
+        // --- PASO 2: LOS DATOS (QR e ID Duplicados para Auto) ---
         const pdfDatos = new jsPDF('l', 'mm', [ancho, alto]);
         
         for (let i = 0; i < listaIDs.length; i++) {
-            // Si no es el primero, añadimos una página nueva al mismo archivo
             if (i > 0) pdfDatos.addPage([ancho, alto], 'l');
             
             const htmlDatos = crearHTML_Datos(listaIDs[i], tipo);
             const canvasDatos = await renderToCanvas(htmlDatos, tipo, false);
             
             pdfDatos.addImage(canvasDatos.toDataURL('image/png'), 'PNG', 0, 0, ancho, alto);
-            
-            // Actualizar botón con progreso si son muchos
-            if(i % 10 === 0) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${i}/${cant}...`;
+            if(i % 5 === 0) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${i}/${cant}...`;
         }
         
-        pdfDatos.save(`DATOS_VARIABLES_${cant}_QRS_${tipo.toUpperCase()}.pdf`);
+        pdfDatos.save(`2_DATOS_QR_LOTE_${tipo.toUpperCase()}.pdf`);
 
-        alert(`¡Listo! Se generó la Base y un archivo con los ${cant} QRs únicos.`);
+        alert(`¡Éxito! Base generada y ${cant} datos procesados.`);
         if (typeof loadData === "function") loadData();
 
     } catch (error) {
-        console.error(error);
-        alert("Error al generar: " + error.message);
+        alert("Error: " + error.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
 }
 
+// --- DISEÑOS RECUPERADOS ---
+
+function crearHTML_Base(tipo) {
+    const anchoPx = (tipo === 'auto') ? '240mm' : '120mm';
+    // Estilo del sticker individual (el que ya tenías)
+    const stickerEstilo = `
+        width: 120mm; height: 110mm; background: #dcdcdc !important; 
+        display: flex; flex-direction: column; align-items: center; justify-content: space-around; 
+        padding: 15px; position: relative; border: 6px solid #ff0000; box-sizing: border-box;
+    `;
+    const decoracionBordes = `
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 4px solid #ffff00; pointer-events: none;"></div>
+        <div style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 4px solid #ff0000; pointer-events: none;"></div>
+    `;
+
+    const bloqueBase = `
+        <div style="${stickerEstilo}">
+            ${decoracionBordes}
+            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:8px 0; font-size:1.3rem; border-radius:4px; font-family:'Archivo Black', sans-serif; z-index:10;">🛡️ SEGURIDAD ACTIVA</div>
+            <div style="font-size: 80px; z-index:10;">🛡️</div>
+            <div style="text-align: center; color: #000; font-size: 0.9rem; font-weight: 900; font-family:'Archivo Black', sans-serif; z-index:10;">SISTEMA PROTEGIDO POR<br>CENTRAL SANTUA</div>
+        </div>`;
+
+    return `
+    <div class="render-area" style="width:${anchoPx}; height:110mm; display:flex; background:white;">
+        ${bloqueBase}
+        ${tipo === 'auto' ? bloqueBase : ''}
+    </div>`;
+}
+
+function crearHTML_Datos(idUnico, tipo) {
+    const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+    const anchoPx = (tipo === 'auto') ? '240mm' : '120mm';
+
+    const bloqueDato = `
+        <div style="width: 120mm; height: 110mm; display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent;">
+            <div style="background:#000 !important; color:#fff !important; width:80%; text-align:center; padding:5px; border-radius:4px; font-weight:bold; font-size:1.1rem; margin-top:10px; font-family:sans-serif;">ESCANEAME</div>
+            <div style="background:#fff !important; padding:8px; border:2px solid #000; line-height:0; margin: 10px 0;">
+                <img src="${qrImg}" width="160" height="160">
+            </div>
+            <div style="background:#000 !important; color:#ffff00 !important; padding:5px 20px; border-radius:4px; font-family:monospace; font-size:2.2rem; font-weight:bold; letter-spacing:2px; border: 2px solid #ffff00;">
+                ${idUnico}
+            </div>
+        </div>`;
+
+    return `
+    <div class="render-area" style="width:${anchoPx}; height:110mm; display:flex; background:transparent;">
+        ${bloqueDato}
+        ${tipo === 'auto' ? bloqueDato : ''}
+    </div>`;
+}
+
+async function renderToCanvas(html, tipo, esBase) {
+    const temp = document.createElement('div');
+    temp.style.position = 'fixed'; temp.style.left = '-10000px'; temp.style.top = '0';
+    document.body.appendChild(temp);
+    temp.innerHTML = html;
+    
+    // Tiempo para que cargue la fuente y el QR
+    await new Promise(r => setTimeout(r, esBase ? 500 : 1200)); 
+
+    const canvas = await html2canvas(temp.querySelector('.render-area'), { 
+        scale: 3, 
+        useCORS: true, 
+        backgroundColor: null 
+    });
+    
+    document.body.removeChild(temp);
+    return canvas;
+}
 // --- MOLDES DE DISEÑO ---
 
 function crearHTML_Base(tipo) {
