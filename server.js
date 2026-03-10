@@ -73,6 +73,39 @@ Usuario.createIndexes();
 
 const app = express();
 
+// --- BLOQUEO DE SEGURIDAD POR IP (SOLO VOS ENTRÁS) ---
+const miIpWifi = '190.99.71.6'; 
+
+app.use((req, res, next) => {
+    // Render manda la IP real en 'x-forwarded-for'
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "";
+    
+    // Si la IP que entra NO contiene tu IP de casa, rebotalo
+    if (!clientIp.includes(miIpWifi)) {
+        return res.status(403).send(`
+            <div style="text-align: center; padding: 100px 20px; font-family: sans-serif; background-color: #ffffff; height: 100vh; margin: 0;">
+                <h1 style="font-size: 80px; margin-bottom: 20px;">🚀</h1>
+                <h2 style="color: #1a1a1a; font-size: 32px; letter-spacing: 2px;">¡PRÓXIMAMENTE!</h2>
+                <p style="color: #666; font-size: 20px; margin-bottom: 40px;">Estamos preparando algo increíble para vos.</p>
+                <div style="width: 100px; height: 4px; background-color: #d32f2f; margin: 0 auto 30px;"></div>
+                <p style="font-weight: bold; color: #333; font-size: 22px; text-transform: uppercase;">SANTUA</p>
+                <p style="margin-top: 50px; font-size: 14px; color: #bbb;">© 2026 - Todos los derechos reservados</p>
+            </div>
+        `);
+    }
+
+    // --- SI PASÓ EL BLOQUEO (SOS VOS), CONTAMOS LA VISITA ---
+    const ahora = Date.now();
+    if (req.url === '/index.html' || req.url === '/') {
+        if (!usuariosActivos.has(clientIp) || (ahora - usuariosActivos.get(clientIp)) > 1800000) {
+            visitasTotales++;
+        }
+    }
+    usuariosActivos.set(clientIp, ahora);
+    
+    next(); // Dale paso a la web
+});
+
 // --- BASES DE DATOS EN MEMORIA ---
 let hallazgos = []; 
 let busquedas = []; 
@@ -176,23 +209,6 @@ passport.deserializeUser((obj, done) => done(null, obj));
  */
 const normalizar = (t) => t ? t.toUpperCase().replace(/[\s\.\-]/g, '').trim() : "";
 
-// Middleware corregido: Cuenta visitas y rastrea actividad real
-app.use((req, res, next) => {
-    const ip = req.ip;
-    const ahora = Date.now();
-    
-    // Contar visita solo si es la página principal
-    if (req.url === '/index.html' || req.url === '/') {
-        // Evitamos que el mismo usuario sume visitas cada vez que toca F5 (30 min de gracia)
-        if (!usuariosActivos.has(ip) || (ahora - usuariosActivos.get(ip)) > 1800000) {
-            visitasTotales++;
-        }
-    }
-    
-    // Registramos que esta IP está haciendo algo ahora
-    usuariosActivos.set(ip, ahora);
-    next();
-});
 
 // --- FUNCIÓN DE SEGURIDAD PARA ADMIN ---
 function asegurarAdmin(req, res, next) {
