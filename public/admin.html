@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -466,55 +468,88 @@ function filtrarStickers() {
     render();
 }
 
+    
     async function prepararLote() {
+    const { jsPDF } = window.jspdf;
     const cantInput = document.getElementById('cant-qr');
     const tipoInput = document.getElementById('tipo-qr');
+    
+    if (!cantInput || !tipoInput) return alert("Error: No se encontraron los campos de entrada.");
+    
     const cant = parseInt(cantInput.value);
     const tipo = tipoInput.value;
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
-
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
-    const ahora = new Date();
-    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
-    const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDFs...';
 
+        // 1. Pedimos los IDs al servidor
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                cantidad: cant, 
-                tipo: tipo, 
-                lote_id: nuevoLoteId 
-            })
+            body: JSON.stringify({ cantidad: cant, tipo: tipo })
         });
 
-        if (!response.ok) throw new Error("Error en el servidor");
+        if (!response.ok) throw new Error("Error al obtener IDs del servidor");
         
         const data = await response.json();
-        const listaIDs = data.ids; 
+        const listaIDs = data.ids;
 
-        const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
-        
-        win.document.write(contenidoHTML);
-        win.document.close();
-        
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
-            setTimeout(loadData, 1000); 
+        // 2. Contenedor oculto para renderizar (aquí se "dibuja" el fondo gris y el diseño doble)
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.left = '-10000px';
+        tempDiv.style.top = '0';
+        document.body.appendChild(tempDiv);
+
+        for (let idUnico of listaIDs) {
+            // Genera el HTML con el fondo GRIS y las dos mitades IGUALES (para auto)
+            tempDiv.innerHTML = generarHTMLImpresion([idUnico], tipo);
+            
+            // ESPERA para que el QR se renderice desde la API
+            await new Promise(r => setTimeout(r, 700)); 
+
+            const selector = (tipo === 'auto') ? '.sticker-auto-full' : '.sticker-moto-full';
+            const elemento = tempDiv.querySelector(selector);
+
+            if (!elemento) throw new Error("No se pudo encontrar el diseño del sticker para renderizar.");
+
+            // Convertimos el diseño a imagen (PNG)
+            const canvas = await html2canvas(elemento, { 
+                scale: 3, // Alta definición
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: null 
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            
+            // MEDIDAS EXACTAS: Auto 240x110mm, Moto 120x110mm
+            const anchoPDF = (tipo === 'auto') ? 240 : 120;
+            const altoPDF = 110;
+
+            // Creamos el PDF en formato horizontal ('l')
+            const pdf = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
+            
+            // Metemos la imagen cubriendo todo el PDF
+            pdf.addImage(imgData, 'PNG', 0, 0, anchoPDF, altoPDF);
+            
+            // DESCARGA EL PDF con el nombre del ID (Ej: STICKER_ABC123.pdf)
+            pdf.save(`${idUnico}.pdf`); 
         }
 
+        document.body.removeChild(tempDiv);
+        alert(`¡Éxito! Se descargaron ${listaIDs.length} archivos para la imprenta.`);
+        
+        if (typeof loadData === "function") loadData();
+
     } catch (error) {
+        console.error("Error en proceso:", error);
         alert("ERROR: " + error.message);
     } finally {
         btn.disabled = false;
@@ -533,6 +568,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
         if (tipo === 'auto') {
+            // DISEÑO AUTO: 24x11cm - DOS MITADES IDÉNTICAS PARA AMBAS PATENTES
             stickersHTML += `
                 <div class="sticker-auto-full">
                     <div class="mitad-sticker">
@@ -555,6 +591,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     </div>
                 </div>`;
         } else {
+            // DISEÑO MOTO: 12x11cm
             stickersHTML += `
                 <div class="sticker-moto-full">
                     <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
@@ -571,26 +608,21 @@ function generarHTMLImpresion(listaIDs, tipo) {
     return `
         <html>
         <head>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
                 * { box-sizing: border-box; }
                 body { 
                     font-family: 'Archivo Black', sans-serif; 
-                    margin: 0; padding: 10mm; background: #fff; 
+                    margin: 0; padding: 0; background: #fff; 
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                 }
-                .contenedor-impresion {
-                    display: flex; flex-direction: column; align-items: center; gap: 10mm;
-                }
                 .sticker-auto-full {
-                    width: 340mm; height: 150mm; display: flex; justify-content: center; gap: 1mm;
+                    width: 240mm; height: 110mm; display: flex; justify-content: center;
                     background: transparent; position: relative;
                 }
                 .mitad-sticker {
-                    width: 170mm; height: 150mm; background: #dcdcdc;
+                    width: 120mm; height: 110mm; background: #dcdcdc;
                     display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
                 }
@@ -603,7 +635,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     border: 4px solid #ff0000; pointer-events: none;
                 }
                 .sticker-moto-full {
-                    width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                    width: 120mm; height: 110mm; background: #dcdcdc; border: 8px solid #ff0000;
                     position: relative; display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 20px;
                 }
@@ -620,45 +652,44 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     background: #000 !important; color: #fff !important; width: 90%;
                     text-align: center; padding: 8px 0; font-size: 1.3rem; border-radius: 4px;
                 }
-                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; }
+                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; line-height: 0; }
+                .qr-box img { width: 50mm; height: 50mm; }
                 .id-tag {
                     background: #000 !important; color: #ffff00 !important;
                     font-family: 'Roboto Mono', monospace; font-size: 2rem;
                     padding: 5px 20px; border-radius: 3px; letter-spacing: 2px;
                 }
                 .footer-txt { text-align: center; color: #000; font-size: 0.8rem; line-height: 1.1; font-weight: 900; }
-                @media print {
-                    body { padding: 0; margin: 0; }
-                    .sticker-auto-full, .sticker-moto-full { page-break-after: always; }
-                }
             </style>
         </head>
         <body>
-            <div class="contenedor-impresion">
-                ${stickersHTML}
-            </div>
+            ${stickersHTML}
         </body>
         </html>`;
 }
 
 function reimprimirLote(loteId) {
     if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
-    
-    // 1. Buscamos los stickers de ese lote
     const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
     if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
 
-    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
     const tipoDetectado = stickersDelLote[0].tipo || 'moto';
-    
     const listaIDs = stickersDelLote.map(s => s.id_qr);
 
-    // 3. Abrimos la ventana sin preguntar nada
     const win = window.open('', '_blank');
     if (!win) return alert("El navegador bloqueó la ventana emergente.");
-
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
+}
+
+function exportDB() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "respaldo_seguridad.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
 }
 
 </script>
