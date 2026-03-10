@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -450,7 +452,7 @@
     }
 }
 
-// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓNm
+// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA DEL ACORDEÓN
 function verMasLote(event, loteId) {
     event.preventDefault(); // Evita que el navegador haga scroll raro
     event.stopPropagation(); // Evita que el 'details' se cierre
@@ -466,7 +468,9 @@ function filtrarStickers() {
     render();
 }
 
-    async function prepararLote() {
+    // --- NUEVAS FUNCIONES DE GENERACIÓN PARA IMPRENTA (SEPARADAS) ---
+
+async function prepararLote() {
     const cantInput = document.getElementById('cant-qr');
     const tipoInput = document.getElementById('tipo-qr');
     const cant = parseInt(cantInput.value);
@@ -474,47 +478,73 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
+    // Librerías necesarias (Deben estar cargadas en tu HTML o se cargan solas aquí)
+    if (!window.jspdf) {
+        alert("Cargando librerías... reintente en 2 segundos.");
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        document.head.appendChild(script);
+        const script2 = document.createElement('script');
+        script2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        document.head.appendChild(script2);
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
     const ahora = new Date();
-    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
+    const tiempoExacto = `${ahora.getDate()}-${ahora.getMonth() + 1}_${ahora.getHours()}${ahora.getMinutes()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO ARCHIVOS...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                cantidad: cant, 
-                tipo: tipo, 
-                lote_id: nuevoLoteId 
-            })
+            body: JSON.stringify({ cantidad: cant, tipo: tipo, lote_id: nuevoLoteId })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
-        
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+        // Medidas del PDF (Auto es doble ancho)
+        const anchoPDF = (tipo === 'auto') ? 340 : 170;
+        const altoPDF = 150;
+
+        // --- PASO 1: GENERAR PDF DE LA BASE (1 sola página) ---
+        const pdfBase = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
+        const htmlBase = crearHTML_Base_Real(tipo);
+        const canvasBase = await renderToCanvas(htmlBase, anchoPDF, altoPDF, true);
+        pdfBase.addImage(canvasBase.toDataURL('image/png'), 'PNG', 0, 0, anchoPDF, altoPDF);
+        pdfBase.save(`1_BASE_IMPRENTA_${tipo.toUpperCase()}.pdf`);
+
+        // --- PASO 2: GENERAR PDF DE DATOS (Transparente, paginado) ---
+        const pdfDatos = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
         
-        win.document.write(contenidoHTML);
-        win.document.close();
-        
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
-            setTimeout(loadData, 1000); 
+        for (let i = 0; i < listaIDs.length; i++) {
+            if (i > 0) pdfDatos.addPage([anchoPDF, altoPDF], 'l');
+            
+            const htmlDatos = crearHTML_Datos_Real(listaIDs[i], tipo);
+            const canvasDatos = await renderToCanvas(htmlDatos, anchoPDF, altoPDF, false);
+            
+            // La clave: PNG con transparencia
+            pdfDatos.addImage(canvasDatos.toDataURL('image/png'), 'PNG', 0, 0, anchoPDF, altoPDF);
+            
+            if(i % 5 === 0) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> DATOS: ${i}/${cant}...`;
         }
+        
+        pdfDatos.save(`2_DATOS_VARIABLES_${tipo.toUpperCase()}.pdf`);
+
+        alert("¡Proceso terminado!\nSe descargaron 2 archivos.\nEnvíe AMBOS a la imprenta.");
+        if (typeof loadData === "function") loadData();
 
     } catch (error) {
+        console.error(error);
         alert("ERROR: " + error.message);
     } finally {
         btn.disabled = false;
@@ -522,143 +552,68 @@ function filtrarStickers() {
     }
 }
 
-/**
- * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
- */
-function generarHTMLImpresion(listaIDs, tipo) {
-    let stickersHTML = '';
+// --- PLANTILLAS DE DISEÑO ---
 
-    listaIDs.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-
-        if (tipo === 'auto') {
-            stickersHTML += `
-                <div class="sticker-auto-full">
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                </div>`;
-        } else {
-            stickersHTML += `
-                <div class="sticker-moto-full">
-                    <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                        --IMAGEN DE PRUEBA--<br>
-                        --IMAGEN DE PRUEBA--
-                    </div>
-                </div>`;
-        }
-    });
+function crearHTML_Base_Real(tipo) {
+    const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
+    // El diseño que me enviaste en la foto (Gris, Bordes, Escudos)
+    const disenoBase = `
+        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; pointer-events: none;"></div>
+            <div style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; pointer-events: none;"></div>
+            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:12px 0; font-size:2rem; border-radius:6px; font-family:'Archivo Black', sans-serif; z-index:10;">🛡️ SEGURIDAD ACTIVA</div>
+            <div style="font-size: 100px; z-index:10;">🛡️</div>
+            <div style="text-align: center; color: #000; font-size: 1.2rem; font-weight: 900; font-family:'Archivo Black', sans-serif; z-index:10;">SISTEMA PROTEGIDO POR<br>CENTRAL SANTUA</div>
+        </div>`;
 
     return `
-        <html>
-        <head>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
-                * { box-sizing: border-box; }
-                body { 
-                    font-family: 'Archivo Black', sans-serif; 
-                    margin: 0; padding: 10mm; background: #fff; 
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                .contenedor-impresion {
-                    display: flex; flex-direction: column; align-items: center; gap: 10mm;
-                }
-                .sticker-auto-full {
-                    width: 340mm; height: 150mm; display: flex; justify-content: center; gap: 1mm;
-                    background: transparent; position: relative;
-                }
-                .mitad-sticker {
-                    width: 170mm; height: 150mm; background: #dcdcdc;
-                    display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
-                }
-                .mitad-sticker::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 4px solid #ffff00; pointer-events: none;
-                }
-                .mitad-sticker::after {
-                    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-                    border: 4px solid #ff0000; pointer-events: none;
-                }
-                .sticker-moto-full {
-                    width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
-                    position: relative; display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 20px;
-                }
-                .sticker-moto-full::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 6px solid #ffff00; pointer-events: none;
-                }
-                .sticker-moto-full::after {
-                    content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
-                    border: 6px solid #ff0000; pointer-events: none;
-                }
-                .header-txt, .qr-box, .id-tag, .footer-txt { z-index: 10; position: relative; }
-                .header-txt {
-                    background: #000 !important; color: #fff !important; width: 90%;
-                    text-align: center; padding: 8px 0; font-size: 1.3rem; border-radius: 4px;
-                }
-                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; }
-                .id-tag {
-                    background: #000 !important; color: #ffff00 !important;
-                    font-family: 'Roboto Mono', monospace; font-size: 2rem;
-                    padding: 5px 20px; border-radius: 3px; letter-spacing: 2px;
-                }
-                .footer-txt { text-align: center; color: #000; font-size: 0.8rem; line-height: 1.1; font-weight: 900; }
-                @media print {
-                    body { padding: 0; margin: 0; }
-                    .sticker-auto-full, .sticker-moto-full { page-break-after: always; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="contenedor-impresion">
-                ${stickersHTML}
-            </div>
-        </body>
-        </html>`;
+        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:white;">
+            ${disenoBase}
+            ${tipo === 'auto' ? disenoBase : ''}
+        </div>`;
 }
 
-function reimprimirLote(loteId) {
-    if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
+function crearHTML_Datos_Real(idUnico, tipo) {
+    const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+    const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
+
+    // Bloque de datos (QR e ID). Background transparent es vital.
+    const bloqueDatos = `
+        <div style="width: 170mm; height: 150mm; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="background:#000 !important; color:#fff !important; width:70%; text-align:center; padding:8px; border-radius:6px; font-weight:bold; font-size:1.5rem; margin-top:20px;">ESCANEAME</div>
+            <div style="background:#fff !important; padding:15px; border:4px solid #000; margin: 20px 0;">
+                <img src="${qrImg}" width="280" height="280">
+            </div>
+            <div style="background:#000 !important; color:#ffff00 !important; padding:10px 40px; border-radius:6px; font-family:monospace; font-size:4rem; font-weight:bold; letter-spacing:4px; border: 4px solid #ffff00;">
+                ${idUnico}
+            </div>
+        </div>`;
+
+    return `
+        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:transparent;">
+            ${bloqueDatos}
+            ${tipo === 'auto' ? bloqueDatos : ''}
+        </div>`;
+}
+
+async function renderToCanvas(html, wMm, hMm, esBase) {
+    const temp = document.createElement('div');
+    temp.style.position = 'fixed'; temp.style.left = '-10000px';
+    document.body.appendChild(temp);
+    temp.innerHTML = html;
     
-    // 1. Buscamos los stickers de ese lote
-    const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
-    if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
+    // Esperamos a que el QR cargue (importante)
+    await new Promise(r => setTimeout(r, esBase ? 300 : 800)); 
 
-    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
-    const tipoDetectado = stickersDelLote[0].tipo || 'moto';
+    const canvas = await html2canvas(temp.querySelector('#render-area'), { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: null // Esto genera el fondo transparente
+    });
     
-    const listaIDs = stickersDelLote.map(s => s.id_qr);
-
-    // 3. Abrimos la ventana sin preguntar nada
-    const win = window.open('', '_blank');
-    if (!win) return alert("El navegador bloqueó la ventana emergente.");
-
-    win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
-    win.document.close();
+    document.body.removeChild(temp);
+    return canvas;
 }
 
 </script>
