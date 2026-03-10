@@ -473,9 +473,6 @@ function filtrarStickers() {
     const { jsPDF } = window.jspdf;
     const cantInput = document.getElementById('cant-qr');
     const tipoInput = document.getElementById('tipo-qr');
-    
-    if (!cantInput || !tipoInput) return alert("Error: No se encontraron los campos de entrada.");
-    
     const cant = parseInt(cantInput.value);
     const tipo = tipoInput.value;
     
@@ -486,7 +483,7 @@ function filtrarStickers() {
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDFs...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO ARCHIVOS...';
 
         // 1. Pedimos los IDs al servidor
         const response = await fetch('/api/generar-lote-seguro', {
@@ -494,67 +491,62 @@ function filtrarStickers() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cantidad: cant, tipo: tipo })
         });
-
-        if (!response.ok) throw new Error("Error al obtener IDs del servidor");
-        
         const data = await response.json();
         const listaIDs = data.ids;
 
-        // 2. Contenedor oculto para renderizar (aquí se "dibuja" el fondo gris y el diseño doble)
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'fixed';
-        tempDiv.style.left = '-10000px';
-        tempDiv.style.top = '0';
-        document.body.appendChild(tempDiv);
+        // 2. Definimos medidas (Auto 240x110mm, Moto 120x110mm)
+        const ancho = (tipo === 'auto') ? 240 : 120;
+        const alto = 110;
 
-        for (let idUnico of listaIDs) {
-            // Genera el HTML con el fondo GRIS y las dos mitades IGUALES (para auto)
-            tempDiv.innerHTML = generarHTMLImpresion([idUnico], tipo);
-            
-            // ESPERA para que el QR se renderice desde la API
-            await new Promise(r => setTimeout(r, 700)); 
+        // --- PASO A: GENERAR PDF DE LA BASE (DISEÑO FIJO) ---
+        const pdfBase = new jsPDF('l', 'mm', [ancho, alto]);
+        const htmlBase = generarHTMLBase(tipo);
+        const canvasBase = await renderizarParaPDF(htmlBase, tipo, true);
+        pdfBase.addImage(canvasBase.toDataURL('image/png'), 'PNG', 0, 0, ancho, alto);
+        pdfBase.save(`1_BASE_DISENO_${tipo.toUpperCase()}.pdf`);
 
-            const selector = (tipo === 'auto') ? '.sticker-auto-full' : '.sticker-moto-full';
-            const elemento = tempDiv.querySelector(selector);
-
-            if (!elemento) throw new Error("No se pudo encontrar el diseño del sticker para renderizar.");
-
-            // Convertimos el diseño a imagen (PNG)
-            const canvas = await html2canvas(elemento, { 
-                scale: 3, // Alta definición
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: null 
-            });
-            
-            const imgData = canvas.toDataURL('image/png');
-            
-            // MEDIDAS EXACTAS: Auto 240x110mm, Moto 120x110mm
-            const anchoPDF = (tipo === 'auto') ? 240 : 120;
-            const altoPDF = 110;
-
-            // Creamos el PDF en formato horizontal ('l')
-            const pdf = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
-            
-            // Metemos la imagen cubriendo todo el PDF
-            pdf.addImage(imgData, 'PNG', 0, 0, anchoPDF, altoPDF);
-            
-            // DESCARGA EL PDF con el nombre del ID (Ej: STICKER_ABC123.pdf)
-            pdf.save(`${idUnico}.pdf`); 
-        }
-
-        document.body.removeChild(tempDiv);
-        alert(`¡Éxito! Se descargaron ${listaIDs.length} archivos para la imprenta.`);
+        // --- PASO B: GENERAR PDF DE DATOS (QR + IDs) ---
+        const pdfDatos = new jsPDF('l', 'mm', [ancho, alto]);
         
+        for (let i = 0; i < listaIDs.length; i++) {
+            if (i > 0) pdfDatos.addPage([ancho, alto], 'l');
+            
+            const htmlDatos = generarHTMLSoloDatos(listaIDs[i], tipo);
+            const canvasDatos = await renderizarParaPDF(htmlDatos, tipo, false);
+            
+            pdfDatos.addImage(canvasDatos.toDataURL('image/png'), 'PNG', 0, 0, ancho, alto);
+        }
+        pdfDatos.save(`2_DATOS_VARIABLES_${tipo.toUpperCase()}.pdf`);
+
+        alert("¡Éxito! Se bajaron 2 archivos: La BASE (fondo gris/bordes) y los DATOS (QR/IDs).");
         if (typeof loadData === "function") loadData();
 
     } catch (error) {
-        console.error("Error en proceso:", error);
-        alert("ERROR: " + error.message);
+        alert("Error: " + error.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
+}
+
+// Función para convertir HTML a Imagen de alta calidad
+async function renderizarParaPDF(html, tipo, esBase) {
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'fixed'; tempDiv.style.left = '-10000px';
+    document.body.appendChild(tempDiv);
+    tempDiv.innerHTML = html;
+    
+    if (!esBase) await new Promise(r => setTimeout(r, 700)); // Espera al QR
+
+    const elemento = tempDiv.querySelector('.contenedor-render');
+    const canvas = await html2canvas(elemento, { 
+        scale: 3, 
+        useCORS: true, 
+        backgroundColor: null 
+    });
+    
+    document.body.removeChild(tempDiv);
+    return canvas;
 }
 
 /**
