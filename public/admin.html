@@ -552,22 +552,22 @@ async function prepararLote() {
     }
 }
 
-// --- PLANTILLAS DE DISEÑO CORREGIDAS (PARA IMPRENTA) ---
+// --- PLANTILLAS DE DISEÑO CORREGIDAS (ALINEACIÓN Y TRANSPARENCIA) ---
 
 function crearHTML_Base_Real(tipo) {
+    // Forzamos el tamaño del canvas de base
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
     
-    // Diseño de la Base: Sin escudo central, con textos de prueba
     const contenidoBase = `
-        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 25px; font-family: 'Archivo Black', sans-serif;">
+        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 30px; font-family: 'Archivo Black', sans-serif;">
             <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; pointer-events: none;"></div>
             <div style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; pointer-events: none;"></div>
             
-            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:12px 0; font-size:2rem; border-radius:6px; z-index:10;">🛡️ IMAGEN DE PRUEBA</div>
+            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:15px 0; font-size:2rem; border-radius:6px; z-index:10;">🛡️ IMAGEN DE PRUEBA</div>
             
             <div style="flex-grow: 1;"></div>
             
-            <div style="text-align: center; color: #000; font-size: 1.2rem; font-weight: 900; line-height: 1.3; z-index:10; margin-bottom: 10px;">
+            <div style="text-align: center; color: #000; font-size: 1.3rem; font-weight: 900; line-height: 1.3; z-index:10; text-transform: uppercase;">
                 IMAGEN DE PRUEBA<br>
                 IMAGEN DE PRUEBA<br>
                 IMAGEN DE PRUEBA
@@ -576,8 +576,8 @@ function crearHTML_Base_Real(tipo) {
 
     return `
         <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:white;">
-            <div style="width: 170mm; height: 150mm;">${contenidoBase}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm;">${contenidoBase}</div>` : ''}
+            <div style="width: 170mm; height: 150mm; overflow:hidden;">${contenidoBase}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; overflow:hidden; border-left:1px solid #eee;">${contenidoBase}</div>` : ''}
         </div>`;
 }
 
@@ -586,23 +586,23 @@ function crearHTML_Datos_Real(idUnico, tipo) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
 
-    // Bloque de datos: Sin fondo blanco para no tapar la base gris
+    // Usamos justify-content: center para que el QR e ID queden en el medio exacto del hueco de la base
     const bloqueDatos = `
-        <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Archivo Black', sans-serif;">
+        <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; font-family: 'Archivo Black', sans-serif;">
             
-            <div style="margin-bottom: 25px; line-height: 0;">
-                <img src="${qrImg}" width="280" height="280" style="mix-blend-mode: multiply;">
+            <div style="background: transparent !important; margin-bottom: 20px; line-height: 0;">
+                <img src="${qrImg}" width="280" height="280" style="mix-blend-mode: multiply; display: block; border:none;">
             </div>
             
-            <div style="background:#000 !important; color:#ffff00 !important; padding:10px 40px; border-radius:6px; font-family:monospace; font-size:4rem; font-weight:bold; letter-spacing:4px; border: 4px solid #ffff00;">
+            <div style="background:#000 !important; color:#ffff00 !important; padding:10px 40px; border-radius:6px; font-family:monospace; font-size:4rem; font-weight:bold; letter-spacing:4px; border: 4px solid #ffff00; box-shadow: none;">
                 ${idUnico}
             </div>
         </div>`;
 
     return `
-        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:transparent !important;">
-            <div style="width: 170mm; height: 150mm; background:transparent !important;">${bloqueDatos}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background:transparent !important;">${bloqueDatos}</div>` : ''}
+        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background: transparent !important;">
+            <div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>` : ''}
         </div>`;
 }
 
@@ -611,16 +611,19 @@ async function renderToCanvas(html, wMm, hMm, esBase) {
     temp.style.position = 'fixed'; 
     temp.style.left = '-10000px';
     temp.style.top = '0';
+    temp.style.background = 'transparent'; // Contenedor temporal transparente
     document.body.appendChild(temp);
     temp.innerHTML = html;
     
-    // Esperamos a que el QR cargue de la API (800ms es seguro)
-    await new Promise(r => setTimeout(r, esBase ? 200 : 800)); 
+    // El tiempo de espera es vital para que cargue la imagen del QR
+    await new Promise(r => setTimeout(r, esBase ? 200 : 1200)); 
 
     const canvas = await html2canvas(temp.querySelector('#render-area'), { 
-        scale: 3, // Mayor escala para que la imprenta no vea píxeles
+        scale: 3, 
         useCORS: true, 
-        backgroundColor: null // <--- CLAVE: Genera el canvas con fondo transparente
+        backgroundColor: null, // ESTO QUITA EL FONDO BLANCO EN EL PDF
+        removeContainer: true,
+        logging: false
     });
     
     document.body.removeChild(temp);
