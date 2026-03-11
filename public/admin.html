@@ -552,24 +552,32 @@ async function prepararLote() {
     }
 }
 
-// --- PLANTILLAS DE DISEÑO ---
+// --- PLANTILLAS DE DISEÑO CORREGIDAS (PARA IMPRENTA) ---
 
 function crearHTML_Base_Real(tipo) {
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
-    // El diseño que me enviaste en la foto (Gris, Bordes, Escudos)
-    const disenoBase = `
-        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px;">
+    
+    // Diseño de la Base: Sin escudo central, con textos de prueba
+    const contenidoBase = `
+        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 25px; font-family: 'Archivo Black', sans-serif;">
             <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; pointer-events: none;"></div>
             <div style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; pointer-events: none;"></div>
-            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:12px 0; font-size:2rem; border-radius:6px; font-family:'Archivo Black', sans-serif; z-index:10;">🛡️ SEGURIDAD ACTIVA</div>
-            <div style="font-size: 100px; z-index:10;">🛡️</div>
-            <div style="text-align: center; color: #000; font-size: 1.2rem; font-weight: 900; font-family:'Archivo Black', sans-serif; z-index:10;">SISTEMA PROTEGIDO POR<br>CENTRAL SANTUA</div>
+            
+            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:12px 0; font-size:2rem; border-radius:6px; z-index:10;">🛡️ IMAGEN DE PRUEBA</div>
+            
+            <div style="flex-grow: 1;"></div>
+            
+            <div style="text-align: center; color: #000; font-size: 1.2rem; font-weight: 900; line-height: 1.3; z-index:10; margin-bottom: 10px;">
+                IMAGEN DE PRUEBA<br>
+                IMAGEN DE PRUEBA<br>
+                IMAGEN DE PRUEBA
+            </div>
         </div>`;
 
     return `
         <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:white;">
-            ${disenoBase}
-            ${tipo === 'auto' ? disenoBase : ''}
+            <div style="width: 170mm; height: 150mm;">${contenidoBase}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm;">${contenidoBase}</div>` : ''}
         </div>`;
 }
 
@@ -578,38 +586,41 @@ function crearHTML_Datos_Real(idUnico, tipo) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
 
-    // Bloque de datos (QR e ID). Background transparent es vital.
+    // Bloque de datos: Sin fondo blanco para no tapar la base gris
     const bloqueDatos = `
-        <div style="width: 170mm; height: 150mm; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <div style="background:#000 !important; color:#fff !important; width:70%; text-align:center; padding:8px; border-radius:6px; font-weight:bold; font-size:1.5rem; margin-top:20px;">ESCANEAME</div>
-            <div style="background:#fff !important; padding:15px; border:4px solid #000; margin: 20px 0;">
-                <img src="${qrImg}" width="280" height="280">
+        <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Archivo Black', sans-serif;">
+            
+            <div style="margin-bottom: 25px; line-height: 0;">
+                <img src="${qrImg}" width="280" height="280" style="mix-blend-mode: multiply;">
             </div>
+            
             <div style="background:#000 !important; color:#ffff00 !important; padding:10px 40px; border-radius:6px; font-family:monospace; font-size:4rem; font-weight:bold; letter-spacing:4px; border: 4px solid #ffff00;">
                 ${idUnico}
             </div>
         </div>`;
 
     return `
-        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:transparent;">
-            ${bloqueDatos}
-            ${tipo === 'auto' ? bloqueDatos : ''}
+        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:transparent !important;">
+            <div style="width: 170mm; height: 150mm; background:transparent !important;">${bloqueDatos}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background:transparent !important;">${bloqueDatos}</div>` : ''}
         </div>`;
 }
 
 async function renderToCanvas(html, wMm, hMm, esBase) {
     const temp = document.createElement('div');
-    temp.style.position = 'fixed'; temp.style.left = '-10000px';
+    temp.style.position = 'fixed'; 
+    temp.style.left = '-10000px';
+    temp.style.top = '0';
     document.body.appendChild(temp);
     temp.innerHTML = html;
     
-    // Esperamos a que el QR cargue (importante)
-    await new Promise(r => setTimeout(r, esBase ? 300 : 800)); 
+    // Esperamos a que el QR cargue de la API (800ms es seguro)
+    await new Promise(r => setTimeout(r, esBase ? 200 : 800)); 
 
     const canvas = await html2canvas(temp.querySelector('#render-area'), { 
-        scale: 2, 
+        scale: 3, // Mayor escala para que la imprenta no vea píxeles
         useCORS: true, 
-        backgroundColor: null // Esto genera el fondo transparente
+        backgroundColor: null // <--- CLAVE: Genera el canvas con fondo transparente
     });
     
     document.body.removeChild(temp);
