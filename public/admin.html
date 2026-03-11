@@ -503,7 +503,11 @@ function filtrarStickers() {
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        ejecutarImpresionProfesional(listaIDs, tipo);
+        const win = window.open('', '_blank');
+        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+        
+        win.document.write(contenidoHTML);
+        win.document.close();
         
         if (typeof render === "function") {
             // Aumentamos a 1 segundo el delay para asegurar que el server guardó
@@ -518,63 +522,123 @@ function filtrarStickers() {
     }
 }
 
-// ESTA FUNCIÓN CREA LOS DOS ARCHIVOS POR SEPARADO
-function ejecutarImpresionProfesional(listaIDs, tipo) {
-    const ancho = (tipo === 'auto') ? '340mm' : '170mm';
-    const alto = '150mm';
+/**
+ * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
+ */
+function generarHTMLImpresion(listaIDs, tipo) {
+    let stickersHTML = '';
 
-    // --- ARCHIVO 1: LA BASE (EL DISEÑO FIJO) ---
-    const winBase = window.open('', '_blank');
-    winBase.document.write(`
-        <html><head><style>
-            @page { size: ${ancho} ${alto}; margin: 0; }
-            body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; }
-            .sticker-base { 
-                width: ${ancho}; height: ${alto}; 
-                background: #dcdcdc; border: 8px solid #ff0000; 
-                position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-around;
-            }
-            .borde-amarillo { position: absolute; top:0; left:0; right:0; bottom:0; border: 6px solid #ffff00; pointer-events: none; }
-            .bloque-negro { background: #000; color: #fff; width: 90%; text-align: center; padding: 10px; font-size: 1.5rem; z-index: 5; }
-            .footer-txt { text-align: center; color: #000; font-weight: 900; font-size: 1.1rem; }
-        </style></head><body>
-            <div class="sticker-base">
-                <div class="borde-amarillo"></div>
-                <div class="bloque-negro">IMAGEN DE PRUEBA</div>
-                <div style="height: 300px; width: 300px; border: 1px dashed #aaa;"></div> <div style="height: 60px;"></div> <div class="footer-txt">IMAGEN DE PRUEBA<br>IMAGEN DE PRUEBA</div>
+    listaIDs.forEach(idUnico => {
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+
+        if (tipo === 'auto') {
+            stickersHTML += `
+                <div class="sticker-auto-full">
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            --IMAGEN DE PRUEBA--<br>
+                            --IMAGEN DE PRUEBA--
+                        </div>
+                    </div>
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            --IMAGEN DE PRUEBA--<br>
+                            --IMAGEN DE PRUEBA--
+                        </div>
+                    </div>
+                </div>`;
+        } else {
+            stickersHTML += `
+                <div class="sticker-moto-full">
+                    <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
+                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
+                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                        --IMAGEN DE PRUEBA--<br>
+                        --IMAGEN DE PRUEBA--
+                    </div>
+                </div>`;
+        }
+    });
+
+    return `
+        <html>
+        <head>
+            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
+            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Archivo Black', sans-serif; 
+                    margin: 0; padding: 10mm; background: #fff; 
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .contenedor-impresion {
+                    display: flex; flex-direction: column; align-items: center; gap: 10mm;
+                }
+                .sticker-auto-full {
+                    width: 340mm; height: 150mm; display: flex; justify-content: center; gap: 1mm;
+                    background: transparent; position: relative;
+                }
+                .mitad-sticker {
+                    width: 170mm; height: 150mm; background: #dcdcdc;
+                    display: flex; flex-direction: column; align-items: center;
+                    justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
+                }
+                .mitad-sticker::before {
+                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                    border: 4px solid #ffff00; pointer-events: none;
+                }
+                .mitad-sticker::after {
+                    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+                    border: 4px solid #ff0000; pointer-events: none;
+                }
+                .sticker-moto-full {
+                    width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                    position: relative; display: flex; flex-direction: column; align-items: center;
+                    justify-content: space-around; padding: 20px;
+                }
+                .sticker-moto-full::before {
+                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                    border: 6px solid #ffff00; pointer-events: none;
+                }
+                .sticker-moto-full::after {
+                    content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
+                    border: 6px solid #ff0000; pointer-events: none;
+                }
+                .header-txt, .qr-box, .id-tag, .footer-txt { z-index: 10; position: relative; }
+                .header-txt {
+                    background: #000 !important; color: #fff !important; width: 90%;
+                    text-align: center; padding: 8px 0; font-size: 1.3rem; border-radius: 4px;
+                }
+                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; }
+                .id-tag {
+                    background: #000 !important; color: #ffff00 !important;
+                    font-family: 'Roboto Mono', monospace; font-size: 2rem;
+                    padding: 5px 20px; border-radius: 3px; letter-spacing: 2px;
+                }
+                .footer-txt { text-align: center; color: #000; font-size: 0.8rem; line-height: 1.1; font-weight: 900; }
+                @media print {
+                    body { padding: 0; margin: 0; }
+                    .sticker-auto-full, .sticker-moto-full { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="contenedor-impresion">
+                ${stickersHTML}
             </div>
-        </body></html>
-    `);
-    winBase.document.close();
-
-    // --- ARCHIVO 2: LOS DATOS (QR E ID SIN FONDO) ---
-    const winDatos = window.open('', '_blank');
-    winDatos.document.write(`
-        <html><head><style>
-            @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
-            @page { size: ${ancho} ${alto}; margin: 0; }
-            body { margin: 0; padding: 0; background: transparent !important; }
-            .capa-datos { 
-                width: ${ancho}; height: ${alto}; 
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                page-break-after: always; background: transparent !important;
-            }
-            .id-tag { 
-                background: #000 !important; color: #ffff00 !important; 
-                font-family: 'Roboto Mono', monospace; font-size: 3.5rem; 
-                padding: 5px 25px; border-radius: 5px; margin-top: 30px;
-                -webkit-print-color-adjust: exact;
-            }
-        </style></head><body>
-            ${listaIDs.map(id => `
-                <div class="capa-datos">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://centralsantua.com.ar/index.html?id=${id}&bgcolor=ffffff00" width="300">
-                    <div class="id-tag">${id}</div>
-                </div>
-            `).join('')}
-        </body></html>
-    `);
-    winDatos.document.close();
+        </body>
+        </html>`;
 }
 
 function reimprimirLote(loteId) {
