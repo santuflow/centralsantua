@@ -516,122 +516,6 @@ function filtrarStickers() {
 /**
  * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
  */
-function generarHTMLImpresion(listaIDs, tipo) {
-    let stickersHTML = '';
-
-    listaIDs.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-
-        if (tipo === 'auto') {
-            stickersHTML += `
-                <div class="sticker-auto-full">
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                    <div class="mitad-sticker">
-                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
-                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                </div>`;
-        } else {
-            stickersHTML += `
-                <div class="sticker-moto-full">
-                    <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
-                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
-                        --IMAGEN DE PRUEBA--<br>
-                        --IMAGEN DE PRUEBA--
-                    </div>
-                </div>`;
-        }
-    });
-
-    return `
-        <html>
-        <head>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <title>STIKERS PREMIUM | CENTRAL SANTUA</title>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
-                * { box-sizing: border-box; }
-                body { 
-                    font-family: 'Archivo Black', sans-serif; 
-                    margin: 0; padding: 10mm; background: #fff; 
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                .contenedor-impresion {
-                    display: flex; flex-direction: column; align-items: center; gap: 10mm;
-                }
-                .sticker-auto-full {
-                    width: 240mm; height: 110mm; display: flex; justify-content: center; gap: 1mm;
-                    background: transparent; position: relative;
-                }
-                .mitad-sticker {
-                    width: 120mm; height: 110mm; background: #dcdcdc;
-                    display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
-                }
-                .mitad-sticker::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 4px solid #ffff00; pointer-events: none;
-                }
-                .mitad-sticker::after {
-                    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-                    border: 4px solid #ff0000; pointer-events: none;
-                }
-                .sticker-moto-full {
-                    width: 120mm; height: 110mm; background: #dcdcdc; border: 8px solid #ff0000;
-                    position: relative; display: flex; flex-direction: column; align-items: center;
-                    justify-content: space-around; padding: 20px;
-                }
-                .sticker-moto-full::before {
-                    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                    border: 6px solid #ffff00; pointer-events: none;
-                }
-                .sticker-moto-full::after {
-                    content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
-                    border: 6px solid #ff0000; pointer-events: none;
-                }
-                .header-txt, .qr-box, .id-tag, .footer-txt { z-index: 10; position: relative; }
-                .header-txt {
-                    background: #000 !important; color: #fff !important; width: 90%;
-                    text-align: center; padding: 8px 0; font-size: 1.3rem; border-radius: 4px;
-                }
-                .qr-box { background: #fff; padding: 8px; border: 2px solid #000; }
-                .id-tag {
-                    background: #000 !important; color: #ffff00 !important;
-                    font-family: 'Roboto Mono', monospace; font-size: 2rem;
-                    padding: 5px 20px; border-radius: 3px; letter-spacing: 2px;
-                }
-                .footer-txt { text-align: center; color: #000; font-size: 0.8rem; line-height: 1.1; font-weight: 900; }
-                @media print {
-                    body { padding: 0; margin: 0; }
-                    .sticker-auto-full, .sticker-moto-full { page-break-after: always; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="contenedor-impresion">
-                ${stickersHTML}
-            </div>
-        </body>
-        </html>`;
-}
-
 function reimprimirLote(loteId) {
     if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
     
@@ -669,26 +553,20 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
 
         if (tipo === 'auto') {
             stickersHTML += `
-                <div class="sticker-auto-full">
-                    <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                    <div class="mitad-sticker">
-                        <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
-                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                        <div class="id-tag">${idUnico}</div>
-                        <div class="footer-txt">
-                            --IMAGEN DE PRUEBA--<br>
-                            --IMAGEN DE PRUEBA--
-                        </div>
-                    </div>
-                </div>`;
+    <div class="sticker-auto-full" style="width: 240mm; height: 110mm; overflow: hidden; display: flex;">
+        <div class="mitad-sticker" style="width: 120mm; height: 110mm; overflow: hidden;">
+            <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
+            <div class="qr-box"><img src="${qrImg}" style="width: 180px; height: 180px;"></div>
+            <div class="id-tag">${idUnico}</div>
+            <div class="footer-txt">--IMAGEN DE PRUEBA--<br>--IMAGEN DE PRUEBA--</div>
+        </div>
+        <div class="mitad-sticker" style="width: 120mm; height: 110mm; overflow: hidden;">
+            <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
+            <div class="qr-box"><img src="${qrImg}" style="width: 180px; height: 180px;"></div>
+            <div class="id-tag">${idUnico}</div>
+            <div class="footer-txt">--IMAGEN DE PRUEBA--<br>--IMAGEN DE PRUEBA--</div>
+        </div>
+    </div>`;
         } else {
             stickersHTML += `
                 <div class="sticker-moto-full">
