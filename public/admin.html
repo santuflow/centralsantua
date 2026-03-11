@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -512,38 +513,33 @@ async function prepararLote() {
         pdfBase.save(`1_BASE_IMPRENTA_${tipo.toUpperCase()}.pdf`);
 
         // --- PASO 2: GENERAR PDF DE DATOS (Transparente y Paginado) ---
-        // 'compress: true' ayuda a que el archivo no pese gigas con 5000 stickers
         const pdfDatos = new jsPDF({
             orientation: 'l',
             unit: 'mm',
             format: [anchoPDF, altoPDF],
-            compress: true 
+            putOnlyUsedFonts: true
+            // SACAMOS 'compress: true' porque eso aplanaba el fondo a blanco
         });
         
-        // AQUÍ EMPIEZA EL BUCLE DONDE PONES LO QUE ME PREGUNTASTE
         for (let i = 0; i < listaIDs.length; i++) {
             if (i > 0) pdfDatos.addPage([anchoPDF, altoPDF], 'l');
             
-            // 1. Generamos el HTML específico de este sticker
             const htmlDatos = crearHTML_Datos_Real(listaIDs[i], tipo);
-            
-            // 2. Lo convertimos a canvas (renderToCanvas ya tiene el backgroundColor: null)
-            // Usamos 'false' porque es la capa de DATOS
             const canvasDatos = await renderToCanvas(htmlDatos, false);
             
-            // 3. Lo pegamos en el PDF con formato PNG (soporta transparencia)
-            // El alias 'FAST' es vital para que no tarde horas procesando 5000 imágenes
+            // ACÁ ESTABA EL ERROR: Definimos imgData antes de usarlo
+            const imgData = canvasDatos.toDataURL('image/png'); 
+            
             pdfDatos.addImage(
-                canvasDatos.toDataURL('image/png'), 
+                imgData, 
                 'PNG', 
                 0, 0, 
                 anchoPDF, 
                 altoPDF, 
                 undefined, 
-                'FAST'
+                'NONE' // 'NONE' es vital para mantener el canal Alfa (transparencia)
             );
             
-            // Feedback visual para que no creas que se colgó
             if(i % 10 === 0) {
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PROCESANDO: ${i}/${listaIDs.length}...`;
             }
@@ -608,10 +604,10 @@ function crearHTML_Datos_Real(idUnico, tipo) {
         </div>`;
 
     return `
-        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex;">
-            <div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>` : ''}
-        </div>`;
+    <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background: transparent !important;">
+        <div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>
+        ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>` : ''}
+    </div>`;
 }
 
 async function renderToCanvas(html, esBase) {
