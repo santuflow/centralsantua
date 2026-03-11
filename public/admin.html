@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -468,8 +466,7 @@ function filtrarStickers() {
     render();
 }
 
-    // REEMPLAZAR LA FUNCIÓN PREPARARLOTE
-async function prepararLote() {
+    async function prepararLote() {
     const cantInput = document.getElementById('cant-qr');
     const tipoInput = document.getElementById('tipo-qr');
     const cant = parseInt(cantInput.value);
@@ -477,21 +474,28 @@ async function prepararLote() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
+    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
+    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
     const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
+    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDF...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cantidad: cant, tipo: tipo, lote_id: nuevoLoteId })
+            body: JSON.stringify({ 
+                cantidad: cant, 
+                tipo: tipo, 
+                lote_id: nuevoLoteId 
+            })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
@@ -499,10 +503,14 @@ async function prepararLote() {
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        // ESTA ES LA FUNCIÓN QUE HACE LA MAGIA DEL PDF
-        await generarPDFUnificado(listaIDs, tipo);
-
+        const win = window.open('', '_blank');
+        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+        
+        win.document.write(contenidoHTML);
+        win.document.close();
+        
         if (typeof render === "function") {
+            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
             setTimeout(loadData, 1000); 
         }
 
@@ -512,86 +520,6 @@ async function prepararLote() {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
-}
-
-// NUEVA FUNCIÓN: GENERA UN SOLO PDF CON DISEÑO + QR + ID
-async function generarPDFUnificado(listaIDs, tipo) {
-    const { jsPDF } = window.jspdf;
-    const anchoMm = (tipo === 'auto') ? 340 : 170; // Medidas según tu CSS
-    const altoMm = 150;
-
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
-
-    for (let i = 0; i < listaIDs.length; i++) {
-        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-
-        const id = listaIDs[i];
-        const url = `https://centralsantua.com.ar/index.html?id=${id}`;
-
-        // 1. DIBUJAR FONDO (Diseño base)
-        try {
-            // Intenta cargar bandera.jpg. Si no existe, dibuja un fondo gris oscuro
-            doc.addImage('bandera.jpg', 'JPEG', 0, 0, anchoMm, altoMm);
-        } catch (e) {
-            doc.setFillColor(30, 30, 30);
-            doc.rect(0, 0, anchoMm, altoMm, 'F');
-        }
-
-        // 2. GENERAR QR COMO IMAGEN
-        const qrDataUrl = await QRCode.toDataURL(url, { 
-            errorCorrectionLevel: 'H', 
-            margin: 1, 
-            width: 800,
-            color: { dark: '#000000', light: '#ffffff' } 
-        });
-
-        // 3. POSICIONAR ELEMENTOS
-        if (tipo === 'auto') {
-            // Lógica para sticker de AUTO (Doble bloque)
-            dibujarStickerEnPDF(doc, id, qrDataUrl, 0, anchoMm / 2); // Mitad izquierda
-            dibujarStickerEnPDF(doc, id, qrDataUrl, anchoMm / 2, anchoMm / 2); // Mitad derecha
-        } else {
-            // Lógica para sticker de MOTO
-            dibujarStickerEnPDF(doc, id, qrDataUrl, 0, anchoMm);
-        }
-    }
-
-    doc.save(`STICKERS_SANTUA_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
-}
-
-// FUNCIÓN AUXILIAR PARA DIBUJAR CADA BLOQUE DE STICKER
-function dibujarStickerEnPDF(pdf, id, qrImg, xBase, ancho) {
-    const centroX = xBase + (ancho / 2);
-    
-    // Marco Rojo y Amarillo (como tu CSS)
-    pdf.setDrawColor(255, 0, 0);
-    pdf.setLineWidth(4);
-    pdf.rect(xBase + 5, 5, ancho - 10, 140);
-    
-    // Header Negro
-    pdf.setFillColor(0, 0, 0);
-    pdf.rect(xBase + 15, 15, ancho - 30, 15, 'F');
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.text("🛡️ IMAGEN DE PRUEBA", centroX, 25, { align: 'center' });
-
-    // El QR
-    pdf.addImage(qrImg, 'PNG', centroX - 35, 35, 70, 70);
-
-    // Caja del ID (Negra)
-    pdf.setFillColor(0, 0, 0);
-    pdf.roundedRect(centroX - 45, 110, 90, 18, 2, 2, 'F');
-    
-    // ID Texto (Amarillo)
-    pdf.setTextColor(255, 255, 0);
-    pdf.setFont("courier", "bold");
-    pdf.setFontSize(32);
-    pdf.text(id, centroX, 123, { align: 'center' });
-
-    // Footer
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(10);
-    pdf.text("-- IMAGEN DE PRUEBA --", centroX, 138, { align: 'center' });
 }
 
 /**
