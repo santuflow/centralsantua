@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -474,45 +476,32 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
-    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
+    const tiempoExacto = `${ahora.getDate()}-${ahora.getMonth() + 1}_${ahora.getHours()}-${ahora.getMinutes()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO DATOS...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                cantidad: cant, 
-                tipo: tipo, 
-                lote_id: nuevoLoteId 
-            })
+            body: JSON.stringify({ cantidad: cant, tipo: tipo, lote_id: nuevoLoteId })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
-        
         const data = await response.json();
-        const listaIDs = data.ids; 
+        
+        // --- AQUÍ EMPIEZA LO PROFESIONAL ---
+        btn.innerHTML = '<i class="fas fa-file-pdf"></i> DIBUJANDO PDF...';
+        await generarArchivosProfesionales(data.ids, tipo);
 
-        const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
-        
-        win.document.write(contenidoHTML);
-        win.document.close();
-        
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
-            setTimeout(loadData, 1000); 
-        }
+        alert("¡ÉXITO! Se han descargado los archivos para la imprenta.");
+        loadData();
 
     } catch (error) {
         alert("ERROR: " + error.message);
@@ -659,6 +648,68 @@ function reimprimirLote(loteId) {
 
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
+}
+
+async function generarArchivosProfesionales(listaIDs, tipo) {
+    const { jsPDF } = window.jspdf;
+    
+    // Medidas exactas para la imprenta (en mm)
+    // El tipo 'auto' usa el doble de ancho que 'moto'
+    const anchoMm = (tipo === 'auto') ? 240 : 120;
+    const altoMm = 110;
+
+    // Crear el PDF con fondo transparente (por defecto en jsPDF)
+    const doc = new jsPDF({ 
+        orientation: 'l', 
+        unit: 'mm', 
+        format: [anchoMm, altoMm],
+        putOnlyUsedFonts: true
+    });
+
+    for (let i = 0; i < listaIDs.length; i++) {
+        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
+        
+        const id = listaIDs[i];
+        const url = `https://centralsantua.com.ar/index.html?id=${id}`;
+        
+        // Generar QR en alta resolución (1000px)
+        const qrDataUrl = await QRCode.toDataURL(url, { 
+            errorCorrectionLevel: 'H', 
+            margin: 1, 
+            width: 1000,
+            color: {
+                dark: '#000000',
+                light: '#ffffff00' // QR con fondo transparente si el lector lo soporta
+            }
+        });
+
+        if (tipo === 'auto') {
+            // Posicionamiento para AUTO (2 juegos de datos simétricos)
+            dibujarBloque(doc, id, qrDataUrl, 20, 15);  // Lado izquierdo
+            dibujarBloque(doc, id, qrDataUrl, 130, 15); // Lado derecho
+        } else {
+            // Posicionamiento para MOTO (1 solo juego de datos)
+            dibujarBloque(doc, id, qrDataUrl, 15, 15);
+        }
+    }
+
+    // Descarga automática del archivo de DATOS
+    doc.save(`2_DATOS_${tipo.toUpperCase()}_${listaIDs.length}_U.pdf`);
+}
+
+function dibujarBloque(pdf, id, qrImg, x, y) {
+    // 1. Dibujar el QR (Tamaño 70x70mm)
+    pdf.addImage(qrImg, 'PNG', x + 10, y, 70, 70);
+
+    // 2. Dibujar la caja negra del ID (Fondo sólido para que resalte el neón)
+    pdf.setFillColor(0, 0, 0);
+    pdf.roundedRect(x, y + 75, 90, 15, 1, 1, 'F');
+
+    // 3. Dibujar el Texto del ID (Amarillo Neón)
+    pdf.setTextColor(255, 255, 0);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(30);
+    pdf.text(id, x + 45, y + 86, { align: 'center' });
 }
 
 </script>
