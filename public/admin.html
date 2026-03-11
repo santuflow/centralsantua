@@ -654,70 +654,110 @@ function reimprimirLote(loteId) {
 
 async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const { jsPDF } = window.jspdf;
-    const anchoMm = (tipo === 'auto') ? 340 : 170;
-    const altoMm = 150;
-
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm], compress: true });
-
-    for (let i = 0; i < listaIDs.length; i++) {
-        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-
-        const id = listaIDs[i];
-        const url = `https://centralsantua.com.ar/index.html?id=${id}`;
-        
-        // Generar QR en alta resolución
-        const qrDataUrl = await QRCode.toDataURL(url, { errorCorrectionLevel: 'H', margin: 1, width: 800 });
+    
+    // 1. Creamos un contenedor invisible para renderizar TU HTML real
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.left = '-10000px';
+    tempDiv.style.top = '0';
+    
+    // Generamos el HTML usando los estilos que me pasaste
+    let stickersHTML = '';
+    listaIDs.forEach(idUnico => {
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
         if (tipo === 'auto') {
-            dibujarCuerpoSticker(doc, id, qrDataUrl, 0, 170);   // Mitad izquierda
-            dibujarCuerpoSticker(doc, id, qrDataUrl, 170, 170); // Mitad derecha
+            stickersHTML += `
+                <div class="sticker-auto-full">
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            --IMAGEN DE PRUEBA--<br>
+                            --IMAGEN DE PRUEBA--
+                        </div>
+                    </div>
+                    <div class="mitad-sticker">
+                        <div class="header-txt" style="font-size: 1.6rem;">🛡️ IMAGEN DE PRUEBA</div>
+                        <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                        <div class="id-tag" style="font-size: 3rem; margin: 5px 0;">${idUnico}</div>
+                        <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                            --IMAGEN DE PRUEBA--<br>
+                            --IMAGEN DE PRUEBA--
+                        </div>
+                    </div>
+                </div>`;
         } else {
-            dibujarCuerpoSticker(doc, id, qrDataUrl, 0, 170);   // Único (Moto)
+            stickersHTML += `
+                <div class="sticker-moto-full">
+                    <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
+                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
+                    <div class="id-tag" style="font-size: 3.5rem; margin: 5px 0;">${idUnico}</div>
+                    <div class="footer-txt" style="font-size: 1.1rem; line-height: 1.2; letter-spacing: 1px;">
+                        --IMAGEN DE PRUEBA--<br>
+                        --IMAGEN DE PRUEBA--
+                    </div>
+                </div>`;
         }
+    });
+
+    // Insertamos tu CSS original para que html2canvas sepa cómo dibujarlo
+    tempDiv.innerHTML = `
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
+            .sticker-auto-full { width: 340mm; height: 150mm; display: flex; gap: 0; background: #fff; }
+            .mitad-sticker { 
+                width: 170mm; height: 150mm; background: #dcdcdc; 
+                display: flex; flex-direction: column; align-items: center; 
+                justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
+            }
+            .mitad-sticker::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 4px solid #ffff00; }
+            .mitad-sticker::after { content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 4px solid #ff0000; }
+            
+            .sticker-moto-full { 
+                width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                position: relative; display: flex; flex-direction: column; align-items: center;
+                justify-content: space-around; padding: 20px;
+            }
+            .sticker-moto-full::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; }
+            .sticker-moto-full::after { content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; }
+
+            .header-txt { background: #000 !important; color: #fff !important; width: 90%; text-align: center; padding: 8px 0; border-radius: 4px; font-family: 'Archivo Black', sans-serif; }
+            .qr-box { background: #fff; padding: 8px; border: 2px solid #000; display: flex; }
+            .id-tag { background: #000 !important; color: #ffff00 !important; font-family: 'Roboto Mono', monospace; padding: 5px 20px; border-radius: 3px; letter-spacing: 2px; }
+            .footer-txt { text-align: center; color: #000; font-weight: 900; font-family: 'Archivo Black', sans-serif; }
+        </style>
+        <div id="captura-area">${stickersHTML}</div>
+    `;
+    document.body.appendChild(tempDiv);
+
+    // 2. Configuración del PDF
+    const anchoMm = (tipo === 'auto') ? 340 : 170;
+    const altoMm = 150;
+    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
+
+    // 3. Procesamos cada sticker
+    const stickers = tempDiv.querySelectorAll(tipo === 'auto' ? '.sticker-auto-full' : '.sticker-moto-full');
+
+    for (let i = 0; i < stickers.length; i++) {
+        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
+
+        // Capturamos el diseño real como imagen
+        const canvas = await html2canvas(stickers[i], {
+            scale: 3, // Alta calidad
+            useCORS: true,
+            logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
+
+    // 4. Guardar y limpiar
     doc.save(`SANTUA_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
-}
-
-function dibujarCuerpoSticker(pdf, id, qrImg, xBase, ancho) {
-    const centroX = xBase + (ancho / 2);
-
-    // 1. Fondo Gris (Simulando tu CSS #dcdcdc)
-    pdf.setFillColor(220, 220, 220);
-    pdf.rect(xBase, 0, ancho, 150, 'F');
-
-    // 2. Bordes (Rojo y Amarillo)
-    pdf.setLineWidth(2);
-    pdf.setDrawColor(255, 0, 0); // Rojo Exterior
-    pdf.rect(xBase + 2, 2, ancho - 4, 146);
-    pdf.setDrawColor(255, 255, 0); // Amarillo Medio
-    pdf.rect(xBase + 4, 4, ancho - 8, 142);
-    pdf.setDrawColor(255, 0, 0); // Rojo Interior
-    pdf.rect(xBase + 6, 6, ancho - 12, 138);
-
-    // 3. Header Negro
-    pdf.setFillColor(0, 0, 0);
-    pdf.roundedRect(centroX - 60, 15, 120, 15, 2, 2, 'F');
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.text("🛡️ IMAGEN DE PRUEBA", centroX, 25, { align: 'center' });
-
-    // 4. Caja Blanca QR
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(centroX - 38, 38, 76, 76, 'F');
-    pdf.addImage(qrImg, 'PNG', centroX - 35, 41, 70, 70);
-
-    // 5. Tag ID (Negro con letras Amarillas)
-    pdf.setFillColor(0, 0, 0);
-    pdf.roundedRect(centroX - 50, 118, 100, 18, 2, 2, 'F');
-    pdf.setTextColor(255, 255, 0);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(32);
-    pdf.text(id, centroX, 132, { align: 'center' });
-
-    // 6. Footer
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(10);
-    pdf.text("--IMAGEN DE PRUEBA--", centroX, 142, { align: 'center' });
+    document.body.removeChild(tempDiv);
 }
 
 </script>
