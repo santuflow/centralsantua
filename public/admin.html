@@ -476,28 +476,21 @@ function filtrarStickers() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
-    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
     const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
-    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDF...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                cantidad: cant, 
-                tipo: tipo, 
-                lote_id: nuevoLoteId 
-            })
+            body: JSON.stringify({ cantidad: cant, tipo: tipo, lote_id: nuevoLoteId })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
@@ -505,14 +498,10 @@ function filtrarStickers() {
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        const win = window.open('', '_blank');
-        const contenidoHTML = generarHTMLImpresion(listaIDs, tipo);
+        // LLAMADA AL GENERADOR DE PDF ÚNICO
+        await generarPdfFinalTodoJunto(listaIDs, tipo);
         
-        win.document.write(contenidoHTML);
-        win.document.close();
-        
-        if (typeof render === "function") {
-            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
+        if (typeof loadData === "function") {
             setTimeout(loadData, 1000); 
         }
 
@@ -661,6 +650,74 @@ function reimprimirLote(loteId) {
 
     win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
     win.document.close();
+}
+
+async function generarPdfFinalTodoJunto(listaIDs, tipo) {
+    const { jsPDF } = window.jspdf;
+    const anchoMm = (tipo === 'auto') ? 340 : 170;
+    const altoMm = 150;
+
+    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm], compress: true });
+
+    for (let i = 0; i < listaIDs.length; i++) {
+        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
+
+        const id = listaIDs[i];
+        const url = `https://centralsantua.com.ar/index.html?id=${id}`;
+        
+        // Generar QR en alta resolución
+        const qrDataUrl = await QRCode.toDataURL(url, { errorCorrectionLevel: 'H', margin: 1, width: 800 });
+
+        if (tipo === 'auto') {
+            dibujarCuerpoSticker(doc, id, qrDataUrl, 0, 170);   // Mitad izquierda
+            dibujarCuerpoSticker(doc, id, qrDataUrl, 170, 170); // Mitad derecha
+        } else {
+            dibujarCuerpoSticker(doc, id, qrDataUrl, 0, 170);   // Único (Moto)
+        }
+    }
+    doc.save(`SANTUA_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
+}
+
+function dibujarCuerpoSticker(pdf, id, qrImg, xBase, ancho) {
+    const centroX = xBase + (ancho / 2);
+
+    // 1. Fondo Gris (Simulando tu CSS #dcdcdc)
+    pdf.setFillColor(220, 220, 220);
+    pdf.rect(xBase, 0, ancho, 150, 'F');
+
+    // 2. Bordes (Rojo y Amarillo)
+    pdf.setLineWidth(2);
+    pdf.setDrawColor(255, 0, 0); // Rojo Exterior
+    pdf.rect(xBase + 2, 2, ancho - 4, 146);
+    pdf.setDrawColor(255, 255, 0); // Amarillo Medio
+    pdf.rect(xBase + 4, 4, ancho - 8, 142);
+    pdf.setDrawColor(255, 0, 0); // Rojo Interior
+    pdf.rect(xBase + 6, 6, ancho - 12, 138);
+
+    // 3. Header Negro
+    pdf.setFillColor(0, 0, 0);
+    pdf.roundedRect(centroX - 60, 15, 120, 15, 2, 2, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.text("🛡️ IMAGEN DE PRUEBA", centroX, 25, { align: 'center' });
+
+    // 4. Caja Blanca QR
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(centroX - 38, 38, 76, 76, 'F');
+    pdf.addImage(qrImg, 'PNG', centroX - 35, 41, 70, 70);
+
+    // 5. Tag ID (Negro con letras Amarillas)
+    pdf.setFillColor(0, 0, 0);
+    pdf.roundedRect(centroX - 50, 118, 100, 18, 2, 2, 'F');
+    pdf.setTextColor(255, 255, 0);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(32);
+    pdf.text(id, centroX, 132, { align: 'center' });
+
+    // 6. Footer
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(10);
+    pdf.text("--IMAGEN DE PRUEBA--", centroX, 142, { align: 'center' });
 }
 
 </script>
