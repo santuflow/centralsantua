@@ -577,11 +577,11 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     display: flex; flex-direction: column; align-items: center; gap: 10mm;
                 }
                 .sticker-auto-full {
-                    width: 340mm; height: 150mm; display: flex; justify-content: center; gap: 1mm;
+                    width: 240mm; height: 110mm; display: flex; justify-content: center; gap: 1mm;
                     background: transparent; position: relative;
                 }
                 .mitad-sticker {
-                    width: 170mm; height: 150mm; background: #dcdcdc;
+                    width: 120mm; height: 110mm; background: #dcdcdc;
                     display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
                 }
@@ -594,7 +594,7 @@ function generarHTMLImpresion(listaIDs, tipo) {
                     border: 4px solid #ff0000; pointer-events: none;
                 }
                 .sticker-moto-full {
-                    width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                    width: 120mm; height: 110mm; background: #dcdcdc; border: 8px solid #ff0000;
                     position: relative; display: flex; flex-direction: column; align-items: center;
                     justify-content: space-around; padding: 20px;
                 }
@@ -733,8 +733,8 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     `;
     document.body.appendChild(tempDiv);
 
-    const anchoMm = (tipo === 'auto') ? 340 : 170;
-    const altoMm = 150;
+    const anchoMm = (tipo === 'auto') ? 240 : 120;
+    const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
     // 2. Procesamos cada sticker como una imagen de alta calidad
