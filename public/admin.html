@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Central Santua</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -453,7 +450,7 @@
     }
 }
 
-// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA DEL ACORDEÓN
+// ESTA FUNCIÓN ES LA QUE EVITA QUE SE CIERRE LA MIERDA DEL ACORDEÓNm
 function verMasLote(event, loteId) {
     event.preventDefault(); // Evita que el navegador haga scroll raro
     event.stopPropagation(); // Evita que el 'details' se cierre
@@ -469,9 +466,7 @@ function filtrarStickers() {
     render();
 }
 
-    // --- NUEVAS FUNCIONES DE GENERACIÓN PARA IMPRENTA (SEPARADAS) ---
-
-async function prepararLote() {
+    async function prepararLote() {
     const cantInput = document.getElementById('cant-qr');
     const tipoInput = document.getElementById('tipo-qr');
     const cant = parseInt(cantInput.value);
@@ -479,87 +474,43 @@ async function prepararLote() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    const { jsPDF } = window.jspdf;
+    // --- CAMBIO CLAVE: Formato de hora con SEGUNDOS ---
+    // Esto genera algo como "5/3 00:45:12"
     const ahora = new Date();
-    const tiempoExacto = `${ahora.getDate()}-${ahora.getMonth() + 1}_${ahora.getHours()}${ahora.getMinutes()}`;
+    const tiempoExacto = `${ahora.getDate()}/${ahora.getMonth() + 1} ${ahora.getHours()}:${ahora.getMinutes()}:${ahora.getSeconds()}`;
     const nuevoLoteId = `LOTE-${tiempoExacto}`; 
+    // -------------------------------------------------
 
     const btn = document.querySelector('button[onclick="prepararLote()"]');
     const originalText = btn.innerHTML;
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO REGISTROS...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SEGURIDAD...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cantidad: cant, tipo: tipo, lote_id: nuevoLoteId })
+            body: JSON.stringify({ 
+                cantidad: cant, 
+                tipo: tipo, 
+                lote_id: nuevoLoteId 
+            })
         });
 
         if (!response.ok) throw new Error("Error en el servidor");
+        
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        const anchoPDF = (tipo === 'auto') ? 340 : 170;
-        const altoPDF = 150;
-
-        // --- PASO 1: GENERAR PDF DE LA BASE (1 sola página) ---
-        // Se mantiene igual porque la base NO necesita transparencia
-        const pdfBase = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
-        const htmlBase = crearHTML_Base_Real(tipo);
-        const canvasBase = await renderToCanvas(htmlBase, true); 
-        pdfBase.addImage(canvasBase.toDataURL('image/png'), 'PNG', 0, 0, anchoPDF, altoPDF);
-        pdfBase.save(`1_BASE_IMPRENTA_${tipo.toUpperCase()}.pdf`);
-
-        // --- PASO 2: GENERAR PDF DE DATOS (Fondo Transparente Real) ---
-        const pdfDatos = new jsPDF({
-            orientation: 'l',
-            unit: 'mm',
-            format: [anchoPDF, altoPDF],
-            putOnlyUsedFonts: true,
-            compress: false // Desactivamos compresión para evitar que "aplane" capas
-        });
+        ejecutarImpresionProfesional(listaIDs, tipo);
         
-        for (let i = 0; i < listaIDs.length; i++) {
-            // Si no es la primera página, añadimos una nueva
-            if (i > 0) pdfDatos.addPage([anchoPDF, altoPDF], 'l');
-            
-            const htmlDatos = crearHTML_Datos_Real(listaIDs[i], tipo);
-            
-            // IMPORTANTE: renderToCanvas debe recibir 'false' para no pintar fondo
-            const canvasDatos = await renderToCanvas(htmlDatos, false);
-            
-            // Extraemos la imagen en PNG (que soporta transparencia)
-            const imgData = canvasDatos.toDataURL('image/png'); 
-            
-            // Insertamos la imagen con parámetros de transparencia absoluta
-            pdfDatos.addImage(
-                imgData, 
-                'PNG', 
-                0, 0, 
-                anchoPDF, 
-                altoPDF, 
-                undefined, 
-                'NONE', // Evita algoritmos de mezcla que rellenan con blanco
-                0       // Rotación 0
-            );
-            
-            // Feedback visual en el botón
-            if(i % 5 === 0) {
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PROCESANDO: ${i+1}/${listaIDs.length}...`;
-            }
+        if (typeof render === "function") {
+            // Aumentamos a 1 segundo el delay para asegurar que el server guardó
+            setTimeout(loadData, 1000); 
         }
-        
-        // Guardamos el archivo final
-        pdfDatos.save(`2_DATOS_VARIABLES_${tipo.toUpperCase()}.pdf`);
-
-        alert("¡Éxito! Ahora los datos son transparentes.\nAl abrirlos en Photopea, verás solo el QR y el ID.");
-        
-        if (typeof loadData === "function") loadData();
 
     } catch (error) {
-        console.error(error);
         alert("ERROR: " + error.message);
     } finally {
         btn.disabled = false;
@@ -567,78 +518,83 @@ async function prepararLote() {
     }
 }
 
-// --- PLANTILLAS DE DISEÑO CORREGIDAS (ALINEACIÓN Y TRANSPARENCIA) ---
+// ESTA FUNCIÓN CREA LOS DOS ARCHIVOS POR SEPARADO
+function ejecutarImpresionProfesional(listaIDs, tipo) {
+    const ancho = (tipo === 'auto') ? '340mm' : '170mm';
+    const alto = '150mm';
 
-function crearHTML_Base_Real(tipo) {
-    // Forzamos el tamaño del canvas de base
-    const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
-    
-    const contenidoBase = `
-        <div style="width: 170mm; height: 150mm; background: #dcdcdc !important; position: relative; border: 8px solid #ff0000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 30px; font-family: 'Archivo Black', sans-serif;">
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; pointer-events: none;"></div>
-            <div style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; pointer-events: none;"></div>
-            
-            <div style="background:#000 !important; color:#fff !important; width:90%; text-align:center; padding:15px 0; font-size:2rem; border-radius:6px; z-index:10;">🛡️ IMAGEN DE PRUEBA</div>
-            
-            <div style="flex-grow: 1;"></div>
-            
-            <div style="text-align: center; color: #000; font-size: 1.3rem; font-weight: 900; line-height: 1.3; z-index:10; text-transform: uppercase;">
-                IMAGEN DE PRUEBA<br>
-                IMAGEN DE PRUEBA<br>
-                IMAGEN DE PRUEBA
+    // --- ARCHIVO 1: LA BASE (EL DISEÑO FIJO) ---
+    const winBase = window.open('', '_blank');
+    winBase.document.write(`
+        <html><head><style>
+            @page { size: ${ancho} ${alto}; margin: 0; }
+            body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; }
+            .sticker-base { 
+                width: ${ancho}; height: ${alto}; 
+                background: #dcdcdc; border: 8px solid #ff0000; 
+                position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-around;
+            }
+            .borde-amarillo { position: absolute; top:0; left:0; right:0; bottom:0; border: 6px solid #ffff00; pointer-events: none; }
+            .bloque-negro { background: #000; color: #fff; width: 90%; text-align: center; padding: 10px; font-size: 1.5rem; z-index: 5; }
+            .footer-txt { text-align: center; color: #000; font-weight: 900; font-size: 1.1rem; }
+        </style></head><body>
+            <div class="sticker-base">
+                <div class="borde-amarillo"></div>
+                <div class="bloque-negro">IMAGEN DE PRUEBA</div>
+                <div style="height: 300px; width: 300px; border: 1px dashed #aaa;"></div> <div style="height: 60px;"></div> <div class="footer-txt">IMAGEN DE PRUEBA<br>IMAGEN DE PRUEBA</div>
             </div>
-        </div>`;
+        </body></html>
+    `);
+    winBase.document.close();
 
-    return `
-        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background:white;">
-            <div style="width: 170mm; height: 150mm; overflow:hidden;">${contenidoBase}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; overflow:hidden; border-left:1px solid #eee;">${contenidoBase}</div>` : ''}
-        </div>`;
+    // --- ARCHIVO 2: LOS DATOS (QR E ID SIN FONDO) ---
+    const winDatos = window.open('', '_blank');
+    winDatos.document.write(`
+        <html><head><style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+            @page { size: ${ancho} ${alto}; margin: 0; }
+            body { margin: 0; padding: 0; background: transparent !important; }
+            .capa-datos { 
+                width: ${ancho}; height: ${alto}; 
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                page-break-after: always; background: transparent !important;
+            }
+            .id-tag { 
+                background: #000 !important; color: #ffff00 !important; 
+                font-family: 'Roboto Mono', monospace; font-size: 3.5rem; 
+                padding: 5px 25px; border-radius: 5px; margin-top: 30px;
+                -webkit-print-color-adjust: exact;
+            }
+        </style></head><body>
+            ${listaIDs.map(id => `
+                <div class="capa-datos">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://centralsantua.com.ar/index.html?id=${id}&bgcolor=ffffff00" width="300">
+                    <div class="id-tag">${id}</div>
+                </div>
+            `).join('')}
+        </body></html>
+    `);
+    winDatos.document.close();
 }
 
-//aa
-function crearHTML_Datos_Real(idUnico, tipo) {
-    const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-    const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
-
-    // AJUSTE: Usamos padding-top para empujar los datos hacia la zona gris de tu sticker
-    const bloqueDatos = `
-        <div style="width: 170mm; height: 150mm; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 35mm; font-family: 'Archivo Black', sans-serif; background: transparent !important;">
-            <div style="margin-bottom: 12px;">
-                <img src="${qrImg}" width="190" height="190" style="display: block;">
-            </div>
-            <div style="background: #000 !important; color: #ffff00 !important; padding: 6px 22px; border-radius: 8px; font-family: 'Archivo Black', sans-serif; font-size: 2.3rem; font-weight: bold; border: 4px solid #ffff00; line-height: 1;">
-                ${idUnico}
-            </div>
-        </div>`;
-
-    return `
-    <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background: transparent !important;">
-        <div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>
-        ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>` : ''}
-    </div>`;
-}
-
-async function renderToCanvas(html, esBase) {
-    const temp = document.createElement('div');
-    temp.style.position = 'fixed';
-    temp.style.left = '-10000px';
-    document.body.appendChild(temp);
-    temp.innerHTML = html;
+function reimprimirLote(loteId) {
+    if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
     
-    const area = temp.querySelector('#render-area');
+    // 1. Buscamos los stickers de ese lote
+    const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
+    if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
 
-    const canvas = await html2canvas(area, { 
-        scale: 3, 
-        useCORS: true, 
-        // Si esBase es false, el fondo será NULL (transparente)
-        backgroundColor: esBase ? '#ffffff' : null, 
-        removeContainer: true
-    });
+    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
+    const tipoDetectado = stickersDelLote[0].tipo || 'moto';
     
-    document.body.removeChild(temp);
-    return canvas;
+    const listaIDs = stickersDelLote.map(s => s.id_qr);
+
+    // 3. Abrimos la ventana sin preguntar nada
+    const win = window.open('', '_blank');
+    if (!win) return alert("El navegador bloqueó la ventana emergente.");
+
+    win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
+    win.document.close();
 }
 
 </script>
