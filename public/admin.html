@@ -478,18 +478,6 @@ async function prepararLote() {
     
     if(!cant || cant <= 0) return alert("Ingrese una cantidad válida.");
 
-    // Librerías necesarias (Deben estar cargadas en tu HTML o se cargan solas aquí)
-    if (!window.jspdf) {
-        alert("Cargando librerías... reintente en 2 segundos.");
-        const script = document.createElement('script');
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-        document.head.appendChild(script);
-        const script2 = document.createElement('script');
-        script2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-        document.head.appendChild(script2);
-        return;
-    }
-
     const { jsPDF } = window.jspdf;
     const ahora = new Date();
     const tiempoExacto = `${ahora.getDate()}-${ahora.getMonth() + 1}_${ahora.getHours()}${ahora.getMinutes()}`;
@@ -500,7 +488,7 @@ async function prepararLote() {
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO ARCHIVOS...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO REGISTROS...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
@@ -512,35 +500,58 @@ async function prepararLote() {
         const data = await response.json();
         const listaIDs = data.ids; 
 
-        // Medidas del PDF (Auto es doble ancho)
         const anchoPDF = (tipo === 'auto') ? 340 : 170;
         const altoPDF = 150;
 
         // --- PASO 1: GENERAR PDF DE LA BASE (1 sola página) ---
+        // Se mantiene igual porque la base NO necesita transparencia
         const pdfBase = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
         const htmlBase = crearHTML_Base_Real(tipo);
-        const canvasBase = await renderToCanvas(htmlBase, anchoPDF, altoPDF, true);
+        const canvasBase = await renderToCanvas(htmlBase, true); 
         pdfBase.addImage(canvasBase.toDataURL('image/png'), 'PNG', 0, 0, anchoPDF, altoPDF);
         pdfBase.save(`1_BASE_IMPRENTA_${tipo.toUpperCase()}.pdf`);
 
-        // --- PASO 2: GENERAR PDF DE DATOS (Transparente, paginado) ---
-        const pdfDatos = new jsPDF('l', 'mm', [anchoPDF, altoPDF]);
+        // --- PASO 2: GENERAR PDF DE DATOS (Transparente y Paginado) ---
+        // 'compress: true' ayuda a que el archivo no pese gigas con 5000 stickers
+        const pdfDatos = new jsPDF({
+            orientation: 'l',
+            unit: 'mm',
+            format: [anchoPDF, altoPDF],
+            compress: true 
+        });
         
+        // AQUÍ EMPIEZA EL BUCLE DONDE PONES LO QUE ME PREGUNTASTE
         for (let i = 0; i < listaIDs.length; i++) {
             if (i > 0) pdfDatos.addPage([anchoPDF, altoPDF], 'l');
             
+            // 1. Generamos el HTML específico de este sticker
             const htmlDatos = crearHTML_Datos_Real(listaIDs[i], tipo);
-            const canvasDatos = await renderToCanvas(htmlDatos, anchoPDF, altoPDF, false);
             
-            // La clave: PNG con transparencia
-            pdfDatos.addImage(canvasDatos.toDataURL('image/png'), 'PNG', 0, 0, anchoPDF, altoPDF);
+            // 2. Lo convertimos a canvas (renderToCanvas ya tiene el backgroundColor: null)
+            // Usamos 'false' porque es la capa de DATOS
+            const canvasDatos = await renderToCanvas(htmlDatos, false);
             
-            if(i % 5 === 0) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> DATOS: ${i}/${cant}...`;
+            // 3. Lo pegamos en el PDF con formato PNG (soporta transparencia)
+            // El alias 'FAST' es vital para que no tarde horas procesando 5000 imágenes
+            pdfDatos.addImage(
+                canvasDatos.toDataURL('image/png'), 
+                'PNG', 
+                0, 0, 
+                anchoPDF, 
+                altoPDF, 
+                undefined, 
+                'FAST'
+            );
+            
+            // Feedback visual para que no creas que se colgó
+            if(i % 10 === 0) {
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PROCESANDO: ${i}/${listaIDs.length}...`;
+            }
         }
         
         pdfDatos.save(`2_DATOS_VARIABLES_${tipo.toUpperCase()}.pdf`);
 
-        alert("¡Proceso terminado!\nSe descargaron 2 archivos.\nEnvíe AMBOS a la imprenta.");
+        alert("¡Éxito! Los archivos están listos.\nLa base tiene el diseño y los datos tienen el fondo transparente.");
         if (typeof loadData === "function") loadData();
 
     } catch (error) {
@@ -586,44 +597,49 @@ function crearHTML_Datos_Real(idUnico, tipo) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
 
-    // Usamos justify-content: center para que el QR e ID queden en el medio exacto del hueco de la base
+    // Eliminamos bordes y sombras que puedan ocupar espacio extra
     const bloqueDatos = `
-        <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; font-family: 'Archivo Black', sans-serif;">
-            
-            <div style="background: transparent !important; margin-bottom: 20px; line-height: 0;">
-                <img src="${qrImg}" width="280" height="280" style="mix-blend-mode: multiply; display: block; border:none;">
+        <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Archivo Black', sans-serif;">
+            <div style="margin-bottom: 15px;">
+                <img src="${qrImg}" width="300" height="300" style="display: block;">
             </div>
-            
-            <div style="background:#000 !important; color:#ffff00 !important; padding:10px 40px; border-radius:6px; font-family:monospace; font-size:4rem; font-weight:bold; letter-spacing:4px; border: 4px solid #ffff00; box-shadow: none;">
+            <div style="background:#000; color:#ffff00; padding:10px 30px; border-radius:8px; font-family:monospace; font-size:4rem; font-weight:bold; border: 5px solid #ffff00;">
                 ${idUnico}
             </div>
         </div>`;
 
     return `
         <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background: transparent !important;">
-            <div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>` : ''}
+            <div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>` : ''}
         </div>`;
 }
 
-async function renderToCanvas(html, wMm, hMm, esBase) {
+async function renderToCanvas(html, esBase) {
     const temp = document.createElement('div');
     temp.style.position = 'fixed'; 
     temp.style.left = '-10000px';
     temp.style.top = '0';
-    temp.style.background = 'transparent'; // Contenedor temporal transparente
+    // Importante: El contenedor temporal DEBE ser transparente
+    temp.style.background = 'transparent'; 
     document.body.appendChild(temp);
     temp.innerHTML = html;
     
-    // El tiempo de espera es vital para que cargue la imagen del QR
-    await new Promise(r => setTimeout(r, esBase ? 200 : 1200)); 
+    // Esperamos a que las imágenes (QR) se carguen realmente
+    const images = temp.getElementsByTagName('img');
+    const promises = Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+    });
+    await Promise.all(promises);
+    if (!esBase) await new Promise(r => setTimeout(r, 100)); // Respiro extra para el render
 
     const canvas = await html2canvas(temp.querySelector('#render-area'), { 
-        scale: 3, 
+        scale: 3, // Alta calidad para imprenta
         useCORS: true, 
-        backgroundColor: null, // ESTO QUITA EL FONDO BLANCO EN EL PDF
-        removeContainer: true,
-        logging: false
+        backgroundColor: null, // ESTO HACE QUE EL PDF SEA TRANSPARENTE
+        logging: false,
+        allowTaint: true
     });
     
     document.body.removeChild(temp);
