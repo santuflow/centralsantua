@@ -597,52 +597,45 @@ function crearHTML_Datos_Real(idUnico, tipo) {
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
     const anchoMm = (tipo === 'auto') ? '340mm' : '170mm';
 
-    // AJUSTE DE TAMAÑOS: 
-    // QR reducido a 220px y fuente a 3rem para que no tapen la base
-    // Busca donde dice bloqueDatos y reemplázalo por esto:
-const bloqueDatos = `
-    <div style="width: 170mm; height: 150mm; background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Archivo Black', sans-serif;">
-        
-        <div style="margin-bottom: 15px; background: transparent !important;">
-            <img src="${qrImg}" width="200" height="200" style="display: block;">
-        </div>
-        
-        <div style="background: #000 !important; color: #ffff00 !important; padding: 6px 20px; border-radius: 6px; font-family: monospace; font-size: 2.5rem; font-weight: bold; border: 3px solid #ffff00;">
-            ${idUnico}
-        </div>
-    </div>`;
+    const bloqueDatos = `
+        <div style="width: 170mm; height: 150mm; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Archivo Black', sans-serif;">
+            <div style="margin-bottom: 15px;">
+                <img src="${qrImg}" width="200" height="200" style="display: block;">
+            </div>
+            <div style="background: #000 !important; color: #ffff00 !important; padding: 6px 20px; border-radius: 6px; font-family: monospace; font-size: 2.5rem; font-weight: bold; border: 3px solid #ffff00;">
+                ${idUnico}
+            </div>
+        </div>`;
 
     return `
-        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex; background: rgba(0,0,0,0) !important;">
-            <div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>
-            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm; background: transparent !important;">${bloqueDatos}</div>` : ''}
+        <div id="render-area" style="width:${anchoMm}; height:150mm; display:flex;">
+            <div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>
+            ${tipo === 'auto' ? `<div style="width: 170mm; height: 150mm;">${bloqueDatos}</div>` : ''}
         </div>`;
 }
 
 async function renderToCanvas(html, esBase) {
     const temp = document.createElement('div');
-    temp.style.position = 'fixed'; 
+    temp.style.position = 'fixed';
     temp.style.left = '-10000px';
     temp.style.top = '0';
-    // Forzamos transparencia en el contenedor temporal
-    temp.style.backgroundColor = 'transparent'; 
     document.body.appendChild(temp);
     temp.innerHTML = html;
     
-    // Esperar a que el QR cargue
-    const images = temp.getElementsByTagName('img');
-    await Promise.all(Array.from(images).map(img => {
+    const area = temp.querySelector('#render-area');
+
+    const images = Array.from(temp.getElementsByTagName('img'));
+    await Promise.all(images.map(img => {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
     }));
 
-    const canvas = await html2canvas(temp.querySelector('#render-area'), { 
-        scale: 3, 
+    const canvas = await html2canvas(area, { 
+        scale: 2, 
         useCORS: true, 
-        backgroundColor: null, // CLAVE: Quita el fondo blanco
-        logging: false,
-        imageTimeout: 0,
-        removeContainer: true
+        backgroundColor: null, // <--- ESTO ES LO QUE MATA EL FONDO BLANCO
+        removeContainer: true,
+        logging: false
     });
     
     document.body.removeChild(temp);
