@@ -539,13 +539,11 @@ function reimprimirLote(loteId) {
 async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const { jsPDF } = window.jspdf;
     
-    // 1. Creamos un contenedor invisible para renderizar TU HTML real
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
     
-    // Generamos el HTML usando los estilos y estructura que me pasaste
     let stickersHTML = '';
     listaIDs.forEach(idUnico => {
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
@@ -553,59 +551,82 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
 
         if (tipo === 'auto') {
             stickersHTML += `
-    <div class="sticker-auto-full" style="width: 240mm; height: 110mm; overflow: hidden; display: flex;">
-        <div class="mitad-sticker" style="width: 120mm; height: 110mm; overflow: hidden;">
-            <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
-            <div class="qr-box"><img src="${qrImg}" style="width: 180px; height: 180px;"></div>
-            <div class="id-tag">${idUnico}</div>
-            <div class="footer-txt">--IMAGEN DE PRUEBA--<br>--IMAGEN DE PRUEBA--</div>
-        </div>
-        <div class="mitad-sticker" style="width: 120mm; height: 110mm; overflow: hidden;">
-            <div class="header-txt">🛡️ IMAGEN DE PRUEBA</div>
-            <div class="qr-box"><img src="${qrImg}" style="width: 180px; height: 180px;"></div>
-            <div class="id-tag">${idUnico}</div>
-            <div class="footer-txt">--IMAGEN DE PRUEBA--<br>--IMAGEN DE PRUEBA--</div>
-        </div>
-    </div>`;
+            <div class="sticker-auto-full">
+                <div class="mitad-sticker">
+                    <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
+                    <div class="qr-box"><img src="${qrImg}"></div>
+                    <div class="id-tag">${idUnico}</div>
+                    <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+                </div>
+                <div class="mitad-sticker">
+                    <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
+                    <div class="qr-box"><img src="${qrImg}"></div>
+                    <div class="id-tag">${idUnico}</div>
+                    <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+                </div>
+            </div>`;
         } else {
             stickersHTML += `
-                <div class="sticker-moto-full">
-                    <div class="header-txt" style="font-size: 2rem;">🛡️ IMAGEN DE PRUEBA</div>
-                    <div class="qr-box"><img src="${qrImg}" width="300"></div>
-                    <div class="id-tag" style="font-size: 3.5rem;">${idUnico}</div>
-                    <div class="footer-txt">
-                        --IMAGEN DE PRUEBA--<br>
-                        --IMAGEN DE PRUEBA--
-                    </div>
-                </div>`;
+            <div class="sticker-moto-full">
+                <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
+                <div class="qr-box"><img src="${qrImg}"></div>
+                <div class="id-tag">${idUnico}</div>
+                <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+            </div>`;
         }
     });
 
-    // Agregamos TU CSS exacto para que la captura sea idéntica
     tempDiv.innerHTML = `
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
-            .sticker-auto-full { width: 240mm; height: 110mm; display: flex; background: #fff; }
-            .mitad-sticker { 
-                width: 120mm; height: 110mm; background: #dcdcdc; 
-                display: flex; flex-direction: column; align-items: center; 
-                justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
-            }
-            .mitad-sticker::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 4px solid #ffff00; }
-            .mitad-sticker::after { content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 4px solid #ff0000; }
             
-            .sticker-moto-full { 
-                width: 120mm; height: 110mm; background: #dcdcdc; border: 8px solid #ff0000;
-                position: relative; display: flex; flex-direction: column; align-items: center;
-                justify-content: space-around; padding: 20px;
-            }
-            .sticker-moto-full::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 6px solid #ffff00; }
-            .sticker-moto-full::after { content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 6px solid #ff0000; }
+            * { box-sizing: border-box; } /* VITAL: Para que los bordes no sumen tamaño */
 
-            .header-txt { background: #000 !important; color: #fff !important; width: 90%; text-align: center; padding: 8px 0; border-radius: 4px; font-family: 'Archivo Black', sans-serif; font-size: 1.6rem; }
-            .qr-box { background: #fff; padding: 8px; border: 2px solid #000; display: flex; }
-            .id-tag { background: #000 !important; color: #ffff00 !important; font-family: 'Roboto Mono', monospace; padding: 5px 20px; border-radius: 3px; letter-spacing: 2px; font-size: 3rem; }
-            .footer-txt { text-align: center; color: #000; font-weight: 900; font-family: 'Archivo Black', sans-serif; font-size: 1.1rem; }
+            /* AUTO: 240mm x 110mm */
+            .sticker-auto-full { 
+                width: 240mm; height: 110mm; 
+                display: flex; background: #fff; 
+            }
+            .mitad-sticker { 
+                width: 120mm; height: 110mm; 
+                background: #dcdcdc; display: flex; flex-direction: column; 
+                align-items: center; justify-content: space-evenly; 
+                padding: 10px; position: relative; border: 6px solid #ff0000;
+            }
+
+            /* MOTO: 120mm x 110mm */
+            .sticker-moto-full { 
+                width: 120mm; height: 110mm; 
+                background: #dcdcdc; display: flex; flex-direction: column; 
+                align-items: center; justify-content: space-evenly; 
+                padding: 10px; position: relative; border: 8px solid #ff0000;
+            }
+
+            /* Marcos decorativos internos */
+            .mitad-sticker::before, .sticker-moto-full::before { 
+                content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                border: 4px solid #ffff00; pointer-events: none; 
+            }
+            
+            .header-txt { 
+                background: #000; color: #fff; width: 95%; text-align: center; 
+                padding: 5px 0; border-radius: 4px; font-family: 'Archivo Black', sans-serif; 
+                font-size: 1.2rem; z-index: 2;
+            }
+            .qr-box { 
+                background: #fff; padding: 5px; border: 2px solid #000; 
+                display: flex; z-index: 2;
+            }
+            .qr-box img { width: 150px; height: 150px; } /* Ajustado para que no empuje el resto */
+            
+            .id-tag { 
+                background: #000; color: #ffff00; font-family: 'Roboto Mono', monospace; 
+                padding: 4px 15px; border-radius: 3px; font-size: 2.2rem; font-weight: bold; z-index: 2;
+            }
+            .footer-txt { 
+                text-align: center; color: #000; font-weight: 900; 
+                font-family: 'Archivo Black', sans-serif; font-size: 0.85rem; z-index: 2;
+            }
         </style>
         <div>${stickersHTML}</div>
     `;
@@ -615,7 +636,6 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
-    // 2. Procesamos cada sticker como una imagen de alta calidad
     const selectores = tipo === 'auto' ? '.sticker-auto-full' : '.sticker-moto-full';
     const elementos = tempDiv.querySelectorAll(selectores);
 
@@ -623,16 +643,17 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
 
         const canvas = await html2canvas(elementos[i], {
-            scale: 2.5, // Aumenta la resolución para que no se vea pixelado al imprimir
+            scale: 3, // Alta calidad para impresión
             useCORS: true,
-            logging: false
+            logging: false,
+            width: anchoMm * 3.7795, // Conversión precisa de mm a px
+            height: altoMm * 3.7795
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
 
-    // 3. Descarga y limpieza
     doc.save(`SANTUA_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
     document.body.removeChild(tempDiv);
 }
