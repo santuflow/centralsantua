@@ -539,11 +539,13 @@ function reimprimirLote(loteId) {
 async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const { jsPDF } = window.jspdf;
     
+    // Contenedor invisible para renderizar
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
     
+    // --- NUEVO HTML CON DISEÑO PREMIUM ---
     let stickersHTML = '';
     listaIDs.forEach(idUnico => {
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
@@ -551,110 +553,234 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
 
         if (tipo === 'auto') {
             stickersHTML += `
-            <div class="sticker-auto-full">
-                <div class="mitad-sticker">
-                    <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
-                    <div class="qr-box"><img src="${qrImg}"></div>
-                    <div class="id-tag">${idUnico}</div>
-                    <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+            <div class="prm-sticker-auto-full">
+                <div class="prm-mitad-sticker">
+                    <div class="prm-security-frame"></div>
+                    <div class="prm-title-group">
+                        <i class="prm-tech-icon prm-icon-scan"></i>
+                        <span class="prm-header-txt">SISTEMA DE SEGURIDAD VIAL ACTIVA</span>
+                    </div>
+                    
+                    <div class="prm-tech-details-top">
+                        <span class="prm-tech-label">DISPOSITIVO: ACTIVADO</span>
+                        <span class="prm-tech-meta">AUTENTICACIÓN: DIGITAL</span>
+                    </div>
+                    
+                    <div class="prm-qr-box">
+                        <div class="prm-qr-scan-line"></div>
+                        <img src="${qrImg}" class="prm-qr-img">
+                    </div>
+                    
+                    <div class="prm-id-tag-group">
+                        <span class="prm-id-label">UNIDAD ID:</span>
+                        <div class="prm-id-tag">${idUnico}</div>
+                    </div>
+                    
+                    <div class="prm-footer-txt-premium">
+                        <span class="prm-coordenadas">© CENTRAL SANTUA | EST. 2023 | SEG VIAL PREMIUM</span>
+                        <span class="prm-imagen-prueba-txt">-- IMAGEN DE PRUEBA --</span>
+                    </div>
                 </div>
-                <div class="mitad-sticker">
-                    <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
-                    <div class="qr-box"><img src="${qrImg}"></div>
-                    <div class="id-tag">${idUnico}</div>
-                    <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+                <div class="prm-mitad-sticker">
+                    <div class="prm-security-frame"></div>
+                    <div class="prm-title-group">
+                        <i class="prm-tech-icon prm-icon-scan"></i>
+                        <span class="prm-header-txt">SISTEMA DE SEGURIDAD VIAL ACTIVA</span>
+                    </div>
+                    
+                    <div class="prm-tech-details-top">
+                        <span class="prm-tech-label">DISPOSITIVO: ACTIVADO</span>
+                        <span class="prm-tech-meta">AUTENTICACIÓN: DIGITAL</span>
+                    </div>
+                    
+                    <div class="prm-qr-box">
+                        <div class="prm-qr-scan-line"></div>
+                        <img src="${qrImg}" class="prm-qr-img">
+                    </div>
+                    
+                    <div class="prm-id-tag-group">
+                        <span class="prm-id-label">UNIDAD ID:</span>
+                        <div class="prm-id-tag">${idUnico}</div>
+                    </div>
+                    
+                    <div class="prm-footer-txt-premium">
+                        <span class="prm-coordenadas">© CENTRAL SANTUA | EST. 2023 | SEG VIAL PREMIUM</span>
+                        <span class="prm-imagen-prueba-txt">-- IMAGEN DE PRUEBA --</span>
+                    </div>
                 </div>
             </div>`;
         } else {
             stickersHTML += `
-            <div class="sticker-moto-full">
-                <div class="header-txt">🛡️ PROTECCIÓN ACTIVA</div>
-                <div class="qr-box"><img src="${qrImg}"></div>
-                <div class="id-tag">${idUnico}</div>
-                <div class="footer-txt">CENTRAL SANTUA<br>SEGURIDAD VIAL</div>
+            <div class="prm-sticker-moto-full">
+                <div class="prm-security-frame"></div>
+                <div class="prm-title-group">
+                    <i class="prm-tech-icon prm-icon-scan"></i>
+                    <span class="prm-header-txt">SISTEMA DE SEGURIDAD VIAL ACTIVA</span>
+                </div>
+                
+                <div class="prm-tech-details-top">
+                    <span class="prm-tech-label">DISPOSITIVO: ACTIVADO</span>
+                    <span class="prm-tech-meta">AUTENTICACIÓN: DIGITAL</span>
+                </div>
+                
+                <div class="prm-qr-box">
+                    <div class="prm-qr-scan-line"></div>
+                    <img src="${qrImg}" class="prm-qr-img">
+                </div>
+                
+                <div class="prm-id-tag-group">
+                    <span class="prm-id-label">UNIDAD ID:</span>
+                    <div class="prm-id-tag">${idUnico}</div>
+                </div>
+                
+                <div class="prm-footer-txt-premium">
+                    <span class="prm-coordenadas">© CENTRAL SANTUA | EST. 2023 | SEG VIAL PREMIUM</span>
+                    <span class="prm-imagen-prueba-txt">-- IMAGEN DE PRUEBA --</span>
+                </div>
             </div>`;
         }
     });
 
+    // --- NUEVO CSS PREMIUM (PRESTIGE SECURITY AESTHETIC) ---
     tempDiv.innerHTML = `
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
+            /* Importar tipografías profesionales: Una geométrica y una monoespecial profesional */
+            @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Roboto+Mono&family=Inter:wght@900&display=swap');
             
-            * { box-sizing: border-box; } /* VITAL: Para que los bordes no sumen tamaño */
+            * { box-sizing: border-box; }
 
-            /* AUTO: 240mm x 110mm */
-            .sticker-auto-full { 
+            /* Paleta de Colores Premium */
+            :root {
+                --prm-deep-black: #000000;
+                --prm-dark-graphite: #111111;
+                --prm-tech-cyan: #00eaff; /* Cian Eléctrico Premium */
+                --prm-legacy-id-yellow: #ffff00; /* Amarillo ID Refinado */
+                --prm-label-gray: #444444;
+                --prm-subtle-cyan: rgba(0, 234, 255, 0.1); /* Cian muy sutil para micro-patrones */
+            }
+
+            /* --- Contenedores con Patrón de Micro-Retícula --- */
+            .prm-sticker-auto-full { 
                 width: 240mm; height: 110mm; 
-                display: flex; background: #fff; 
+                display: flex; background: var(--prm-deep-black); 
+                /* Fondo de patrón sutil de cuadrícula tech */
+                background-image: linear-gradient(var(--prm-subtle-cyan) 1px, transparent 1px), linear-gradient(90deg, var(--prm-subtle-cyan) 1px, transparent 1px);
+                background-size: 20px 20px;
+                padding: 1px; /* Para que el borde interno cian no se pegue al borde de corte */
             }
-            .mitad-sticker { 
+            .prm-mitad-sticker { 
                 width: 120mm; height: 110mm; 
-                background: #dcdcdc; display: flex; flex-direction: column; 
+                display: flex; flex-direction: column; 
                 align-items: center; justify-content: space-evenly; 
-                padding: 10px; position: relative; border: 6px solid #ff0000;
+                padding: 15px; position: relative;
+                box-shadow: inset 0 0 50px rgba(0,234,255, 0.05); /* Brillo interno cian sutil */
             }
 
-            /* MOTO: 120mm x 110mm */
-            .sticker-moto-full { 
+            .prm-sticker-moto-full { 
                 width: 120mm; height: 110mm; 
-                background: #dcdcdc; display: flex; flex-direction: column; 
+                background: var(--prm-deep-black); 
+                /* Fondo de patrón sutil de cuadrícula tech */
+                background-image: linear-gradient(var(--prm-subtle-cyan) 1px, transparent 1px), linear-gradient(90deg, var(--prm-subtle-cyan) 1px, transparent 1px);
+                background-size: 20px 20px;
+                display: flex; flex-direction: column; 
                 align-items: center; justify-content: space-evenly; 
-                padding: 10px; position: relative; border: 8px solid #ff0000;
+                padding: 15px; position: relative;
+                box-shadow: inset 0 0 50px rgba(0,234,255, 0.05); /* Brillo interno cian sutil */
             }
 
-            /* Marcos decorativos internos */
-            .mitad-sticker::before, .sticker-moto-full::before { 
-                content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
-                border: 4px solid #ffff00; pointer-events: none; 
+            /* --- Marco de Seguridad Cian Eléctrico --- */
+            .prm-security-frame { 
+                content: ""; position: absolute; top: 1px; left: 1px; right: 1px; bottom: 1px; 
+                border: 1.5px solid var(--prm-tech-cyan); pointer-events: none; z-index: 10;
+                /* Bordes esquineros estilizados */
+                clip-path: polygon(0% 0%, 10% 0%, 12% 2%, 88% 2%, 90% 0%, 100% 0%, 100% 10%, 98% 12%, 98% 88%, 100% 90%, 100% 100%, 90% 100%, 88% 98%, 12% 98%, 10% 100%, 0% 100%, 0% 90%, 2% 88%, 2% 12%, 0% 10%, 0% 0%);
+                opacity: 0.9;
+            }
+
+            /* --- Título Técnico --- */
+            .prm-title-group {
+                display: flex; align-items: center; gap: 8px; width: 95%; justify-content: center; z-index: 5;
+            }
+            .prm-tech-icon {
+                font-family: Arial, sans-serif; /* Un simple caracter como icono tech */
+                font-size: 1rem; color: var(--prm-tech-cyan);
+            }
+            .prm-icon-scan::before { content: "⦿"; } /* Simbolizando punto focal o scan */
+            
+            .prm-header-txt { 
+                color: #fff; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1rem; letter-spacing: 2.5px; opacity: 0.9;
+            }
+
+            /* --- Detalles Técnicos Superiores --- */
+            .prm-tech-details-top {
+                display: flex; justify-content: space-between; width: 95%; z-index: 5;
+                font-family: 'Roboto Mono', monospace; font-size: 0.65rem; color: var(--prm-label-gray); text-transform: uppercase;
+                border-top: 1px solid rgba(0, 234, 255, 0.2); padding-top: 5px;
+            }
+            .prm-tech-label { color: var(--prm-tech-cyan); font-weight: 700; opacity: 0.8;}
+
+            /* --- Caja de QR con Micro-Retícula Interna --- */
+            .prm-qr-box { 
+                background: #0d0d0d; padding: 10px; display: flex; z-index: 5; 
+                border-radius: 4px; border: 1px solid rgba(0, 234, 255, 0.2); position: relative;
+            }
+            .prm-qr-box img { width: 145px; height: 145px; image-rendering: pixelated; border: 2px solid #fff;}
+            /* Micro-patrón interno sutil alrededor del QR */
+            .prm-qr-box::after { content:""; position: absolute; top:0;left:0;right:0;bottom:0; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABy872CAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSURBVBhXY2BgYPD///8fCP7/PwMAhA8GAmv741QAAAAASUVORK5CYII=') repeat; opacity: 0.05; }
+
+            /* --- ID TAG Refinado --- */
+            .prm-id-tag-group {
+                display: flex; flex-direction: column; align-items: center; gap: 4px; width: 90%; z-index: 5;
+            }
+            .prm-id-label { font-family: 'Roboto Mono', monospace; font-size: 0.75rem; color: #fff; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;}
+            
+            .prm-id-tag { 
+                background: #fff; color: var(--prm-deep-black); font-family: 'Inter', sans-serif; font-weight: 900; 
+                padding: 6px 20px; border-radius: 3px; font-size: 2.3rem; letter-spacing: -1.5px; z-index: 5;
+                box-shadow: 0 4px 15px rgba(0, 234, 255, 0.3); /* Brillo externo cian tech */
             }
             
-            .header-txt { 
-                background: #000; color: #fff; width: 95%; text-align: center; 
-                padding: 5px 0; border-radius: 4px; font-family: 'Archivo Black', sans-serif; 
-                font-size: 1.2rem; z-index: 2;
+            /* --- Footer Premium con Coordenadas Sutiles --- */
+            .prm-footer-txt-premium { 
+                display: flex; flex-direction: column; align-items: center; gap: 5px; width: 95%; z-index: 5;
+                font-family: 'Roboto Mono', monospace; color: #fff; text-transform: uppercase; border-top: 1px solid rgba(0, 234, 255, 0.2); padding-top: 5px;
             }
-            .qr-box { 
-                background: #fff; padding: 5px; border: 2px solid #000; 
-                display: flex; z-index: 2;
-            }
-            .qr-box img { width: 150px; height: 150px; } /* Ajustado para que no empuje el resto */
+            .prm-coordenadas { font-size: 0.65rem; color: var(--prm-label-gray); opacity: 0.7; letter-spacing: 0.5px;}
             
-            .id-tag { 
-                background: #000; color: #ffff00; font-family: 'Roboto Mono', monospace; 
-                padding: 4px 15px; border-radius: 3px; font-size: 2.2rem; font-weight: bold; z-index: 2;
-            }
-            .footer-txt { 
-                text-align: center; color: #000; font-weight: 900; 
-                font-family: 'Archivo Black', sans-serif; font-size: 0.85rem; z-index: 2;
-            }
+            /* --- El Texto de Prueba Discreto y Técnico --- */
+            .prm-imagen-prueba-txt { font-size: 0.8rem; color: var(--prm-tech-cyan); font-weight: 700; opacity: 0.8; letter-spacing: 3px;}
         </style>
         <div>${stickersHTML}</div>
     `;
     document.body.appendChild(tempDiv);
 
+    // --- CONFIGURACIÓN DEL PDF (MANTENER IGUAL PARA NO CORTAR) ---
     const anchoMm = (tipo === 'auto') ? 240 : 120;
     const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
-    const selectores = tipo === 'auto' ? '.sticker-auto-full' : '.sticker-moto-full';
+    // Selectores para el nuevo diseño premium
+    const selectores = tipo === 'auto' ? '.prm-sticker-auto-full' : '.prm-sticker-moto-full';
     const elementos = tempDiv.querySelectorAll(selectores);
 
     for (let i = 0; i < elementos.length; i++) {
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
 
         const canvas = await html2canvas(elementos[i], {
-            scale: 3, // Alta calidad para impresión
+            scale: 3, // Alta calidad para impresión profesional
             useCORS: true,
             logging: false,
+            // Medidas precisas basadas en el diseño
             width: anchoMm * 3.7795, // Conversión precisa de mm a px
-            height: altoMm * 3.7795
+            height: altoMm * 3.7795,
+            backgroundColor: null // Fondo transparente para que el patrón tech sea visible
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
 
-    doc.save(`SANTUA_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
+    doc.save(`SANTUA_PREMIUM_${tipo.toUpperCase()}_${listaIDs.length}.pdf`);
     document.body.removeChild(tempDiv);
 }
 
