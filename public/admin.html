@@ -549,81 +549,100 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
         const estructura = `
-            <div class="clean-sticker-${tipo === 'auto' ? 'half' : 'full'}">
-                <div class="linea-seguridad-top"></div>
+            <div class="ex-sticker-unit">
+                <div class="ex-border-t"></div>
+                <div class="ex-border-m"></div>
+                <div class="ex-border-b"></div>
                 
-                <div class="label-header">SISTEMA SANTUA</div>
-                
-                <div class="qr-main-container">
-                    <img src="${qrImg}" class="qr-image">
+                <div class="ex-header">
+                    <div class="ex-line"></div>
+                    <span class="ex-title">SISTEMA DE SEGURIDAD VIAL</span>
+                    <div class="ex-line"></div>
                 </div>
-                
-                <div class="id-container">
-                    <span class="id-sub">UNIDAD DE CONTROL</span>
-                    <div class="id-number">${idUnico}</div>
+
+                <div class="ex-content">
+                    <div class="ex-qr-wrapper">
+                        <img src="${qrImg}" class="ex-qr">
+                    </div>
+                    
+                    <div class="ex-id-section">
+                        <span class="ex-id-label">IDENTIFICACIÓN DE UNIDAD</span>
+                        <div class="ex-id-box">${idUnico}</div>
+                    </div>
                 </div>
-                
-                <div class="footer-industrial">
-                    <div class="prueba-tag">IMAGEN DE PRUEBA</div>
-                    <div class="legal-tag">© CENTRAL SANTUA | SEGURIDAD VIAL</div>
+
+                <div class="ex-footer">
+                    <span class="ex-test-text">IMAGEN DE PRUEBA</span>
+                    <span class="ex-brand">CENTRAL SANTUA</span>
                 </div>
             </div>`;
 
-        stickersHTML += tipo === 'auto' ? `<div class="prm-sticker-auto-full">${estructura}${estructura}</div>` : estructura;
+        if (tipo === 'auto') {
+            stickersHTML += `<div class="ex-wrapper-auto">${estructura}${estructura}</div>`;
+        } else {
+            stickersHTML += estructura;
+        }
     });
 
     tempDiv.innerHTML = `
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Mono:wght@700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&family=IBM+Plex+Mono:wght@600&display=swap');
             
-            * { box-sizing: border-box; }
-            body { background: #fff; }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
 
-            /* Contenedores Base - FONDO BLANCO PARA AHORRO */
-            .prm-sticker-auto-full { width: 240mm; height: 110mm; display: flex; background: #fff; }
+            /* Contenedores Principales */
+            .ex-wrapper-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
             
-            .clean-sticker-half, .clean-sticker-full { 
+            .ex-sticker-unit { 
                 width: 120mm; height: 110mm; 
-                background: #fff; display: flex; flex-direction: column; 
+                background: #f2f2f2; /* Gris suave profesional */
+                display: flex; flex-direction: column; 
                 align-items: center; justify-content: space-between; 
-                padding: 12mm 10mm; position: relative;
-                border: 0.5pt solid #eee; /* Guía de corte casi invisible */
+                padding: 10mm; position: relative;
+                overflow: hidden;
             }
 
-            /* Detalle de Identidad - Una sola línea de color para ahorrar tinta */
-            .linea-seguridad-top {
-                position: absolute; top: 0; left: 0; right: 0; height: 4mm;
-                background: #000; /* Negro sólido o el color de tu marca */
+            /* El "Sanguchito" de Bordes Finos */
+            .ex-border-t { position: absolute; top: 0; left: 0; right: 0; height: 1.5mm; background: #e60000; } /* Rojo */
+            .ex-border-m { position: absolute; top: 1.5mm; left: 0; right: 0; height: 1.5mm; background: #ffcc00; } /* Amarillo */
+            .ex-border-b { position: absolute; top: 3mm; left: 0; right: 0; height: 1.5mm; background: #e60000; } /* Rojo */
+
+            /* Header con líneas laterales */
+            .ex-header { display: flex; align-items: center; width: 100%; gap: 10px; margin-top: 5mm; }
+            .ex-line { height: 1px; flex-grow: 1; background: rgba(0,0,0,0.1); }
+            .ex-title { 
+                font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 9pt; 
+                color: #444; letter-spacing: 2px; white-space: nowrap;
             }
 
-            .label-header {
-                font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt;
-                letter-spacing: 4px; color: #000; margin-top: 2mm;
+            /* Layout Central */
+            .ex-content { display: flex; flex-direction: column; align-items: center; gap: 6mm; }
+            
+            .ex-qr-wrapper { 
+                background: #fff; padding: 3mm; border-radius: 2px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                border: 1px solid #ddd;
+            }
+            .ex-qr { width: 40mm; height: 40mm; display: block; }
+
+            .ex-id-section { text-align: center; }
+            .ex-id-label { 
+                font-family: 'Montserrat', sans-serif; font-size: 7pt; font-weight: 600; 
+                color: #888; letter-spacing: 1px; display: block; margin-bottom: 2mm;
+            }
+            .ex-id-box {
+                font-family: 'IBM Plex Mono', monospace; font-size: 22pt; font-weight: 600;
+                color: #000; background: #fff; padding: 2mm 8mm;
+                border: 0.5mm solid #000; border-radius: 1px;
             }
 
-            /* QR Container - Limpio */
-            .qr-main-container {
-                border: 1.5pt solid #000; padding: 2mm; background: #fff;
-                display: flex; align-items: center; justify-content: center;
+            /* Footer */
+            .ex-footer { 
+                width: 100%; display: flex; justify-content: space-between; 
+                align-items: flex-end; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 3mm;
             }
-            .qr-image { width: 42mm; height: 42mm; }
-
-            /* ID Container - Impacto Visual */
-            .id-container { text-align: center; width: 100%; }
-            .id-sub { 
-                font-family: 'Inter', sans-serif; font-size: 7pt; font-weight: 700; 
-                color: #666; letter-spacing: 1px; display: block; margin-bottom: 1mm;
-            }
-            .id-number {
-                font-family: 'Roboto Mono', monospace; font-size: 26pt; font-weight: 700;
-                color: #000; border: 2pt solid #000; padding: 2mm 5mm;
-                display: inline-block; background: #fff;
-            }
-
-            /* Footer - Profesional y técnico */
-            .footer-industrial { width: 100%; border-top: 1pt solid #000; padding-top: 3mm; text-align: center; }
-            .prueba-tag { font-family: 'Roboto Mono', monospace; font-size: 10pt; font-weight: 700; color: #000; margin-bottom: 1mm; }
-            .legal-tag { font-family: 'Inter', sans-serif; font-size: 6pt; color: #999; letter-spacing: 1px; }
+            .ex-test-text { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 10pt; color: #000; }
+            .ex-brand { font-family: 'Montserrat', sans-serif; font-size: 7pt; color: #aaa; font-weight: 600; }
         </style>
         <div>${stickersHTML}</div>
     `;
@@ -633,17 +652,17 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
-    const selectores = tipo === 'auto' ? '.prm-sticker-auto-full' : '.clean-sticker-full';
+    const selectores = tipo === 'auto' ? '.ex-wrapper-auto' : '.ex-sticker-unit';
     const elementos = tempDiv.querySelectorAll(selectores);
 
     for (let i = 0; i < elementos.length; i++) {
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
         const canvas = await html2canvas(elementos[i], { scale: 3, useCORS: true });
-        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
 
-    doc.save(`SANTUA_INDUSTRIAL_${tipo.toUpperCase()}.pdf`);
+    doc.save(`SANTUA_EXECUTIVE_${tipo.toUpperCase()}.pdf`);
     document.body.removeChild(tempDiv);
 }
 
