@@ -549,109 +549,92 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
         const estructura = `
-            <div class="elite-unit">
+            <div class="final-unit">
                 <div class="b-red-ext">
                     <div class="b-yellow-mid">
                         <div class="b-red-int">
-                            
-                            <div class="elite-body">
-                                <div class="elite-header">
-                                    <div class="elite-logo">S</div>
-                                    <div class="elite-header-txt">
-                                        <div class="elite-main-t">CENTRAL SANTUA</div>
-                                        <div class="elite-sub-t">SEGURIDAD VIAL CERTIFICADA</div>
+                            <div class="final-body">
+                                <div class="final-header">
+                                    <div class="final-logo">S</div>
+                                    <div class="final-header-txt">
+                                        <div class="final-main-t">CENTRAL SANTUA</div>
+                                        <div class="final-sub-t">SEGURIDAD VIAL CERTIFICADA</div>
                                     </div>
                                 </div>
 
-                                <div class="elite-center">
-                                    <div class="elite-qr-box">
-                                        <img src="${qrImg}" class="elite-qr">
-                                        <div class="m-t-l"></div><div class="m-t-r"></div>
-                                        <div class="m-b-l"></div><div class="m-b-r"></div>
+                                <div class="final-center">
+                                    <div class="final-qr-box">
+                                        <img src="${qrImg}" class="final-qr">
                                     </div>
 
-                                    <div class="elite-id-container">
-                                        <span class="elite-id-label">ID DE CONTROL</span>
-                                        <div class="elite-id-val">${idUnico}</div>
+                                    <div class="final-id-container">
+                                        <span class="final-id-label">ID DE CONTROL</span>
+                                        <div class="final-id-val">${idUnico}</div>
                                     </div>
                                 </div>
 
-                                <div class="elite-footer">
-                                    <div class="elite-test-tag">IMAGEN DE PRUEBA</div>
-                                    <div class="elite-rights">© 2026 SANTUA SECURITY</div>
+                                <div class="final-footer">
+                                    <div class="final-test-tag">IMAGEN DE PRUEBA</div>
+                                    <div class="final-rights">© 2026 SANTUA SECURITY</div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>`;
 
-        stickersHTML += (tipo === 'auto') ? `<div class="elite-page-auto">${estructura}${estructura}</div>` : estructura;
+        stickersHTML += (tipo === 'auto') ? `<div class="final-page-auto">${estructura}${estructura}</div>` : estructura;
     });
 
     tempDiv.innerHTML = `
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Space+Mono:wght@700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
             
             * { box-sizing: border-box; margin: 0; padding: 0; }
-
-            .elite-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
+            .final-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
             
-            .elite-unit { 
-                width: 120mm; height: 110mm; padding: 2mm; background: #fff; display: flex; 
+            .final-unit { 
+                width: 120mm; height: 110mm; padding: 0.5mm; /* Menos borde blanco exterior */
+                background: #fff; display: flex; 
             }
 
-            /* Marco Triple Perimetral */
-            .b-red-ext { border: 2pt solid #e60000; width: 100%; height: 100%; display: flex; }
-            .b-yellow-mid { border: 2pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
-            .b-red-int { border: 2pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
+            /* Marco Triple */
+            .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
+            .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
+            .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
 
-            .elite-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
+            .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
 
-            /* Header Negro Solido - Look Industrial */
-            .elite-header { 
-                background: #000; color: #fff; padding: 5mm; 
-                display: flex; align-items: center; gap: 12px;
+            .final-header { 
+                background: #000; color: #fff; padding: 4mm; 
+                display: flex; align-items: center; gap: 10px;
             }
-            .elite-logo {
-                background: #e60000; width: 10mm; height: 10mm; 
+            .final-logo {
+                background: #e60000; width: 9mm; height: 9mm; 
                 display: flex; align-items: center; justify-content: center;
-                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px;
+                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt;
             }
-            .elite-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 13pt; letter-spacing: 1px; }
-            .elite-sub-t { font-family: 'Inter', sans-serif; font-size: 6.5pt; color: #ffcc00; font-weight: 700; letter-spacing: 1.5px; }
+            .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
+            .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
 
-            /* Centro */
-            .elite-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5mm; }
+            .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pb: 4mm; gap: 4mm; }
 
-            /* QR con Marco Negro Fino */
-            .elite-qr-box { 
-                padding: 10px; border: 1.5pt solid #000; position: relative; background: #fff;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            }
-            .elite-qr { width: 40mm; height: 40mm; display: block; }
-            
-            /* Marcas de esquina para el QR */
-            .m-t-l, .m-t-r, .m-b-l, .m-b-r { position: absolute; width: 4mm; height: 4mm; border: 1.5pt solid #000; }
-            .m-t-l { top: -2mm; left: -2mm; border-right: 0; border-bottom: 0; }
-            .m-t-r { top: -2mm; right: -2mm; border-left: 0; border-bottom: 0; }
-            .m-b-l { bottom: -2mm; left: -2mm; border-right: 0; border-top: 0; }
-            .m-b-r { bottom: -2mm; right: -2mm; border-left: 0; border-top: 0; }
+            /* QR con marco negro fino */
+            .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
+            .final-qr { width: 38mm; height: 38mm; display: block; }
 
-            /* ID Box */
-            .elite-id-container { text-align: center; }
-            .elite-id-label { font-family: 'Inter', sans-serif; font-size: 7pt; font-weight: 800; color: #888; letter-spacing: 1px; }
-            .elite-id-val {
-                font-family: 'Space Mono', monospace; font-size: 26pt; font-weight: 700;
-                color: #000; border: 1.5pt solid #000; padding: 2mm 8mm; background: #fff;
-                margin-top: 1mm;
+            /* ID Box NEGRO + ROJO */
+            .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
+            .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
+            .final-id-val {
+                font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700;
+                color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px;
+                margin-top: 1mm; width: 100%;
             }
 
-            /* Footer */
-            .elite-footer { padding: 4mm 6mm; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; }
-            .elite-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 13pt; color: #e60000; }
-            .elite-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #bbb; }
+            .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
+            .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
+            .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
         </style>
         <div>${stickersHTML}</div>
     `;
@@ -661,7 +644,7 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
-    const selectores = tipo === 'auto' ? '.elite-page-auto' : '.elite-unit';
+    const selectores = tipo === 'auto' ? '.final-page-auto' : '.final-unit';
     const elementos = tempDiv.querySelectorAll(selectores);
 
     for (let i = 0; i < elementos.length; i++) {
@@ -671,7 +654,7 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
 
-    doc.save(`SANTUA_ELITE_${tipo.toUpperCase()}.pdf`);
+    doc.save(`SANTUA_ELITE_FINAL_${tipo.toUpperCase()}.pdf`);
     document.body.removeChild(tempDiv);
 }
 
