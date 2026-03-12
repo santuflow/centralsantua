@@ -585,9 +585,9 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     tempDiv.innerHTML = `
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@700&display=swap');
-            .sticker-auto-full { width: 340mm; height: 150mm; display: flex; background: #fff; }
+            .sticker-auto-full { width: 240mm; height: 110mm; display: flex; background: #fff; }
             .mitad-sticker { 
-                width: 170mm; height: 150mm; background: #dcdcdc; 
+                width: 120mm; height: 110mm; background: #dcdcdc; 
                 display: flex; flex-direction: column; align-items: center; 
                 justify-content: space-around; padding: 15px; position: relative; border: 6px solid #ff0000;
             }
@@ -595,7 +595,7 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
             .mitad-sticker::after { content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 4px solid #ff0000; }
             
             .sticker-moto-full { 
-                width: 170mm; height: 150mm; background: #dcdcdc; border: 8px solid #ff0000;
+                width: 120mm; height: 110mm; background: #dcdcdc; border: 8px solid #ff0000;
                 position: relative; display: flex; flex-direction: column; align-items: center;
                 justify-content: space-around; padding: 20px;
             }
