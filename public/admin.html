@@ -538,54 +538,47 @@ function reimprimirLote(loteId) {
 
 async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const { jsPDF } = window.jspdf;
-    
-    // Contenedor invisible para renderizar
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
     
-    // --- NUEVO HTML CON DISEÑO INDUSTRIAL CERTIFIED (NIVEL 10000) ---
     let stickersHTML = '';
     listaIDs.forEach(idUnico => {
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
-        // Estructura de un sticker individual certificado
-        const estructuraSticker = `
-            <div class="crt-unit">
-                <div class="crt-border-red-outer">
-                    <div class="crt-border-yellow-mid">
-                        <div class="crt-border-red-inner">
+        const estructura = `
+            <div class="elite-unit">
+                <div class="b-red-ext">
+                    <div class="b-yellow-mid">
+                        <div class="b-red-int">
                             
-                            <div class="crt-body">
-                                
-                                <div class="crt-header-group">
-                                    <div class="crt-tech-icon crt-icon-safety">⦿</div>
-                                    <span class="crt-certified-txt">SEGURIDAD CERTIFICADA CENTRAL SANTUA</span>
-                                </div>
-                                
-                                <div class="crt-main-layout">
-                                    <div class="crt-qr-frame">
-                                        <img src="${qrImg}" class="crt-qr-img">
-                                        <div class="crt-qr-scan-line"></div>
-                                        <div class="crt-corner-mark crt-tl"></div>
-                                        <div class="crt-corner-mark crt-tr"></div>
-                                        <div class="crt-corner-mark crt-bl"></div>
-                                        <div class="crt-corner-mark crt-br"></div>
-                                    </div>
-                                    
-                                    <div class="crt-id-section">
-                                        <span class="crt-id-label">UNIDAD DE CONTROL ID:</span>
-                                        <div class="crt-id-tag-black">
-                                            <div class="crt-id-number">${idUnico}</div>
-                                        }
+                            <div class="elite-body">
+                                <div class="elite-header">
+                                    <div class="elite-logo">S</div>
+                                    <div class="elite-header-txt">
+                                        <div class="elite-main-t">CENTRAL SANTUA</div>
+                                        <div class="elite-sub-t">SEGURIDAD VIAL CERTIFICADA</div>
                                     </div>
                                 </div>
-                                
-                                <div class="crt-footer-tech">
-                                    <span class="crt-meta-data">ESTADISTICAS DE SEG VIAL | EST. 2023 | CERT. NO. ${new Date().getFullYear()}A</span>
-                                    <div class="crt-imagen-prueba-txt">-- IMAGEN DE PRUEBA --</div>
+
+                                <div class="elite-center">
+                                    <div class="elite-qr-box">
+                                        <img src="${qrImg}" class="elite-qr">
+                                        <div class="m-t-l"></div><div class="m-t-r"></div>
+                                        <div class="m-b-l"></div><div class="m-b-r"></div>
+                                    </div>
+
+                                    <div class="elite-id-container">
+                                        <span class="elite-id-label">ID DE CONTROL</span>
+                                        <div class="elite-id-val">${idUnico}</div>
+                                    </div>
+                                </div>
+
+                                <div class="elite-footer">
+                                    <div class="elite-test-tag">IMAGEN DE PRUEBA</div>
+                                    <div class="elite-rights">© 2026 SANTUA SECURITY</div>
                                 </div>
                             </div>
 
@@ -594,128 +587,91 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
                 </div>
             </div>`;
 
-        if (tipo === 'auto') {
-            stickersHTML += `<div class="crt-page-auto">${estructuraSticker}${estructuraSticker}</div>`;
-        } else {
-            stickersHTML += estructuraSticker;
-        }
+        stickersHTML += (tipo === 'auto') ? `<div class="elite-page-auto">${estructura}${estructura}</div>` : estructura;
     });
 
-    // --- NUEVO CSS INDUSTRIAL CERTIFIED (NIVEL 10000) ---
     tempDiv.innerHTML = `
         <style>
-            /* Importar tipografías industriales y de código profesional */
-            @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Roboto+Mono&family=Inter:wght@900&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Space+Mono:wght@700&display=swap');
             
             * { box-sizing: border-box; margin: 0; padding: 0; }
 
-            /* Contenedores Principales */
-            .crt-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
+            .elite-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
             
-            /* Unidad de Sticker Individual */
-            .crt-unit { 
-                width: 120mm; height: 110mm; 
-                padding: 1.5mm; /* Pequeño espacio para precisión industrial de corte */
-                background: #fff;
-                display: flex;
-                position: relative;
+            .elite-unit { 
+                width: 120mm; height: 110mm; padding: 2mm; background: #fff; display: flex; 
             }
 
-            /* El "Sanguchito" Envolvente Industrial */
-            .crt-border-red-outer { border: 1.5pt solid #e60000; width: 100%; height: 100%; padding: 0; display: flex; position: relative; }
-            .crt-border-yellow-mid { border: 1.5pt solid #ffcc00; width: 100%; height: 100%; padding: 0; display: flex; }
-            .crt-border-red-inner { border: 1.5pt solid #e60000; width: 100%; height: 100%; padding: 0; display: flex; flex: 1; position: relative;}
+            /* Marco Triple Perimetral */
+            .b-red-ext { border: 2pt solid #e60000; width: 100%; height: 100%; display: flex; }
+            .b-yellow-mid { border: 2pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
+            .b-red-int { border: 2pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
 
-            /* Cuerpo Interno (Gris Seda Suave Profesional) */
-            .crt-body { 
-                background: #f1f1f1; /* Gris seda profesional */
-                flex: 1; display: flex; flex-direction: column; 
-                align-items: center; justify-content: space-evenly; 
-                padding: 10mm 6mm; 
-                box-shadow: inset 0 0 40px rgba(255,204,0, 0.05); /* Brillo interno amarillo tech sutil */
+            .elite-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
+
+            /* Header Negro Solido - Look Industrial */
+            .elite-header { 
+                background: #000; color: #fff; padding: 5mm; 
+                display: flex; align-items: center; gap: 12px;
+            }
+            .elite-logo {
+                background: #e60000; width: 10mm; height: 10mm; 
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px;
+            }
+            .elite-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 13pt; letter-spacing: 1px; }
+            .elite-sub-t { font-family: 'Inter', sans-serif; font-size: 6.5pt; color: #ffcc00; font-weight: 700; letter-spacing: 1.5px; }
+
+            /* Centro */
+            .elite-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5mm; }
+
+            /* QR con Marco Negro Fino */
+            .elite-qr-box { 
+                padding: 10px; border: 1.5pt solid #000; position: relative; background: #fff;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            }
+            .elite-qr { width: 40mm; height: 40mm; display: block; }
+            
+            /* Marcas de esquina para el QR */
+            .m-t-l, .m-t-r, .m-b-l, .m-b-r { position: absolute; width: 4mm; height: 4mm; border: 1.5pt solid #000; }
+            .m-t-l { top: -2mm; left: -2mm; border-right: 0; border-bottom: 0; }
+            .m-t-r { top: -2mm; right: -2mm; border-left: 0; border-bottom: 0; }
+            .m-b-l { bottom: -2mm; left: -2mm; border-right: 0; border-top: 0; }
+            .m-b-r { bottom: -2mm; right: -2mm; border-left: 0; border-top: 0; }
+
+            /* ID Box */
+            .elite-id-container { text-align: center; }
+            .elite-id-label { font-family: 'Inter', sans-serif; font-size: 7pt; font-weight: 800; color: #888; letter-spacing: 1px; }
+            .elite-id-val {
+                font-family: 'Space Mono', monospace; font-size: 26pt; font-weight: 700;
+                color: #000; border: 1.5pt solid #000; padding: 2mm 8mm; background: #fff;
+                margin-top: 1mm;
             }
 
-            /* Macro-Detalles de Header */
-            .crt-header-group {
-                display: flex; align-items: center; gap: 8px; width: 95%; justify-content: center; z-index: 5;
-            }
-            .crt-tech-icon { font-family: Arial, sans-serif; font-size: 1rem; color: #ffcc00; }
-            .crt-icon-safety::before { content: "⦿"; } /* Símbolo focal industrial */
-            
-            .crt-certified-txt { 
-                color: #555; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.85rem; letter-spacing: 2.5px; opacity: 0.9;
-                border-top: 1px solid rgba(230,0,0,0.2); border-bottom: 1px solid rgba(230,0,0,0.2); padding: 3px 10px;
-            }
-
-            /* Layout Central con Guías Técnicas */
-            .crt-main-layout { display: flex; flex-direction: column; align-items: center; gap: 4mm; width: 100%; position: relative;}
-            
-            /* Caja de QR Tech-Capsule */
-            .crt-qr-frame { 
-                background: #0d0d0d; padding: 12px; display: flex; z-index: 5; 
-                border-radius: 4px; border: 1px solid #ffcc00; position: relative;
-                image-rendering: pixelated; /* QR nítido profesional */
-            }
-            .crt-qr-img { width: 140px; height: 140px; image-rendering: pixelated; border: 2px solid #fff;}
-            
-            /* Micro-detalles de alineación del QR */
-            .crt-corner-mark { position: absolute; width: 6px; height: 6px; border: 1.5pt solid #fff; pointer-events: none; }
-            .crt-tl { top: 3px; left: 3px; border-right: none; border-bottom: none; }
-            .crt-tr { top: 3px; right: 3px; border-left: none; border-bottom: none; }
-            .crt-bl { bottom: 3px; left: 3px; border-right: none; border-top: none; }
-            .crt-br { bottom: 3px; right: 3px; border-left: none; border-top: none; }
-
-            /* ID Tag Tech-Noir Impacto Total */
-            .crt-id-section { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 90%; z-index: 5; }
-            .crt-id-label { font-family: 'Roboto Mono', monospace; font-size: 0.75rem; color: #fff; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
-            
-            .crt-id-tag-black { 
-                background: #fff; color: #000; font-family: 'Space Mono', monospace; font-weight: 700; 
-                padding: 6px 20px; border-radius: 3px; font-size: 2.3rem; letter-spacing: -1px; z-index: 5;
-                box-shadow: 0 4px 15px rgba(255,204,0, 0.3); /* Brillo externo amarillo tech */
-            }
-            
-            /* Footer Premium Industrial con Coordenadas */
-            .crt-footer-tech { 
-                display: flex; flex-direction: column; align-items: center; gap: 4px; width: 95%; z-index: 5;
-                font-family: 'Roboto Mono', monospace; color: #fff; text-transform: uppercase; border-top: 1px solid rgba(230,0,0,0.2); padding-top: 4px;
-            }
-            .crt-meta-data { font-size: 0.65rem; color: #aaa; opacity: 0.7; letter-spacing: 0.5px;}
-            
-            /* El Texto de Prueba Discreto y Técnico */
-            .crt-imagen-prueba-txt { font-size: 11pt; color: #e60000; font-weight: 700; opacity: 0.8; letter-spacing: 3px;}
+            /* Footer */
+            .elite-footer { padding: 4mm 6mm; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; }
+            .elite-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 13pt; color: #e60000; }
+            .elite-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #bbb; }
         </style>
         <div>${stickersHTML}</div>
     `;
     document.body.appendChild(tempDiv);
 
-    // --- CONFIGURACIÓN DEL PDF (MANTENER IGUAL PARA NO CORTAR) ---
     const anchoMm = (tipo === 'auto') ? 240 : 120;
     const altoMm = 110;
     const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
 
-    // Selectores para el nuevo diseño certificado
-    const selectores = tipo === 'auto' ? '.crt-page-auto' : '.crt-unit';
+    const selectores = tipo === 'auto' ? '.elite-page-auto' : '.elite-unit';
     const elementos = tempDiv.querySelectorAll(selectores);
 
     for (let i = 0; i < elementos.length; i++) {
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-
-        const canvas = await html2canvas(elementos[i], {
-            scale: 3, // Alta calidad para impresión profesional CERTIFIED
-            useCORS: true,
-            logging: false,
-            // Medidas precisas basadas en el diseño
-            width: anchoMm * 3.7795, // Conversión precisa de mm a px
-            height: altoMm * 3.7795,
-            backgroundColor: null // Fondo transparente para que el patrón tech sea visible
-        });
-
+        const canvas = await html2canvas(elementos[i], { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
     }
 
-    doc.save(`SANTUA_CERTIFIED_${tipo.toUpperCase()}.pdf`);
+    doc.save(`SANTUA_ELITE_${tipo.toUpperCase()}.pdf`);
     document.body.removeChild(tempDiv);
 }
 
