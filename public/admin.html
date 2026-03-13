@@ -538,56 +538,13 @@ function reimprimirLote(loteId) {
 
 async function generarPdfFinalTodoJunto(listaIDs, tipo) {
     const { jsPDF } = window.jspdf;
-    
-    // --- LÓGICA DE CONTADOR EN BOTÓN ---
-    const boton = event?.target || document.querySelector('button'); 
-    const textoOriginal = boton.innerHTML;
-    boton.disabled = true;
-
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
-    document.body.appendChild(tempDiv);
-
-    const anchoMm = (tipo === 'auto') ? 240 : 120;
-    const altoMm = 110;
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
-
-    // Estilos (Tus estilos originales intactos)
-    const estilos = `
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            .final-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
-            .final-unit { width: 120mm; height: 110mm; padding: 0.5mm; background: #fff; display: flex; }
-            .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
-            .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
-            .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
-            .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
-            .final-header { background: #000; color: #fff; padding: 4mm; display: flex; align-items: center; gap: 10px; }
-            .final-logo { background: #e60000; width: 9mm; height: 9mm; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt; }
-            .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
-            .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
-            .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4mm; gap: 4mm; }
-            .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
-            .final-qr { width: 38mm; height: 38mm; display: block; }
-            .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
-            .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
-            .final-id-val { font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700; color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px; margin-top: 1mm; width: 100%; }
-            .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
-            .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
-            .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
-        </style>
-    `;
-
-    // --- PROCESAMIENTO UNO POR UNO (EFICIENCIA 100%) ---
-    for (let i = 0; i < listaIDs.length; i++) {
-        const idUnico = listaIDs[i];
-        
-        // Actualizar contador en el botón
-        boton.innerHTML = `⏳ PROCESANDO ${i + 1} / ${listaIDs.length}`;
-
+    
+    let stickersHTML = '';
+    listaIDs.forEach(idUnico => {
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
 
@@ -604,15 +561,18 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
                                         <div class="final-sub-t">CENTRAL SANTUA</div>
                                     </div>
                                 </div>
+
                                 <div class="final-center">
                                     <div class="final-qr-box">
                                         <img src="${qrImg}" class="final-qr">
                                     </div>
+
                                     <div class="final-id-container">
                                         <span class="final-id-label">ID DE CONTROL</span>
                                         <div class="final-id-val">${idUnico}</div>
                                     </div>
                                 </div>
+
                                 <div class="final-footer">
                                     <div class="final-test-tag">www.centralsantua.com.ar</div>
                                     <div class="final-rights">© 2026 SANTUA SECURITY</div>
@@ -623,37 +583,78 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo) {
                 </div>
             </div>`;
 
-        // Inyectamos el HTML y esperamos a que el QR se "dibuje" mentalmente
-        tempDiv.innerHTML = estilos + (tipo === 'auto' ? `<div class="final-page-auto">${estructura}${estructura}</div>` : estructura);
-        
-        // Pequeña pausa para asegurar que el motor de renderizado procese el HTML
-        await new Promise(resolve => setTimeout(resolve, 50));
+        stickersHTML += (tipo === 'auto') ? `<div class="final-page-auto">${estructura}${estructura}</div>` : estructura;
+    });
 
-        const selector = tipo === 'auto' ? '.final-page-auto' : '.final-unit';
-        const elemento = tempDiv.querySelector(selector);
+    tempDiv.innerHTML = `
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
+            
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            .final-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
+            
+            .final-unit { 
+                width: 120mm; height: 110mm; padding: 0.5mm; /* Menos borde blanco exterior */
+                background: #fff; display: flex; 
+            }
 
-        // Captura con html2canvas
-        const canvas = await html2canvas(elemento, { 
-            scale: 2, // Scale 2 es óptimo para impresión sin matar la RAM
-            useCORS: true,
-            logging: false
-        });
+            /* Marco Triple */
+            .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
+            .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
+            .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        
+            .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
+
+            .final-header { 
+                background: #000; color: #fff; padding: 4mm; 
+                display: flex; align-items: center; gap: 10px;
+            }
+            .final-logo {
+                background: #e60000; width: 9mm; height: 9mm; 
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt;
+            }
+            .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
+            .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
+
+            .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pb: 4mm; gap: 4mm; }
+
+            /* QR con marco negro fino */
+            .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
+            .final-qr { width: 38mm; height: 38mm; display: block; }
+
+            /* ID Box NEGRO + ROJO */
+            .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
+            .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
+            .final-id-val {
+                font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700;
+                color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px;
+                margin-top: 1mm; width: 100%;
+            }
+
+            .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
+            .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
+            .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
+        </style>
+        <div>${stickersHTML}</div>
+    `;
+    document.body.appendChild(tempDiv);
+
+    const anchoMm = (tipo === 'auto') ? 240 : 120;
+    const altoMm = 110;
+    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
+
+    const selectores = tipo === 'auto' ? '.final-page-auto' : '.final-unit';
+    const elementos = tempDiv.querySelectorAll(selectores);
+
+    for (let i = 0; i < elementos.length; i++) {
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
+        const canvas = await html2canvas(elementos[i], { scale: 3, useCORS: true });
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
         doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
-
-        // Limpieza inmediata para liberar memoria
-        tempDiv.innerHTML = '';
-        canvas.remove();
     }
 
-    // --- DESCARGA Y RESTAURACIÓN ---
-    doc.save(`SANTUA_ELITE_FINAL_${tipo.toUpperCase()}_${Date.now()}.pdf`);
-    
-    boton.innerHTML = textoOriginal;
-    boton.disabled = false;
+    doc.save(`SANTUA_ELITE_FINAL_${tipo.toUpperCase()}.pdf`);
     document.body.removeChild(tempDiv);
 }
 
