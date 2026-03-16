@@ -485,7 +485,7 @@ function filtrarStickers() {
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDF...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO LOTE...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
@@ -495,15 +495,13 @@ function filtrarStickers() {
 
         if (!response.ok) throw new Error("Error en el servidor");
         
-        const data = await response.json();
-        const listaIDs = data.ids; 
-
-        // LLAMADA AL GENERADOR DE PDF ÚNICO
-        await generarPdfFinalTodoJunto(listaIDs, tipo);
+        // Refrescamos la data para que aparezca el lote en la lista
+        await loadData();
         
-        if (typeof loadData === "function") {
-            setTimeout(loadData, 1000); 
-        }
+        alert("✅ Lote guardado en Base de Datos. Iniciando descarga automática...");
+
+        // Lanzamos la descarga usando el botón de la lista (reutilizamos la lógica)
+        reimprimirLote(nuevoLoteId);
 
     } catch (error) {
         alert("ERROR: " + error.message);
@@ -516,145 +514,127 @@ function filtrarStickers() {
 /**
  * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
  */
-function reimprimirLote(loteId) {
+/**
+ * Módulo de Impresión Corregido
+ */
+async function reimprimirLote(loteId) {
     if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
     
-    // 1. Buscamos los stickers de ese lote
     const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
     if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
 
-    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
     const tipoDetectado = stickersDelLote[0].tipo || 'moto';
-    
     const listaIDs = stickersDelLote.map(s => s.id_qr);
 
-    // 3. Abrimos la ventana sin preguntar nada
-    const win = window.open('', '_blank');
-    if (!win) return alert("El navegador bloqueó la ventana emergente.");
+    const botones = document.querySelectorAll('button');
+    let btnTarget = Array.from(botones).find(b => b.textContent.includes('REIMPRIMIR LOTE') && b.onclick?.toString().includes(loteId));
+    
+    if(!btnTarget) btnTarget = document.querySelector('button[onclick="prepararLote()"]');
 
-    win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
-    win.document.close();
+    await generarPdfFinalTodoJunto(listaIDs, tipoDetectado, btnTarget);
 }
 
-async function generarPdfFinalTodoJunto(listaIDs, tipo) {
+async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
     const { jsPDF } = window.jspdf;
+    const textoOriginal = boton.innerHTML;
+    boton.disabled = true;
+
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
     
-    let stickersHTML = '';
-    listaIDs.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-
-        const estructura = `
-            <div class="final-unit">
-                <div class="b-red-ext">
-                    <div class="b-yellow-mid">
-                        <div class="b-red-int">
-                            <div class="final-body">
-                                <div class="final-header">
-                                    <div class="final-logo">S</div>
-                                    <div class="final-header-txt">
-                                        <div class="final-main-t">SI ME PERDI ESCANEAME ASI VUELVO CON MI DUEÑO</div>
-                                        <div class="final-sub-t">CENTRAL SANTUA</div>
-                                    </div>
-                                </div>
-
-                                <div class="final-center">
-                                    <div class="final-qr-box">
-                                        <img src="${qrImg}" class="final-qr">
-                                    </div>
-
-                                    <div class="final-id-container">
-                                        <span class="final-id-label">ID DE CONTROL</span>
-                                        <div class="final-id-val">${idUnico}</div>
-                                    </div>
-                                </div>
-
-                                <div class="final-footer">
-                                    <div class="final-test-tag">www.centralsantua.com.ar</div>
-                                    <div class="final-rights">© 2026 SANTUA SECURITY</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        stickersHTML += (tipo === 'auto') ? `<div class="final-page-auto">${estructura}${estructura}</div>` : estructura;
-    });
-
-    tempDiv.innerHTML = `
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
-            
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            .final-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
-            
-            .final-unit { 
-                width: 120mm; height: 110mm; padding: 0.5mm; /* Menos borde blanco exterior */
-                background: #fff; display: flex; 
-            }
-
-            /* Marco Triple */
-            .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
-            .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
-            .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
-
-            .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
-
-            .final-header { 
-                background: #000; color: #fff; padding: 4mm; 
-                display: flex; align-items: center; gap: 10px;
-            }
-            .final-logo {
-                background: #e60000; width: 9mm; height: 9mm; 
-                display: flex; align-items: center; justify-content: center;
-                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt;
-            }
-            .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
-            .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
-
-            .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pb: 4mm; gap: 4mm; }
-
-            /* QR con marco negro fino */
-            .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
-            .final-qr { width: 38mm; height: 38mm; display: block; }
-
-            /* ID Box NEGRO + ROJO */
-            .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
-            .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
-            .final-id-val {
-                font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700;
-                color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px;
-                margin-top: 1mm; width: 100%;
-            }
-
-            .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
-            .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
-            .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
-        </style>
-        <div>${stickersHTML}</div>
-    `;
+    // CSS CORREGIDO: flex-direction row y flex-shrink para que no se deformen
+    tempDiv.innerHTML = `<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        .final-page-auto { 
+            width: 240mm; 
+            height: 110mm; 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: nowrap; 
+            background: #fff; 
+        }
+        .final-unit { 
+            width: 120mm; 
+            height: 110mm; 
+            padding: 0.5mm; 
+            background: #fff; 
+            display: flex; 
+            flex-shrink: 0;
+        }
+        .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
+        .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
+        .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
+        .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
+        .final-header { background: #000; color: #fff; padding: 4mm; display: flex; align-items: center; gap: 10px; }
+        .final-logo { background: #e60000; width: 9mm; height: 9mm; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt; }
+        .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
+        .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
+        .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4mm; gap: 4mm; }
+        .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
+        .final-qr { width: 38mm; height: 38mm; display: block; }
+        .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
+        .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
+        .final-id-val { font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700; color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px; margin-top: 1mm; width: 100%; }
+        .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
+        .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
+        .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
+    </style><div id="render-area"></div>`;
+    
     document.body.appendChild(tempDiv);
+    const renderArea = document.getElementById('render-area');
 
     const anchoMm = (tipo === 'auto') ? 240 : 120;
     const altoMm = 110;
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
+    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm], compress: true });
 
-    const selectores = tipo === 'auto' ? '.final-page-auto' : '.final-unit';
-    const elementos = tempDiv.querySelectorAll(selectores);
+    for (let i = 0; i < listaIDs.length; i++) {
+        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> ${i + 1} / ${listaIDs.length}`;
 
-    for (let i = 0; i < elementos.length; i++) {
+        const idUnico = listaIDs[i];
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+
+        const estructura = `
+            <div class="final-unit">
+                <div class="b-red-ext"><div class="b-yellow-mid"><div class="b-red-int">
+                    <div class="final-body">
+                        <div class="final-header"><div class="final-logo">S</div><div class="final-header-txt"><div class="final-main-t">SI ME PERDI ESCANEAME</div><div class="final-sub-t">CENTRAL SANTUA</div></div></div>
+                        <div class="final-center"><div class="final-qr-box"><img src="${qrImg}" class="final-qr"></div><div class="final-id-container"><span class="final-id-label">ID DE CONTROL</span><div class="final-id-val">${idUnico}</div></div></div>
+                        <div class="final-footer"><div class="final-test-tag">www.centralsantua.com.ar</div><div class="final-rights">© 2026 SANTUA</div></div>
+                    </div>
+                </div></div></div>
+            </div>`;
+
+        // Generamos el HTML según tipo
+        renderArea.innerHTML = (tipo === 'auto') 
+            ? `<div class="final-page-auto">${estructura}${estructura}</div>` 
+            : estructura;
+
+        await new Promise(resolve => {
+            const img = renderArea.querySelector('img');
+            if (img.complete) resolve(); else img.onload = resolve;
+        });
+
+        const elemento = renderArea.children[0];
+        const canvas = await html2canvas(elemento, { scale: 1.5, useCORS: true });
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-        const canvas = await html2canvas(elementos[i], { scale: 3, useCORS: true });
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
+        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm, undefined, 'FAST');
+
+        renderArea.innerHTML = '';
+        canvas.remove();
+        
+        if (i % 20 === 0) await new Promise(r => setTimeout(r, 50));
     }
 
-    doc.save(`SANTUA_ELITE_FINAL_${tipo.toUpperCase()}.pdf`);
+    doc.save(`SANTUA_${tipo.toUpperCase()}_LOTE_${Date.now()}.pdf`);
+    
+    boton.innerHTML = textoOriginal;
+    boton.disabled = false;
     document.body.removeChild(tempDiv);
 }
 
