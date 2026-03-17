@@ -628,7 +628,7 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
         renderArea.innerHTML = '';
         canvas.remove();
         
-        if (i % 20 === 0) await new Promise(r => setTimeout(r, 50));
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 1000));
     }
 
     doc.save(`SANTUA_${tipo.toUpperCase()}_LOTE_${Date.now()}.pdf`);
