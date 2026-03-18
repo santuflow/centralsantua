@@ -769,8 +769,10 @@ function initMapAdmin() {
 }
 
 async function guardarPDV() {
-    // 1. Recolectamos los datos de los inputs
-    const data = {
+    const btn = document.querySelector('.btn-done');
+    const originalText = btn.innerHTML;
+    
+    const datos = {
         nombre: document.getElementById('pdv-nombre').value,
         direccion: document.getElementById('pdv-dir').value,
         whatsapp: document.getElementById('pdv-wa').value,
@@ -779,57 +781,54 @@ async function guardarPDV() {
         lng: document.getElementById('pdv-lng').value
     };
 
-    // 2. Validación básica
-    if(!data.nombre || !data.lat || !data.lng) {
-        return alert("⚠️ Error: Debes poner un nombre y marcar la ubicación en el mapa.");
+    if (!datos.lat) {
+        alert("❌ Error: Debes seleccionar una dirección de la lista para obtener las coordenadas.");
+        return;
     }
 
-    const btn = document.querySelector('button[onclick="guardarPDV()"]');
-    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...';
+    btn.disabled = true;
 
     try {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO EN BASE DE DATOS...';
-
-        // 3. Envío al servidor (Asegúrate que tu ruta en el backend sea /api/admin/guardar-pdv)
-        const response = await fetch('/api/admin/guardar-pdv', {
+        const res = await fetch('/api/admin/guardar-pdv', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(datos)
         });
 
-        if (response.ok) {
-            alert("✅ ¡Punto de Venta guardado con éxito!");
-            // Limpiamos los campos para el próximo local
-            document.getElementById('pdv-nombre').value = '';
-            document.getElementById('pdv-wa').value = '';
-            document.getElementById('pdv-foto').value = '';
-            document.getElementById('img-pre').src = '';
-            if(markerAdmin) markerAdmin.remove();
-            markerAdmin = null;
+        const result = await res.json();
+
+        if (res.ok) {
+            alert("✅ ¡Comercio guardado con éxito!");
+            location.reload(); // Recargamos para limpiar todo
         } else {
-            throw new Error("El servidor rechazó los datos");
+            throw new Error(result.error || "Error desconocido");
         }
-    } catch (error) {
-        alert("❌ ERROR al guardar: " + error.message);
+    } catch (err) {
+        alert("❌ ERROR al guardar: " + err.message);
     } finally {
-        btn.disabled = false;
         btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
 
 // 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
 async function buscarDireccion(query) {
     const lista = document.getElementById('sugerencias-dir');
-    if (query.length < 4) { lista.innerHTML = ''; return; }
+    if (query.length < 3) { lista.innerHTML = ''; return; }
+
+    // Coordenadas aproximadas de Quilmes/Ezpeleta para priorizar la zona
+    const viewbox = "-58.30,-34.70,-58.20,-34.78"; 
 
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=ar&limit=5`);
+        // Agregamos 'bounded=1' para que priorice tu zona de operación
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=ar&viewbox=${viewbox}&bounded=1&limit=6`);
         const data = await res.json();
 
         lista.innerHTML = data.map(item => `
-            <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.9rem;" 
+            <div style="padding: 12px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.85rem;" 
                  onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${item.display_name}')">
+                <i class="fas fa-map-marker-alt" style="color:var(--primary); margin-right:8px;"></i>
                 ${item.display_name}
             </div>
         `).join('');

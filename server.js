@@ -7,6 +7,9 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 // --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
 const mongoose = require('mongoose');
 
@@ -934,31 +937,40 @@ app.use((req, res, next) => {
 
 
 // Ruta para que el Admin guarde un nuevo Punto de Venta
+// Ruta para que el Admin guarde un nuevo Punto de Venta
 app.post('/api/admin/guardar-pdv', async (req, res) => {
     try {
-        const nuevoPDV = req.body;
-        // Aquí 'db' es tu variable de base de datos (puedes usar fs.writeFile o MongoDB)
-        // Ejemplo con un array en memoria o archivo JSON:
-        if (!db.puntos_venta) db.puntos_venta = [];
+        const nuevoPDV = new PDV(req.body); // Crea el objeto usando el modelo de MongoDB
+        await nuevoPDV.save(); // Lo guarda en la nube (MongoDB Atlas)
         
-        db.puntos_venta.push({
-            id: Date.now(),
-            ...nuevoPDV,
-            fecha_registro: new Date().toISOString()
-        });
-
-        // Si usas archivos locales (fs), recordá guardar el archivo aquí
-        console.log("Nuevo local registrado:", nuevoPDV.nombre);
+        console.log("✅ Nuevo local registrado:", req.body.nombre);
         res.status(200).json({ message: "Local guardado con éxito" });
     } catch (error) {
+        console.error("❌ Error al guardar en MongoDB:", error);
         res.status(500).json({ error: "Error al guardar en el servidor" });
     }
 });
 
 // Ruta para que los usuarios vean los locales en el mapa
-app.get('/api/puntos-venta', (req, res) => {
-    res.json(db.puntos_venta || []);
+app.get('/api/puntos-venta', async (req, res) => {
+    try {
+        const locales = await PDV.find(); // Trae todos los locales de la base de datos
+        res.json(locales);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener locales" });
+    }
 });
+
+const PdvSchema = new mongoose.Schema({
+    nombre: String,
+    direccion: String,
+    whatsapp: String,
+    foto: String,
+    lat: Number,
+    lng: Number,
+    fecha_registro: { type: Date, default: Date.now }
+});
+const PDV = mongoose.model('PuntosDeVenta', PdvSchema);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
