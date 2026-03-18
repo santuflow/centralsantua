@@ -261,11 +261,43 @@
                 .addTo(map);
         }
 
+        let userMarker; // Variable para controlar el punto azul del usuario
+
         function getMyLocation() {
+            if (!navigator.geolocation) {
+                alert("Tu navegador no soporta geolocalización");
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(pos => {
                 const { longitude, latitude } = pos.coords;
-                map.flyTo({ center: [longitude, latitude], zoom: 15 });
-            }, err => alert("GPS no disponible"));
+                
+                // Centrar mapa suavemente
+                map.flyTo({ 
+                    center: [longitude, latitude], 
+                    zoom: 16, 
+                    speed: 1.5 
+                });
+
+                // Crear o mover el marcador azul
+                if (!userMarker) {
+                    const userEl = document.createElement('div');
+                    userEl.innerHTML = `
+                        <div style="width: 14px; height: 14px; background: #276ef1; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative; z-index: 2;"></div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(39, 110, 241, 0.4); border-radius: 50%; animation: pulse-dot 2s infinite; z-index: 1;"></div>
+                    `;
+                    userEl.style.position = 'relative';
+                    userEl.style.display = 'flex';
+                    userEl.style.alignItems = 'center';
+                    userEl.style.justifyContent = 'center';
+
+                    userMarker = new maplibregl.Marker({ element: userEl })
+                        .setLngLat([longitude, latitude])
+                        .addTo(map);
+                } else {
+                    userMarker.setLngLat([longitude, latitude]);
+                }
+            }, err => alert("GPS no disponible o denegado"), { enableHighAccuracy: true });
         }
 
         const input = document.getElementById('engine-search');
@@ -290,6 +322,11 @@
             input.value = n;
             list.classList.remove('show');
         }
+
+        // Animación de pulso para el punto azul (agrega esto al CSS si no lo tienes)
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes pulse-dot { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }`;
+        document.head.appendChild(style);
 
         window.onload = bootMap;
     </script>
