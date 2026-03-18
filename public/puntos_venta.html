@@ -4,302 +4,279 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Puntos de Venta | Central Santua</title>
-    
+
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --accent: #00ff88;
-            --dark: #020617;
-            --panel: rgba(15, 23, 42, 0.95);
+            --neon: #00ff88;
+            --bg: #030712;
+            --glass: rgba(17, 24, 39, 0.8);
             --border: rgba(255, 255, 255, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
         
-        /* Forzar altura total para que el mapa NO desaparezca */
-        html, body { height: 100%; width: 100%; background: #000; overflow: hidden; }
+        body, html { 
+            height: 100vh; 
+            width: 100vw; 
+            background: var(--bg); 
+            color: white; 
+            overflow: hidden;
+        }
 
-        /* --- HEADER ESTILO NEÓN --- */
-        header {
-            height: 65px;
-            background: #000;
+        /* --- UI LAYER: HEADER --- */
+        .elite-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 70px;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 2px solid var(--neon);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            border-bottom: 2px solid var(--accent);
-            z-index: 2000;
-            position: relative;
+            padding: 0 25px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
         }
-        .logo { font-weight: 800; color: var(--accent); text-decoration: none; font-size: 1.2rem; }
-        .nav-link { color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-left: 15px; }
 
-        /* --- CONTENEDOR DEL MAPA --- */
-        #map-container {
+        .brand { font-weight: 900; font-size: 1.4rem; color: var(--neon); text-decoration: none; letter-spacing: -1px; }
+        .nav-btn { color: white; text-decoration: none; font-weight: 600; font-size: 0.9rem; margin-left: 20px; transition: 0.3s; }
+        .nav-btn:hover { color: var(--neon); }
+
+        /* --- MAP LAYER: FULLSCREEN --- */
+        #map-master {
             position: absolute;
-            top: 65px;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1;
-            background: #111; /* Color de fondo mientras carga el mapa */
         }
 
-        #map { width: 100%; height: 100%; }
-
-        /* --- BUSCADOR FLOTANTE (ESTILO SMARTPHONE) --- */
-        .search-overlay {
+        /* --- SEARCH LAYER: APPLE STYLE --- */
+        .search-container {
             position: absolute;
-            top: 85px;
+            top: 90px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 450px;
-            z-index: 1001;
+            max-width: 500px;
+            z-index: 1000;
         }
 
-        .search-bar {
-            background: var(--panel);
-            backdrop-filter: blur(15px);
+        .glass-input {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 18px;
+            border-radius: 20px;
+            padding: 15px 25px;
             display: flex;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .search-bar i { color: var(--accent); margin-right: 15px; }
-        .search-bar input {
-            background: transparent;
-            border: none;
-            color: white;
-            width: 100%;
-            outline: none;
-            font-size: 1rem;
-        }
+        .glass-input:focus-within { border-color: var(--neon); transform: translateX(-50%) scale(1.02); }
+        .glass-input i { color: var(--neon); margin-right: 15px; font-size: 1.2rem; }
+        .glass-input input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1.1rem; }
 
-        /* --- LISTA DE RESULTADOS DINÁMICA --- */
-        #results-box {
-            margin-top: 8px;
-            background: var(--panel);
-            backdrop-filter: blur(15px);
-            border-radius: 14px;
+        #results-list {
+            margin-top: 10px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
             border: 1px solid var(--border);
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-            animation: fadeIn 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
         }
 
-        .result-item {
+        #results-list.show { max-height: 400px; padding: 10px; overflow-y: auto; }
+
+        .local-card {
             padding: 15px;
-            border-bottom: 1px solid var(--border);
+            border-radius: 15px;
+            margin-bottom: 8px;
             cursor: pointer;
             transition: 0.2s;
+            border: 1px solid transparent;
         }
-        .result-item:hover { background: rgba(0, 255, 136, 0.05); }
-        .result-item h4 { color: var(--accent); font-size: 0.95rem; }
-        .result-item p { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
 
-        /* --- BOTONES DE ACCIÓN (ESQUINA INFERIOR) --- */
-        .map-tools {
+        .local-card:hover { background: rgba(255,255,255,0.05); border-color: var(--neon); }
+        .local-card h4 { color: var(--neon); margin-bottom: 4px; }
+        .local-card p { font-size: 0.8rem; color: #94a3b8; }
+
+        /* --- CONTROLS --- */
+        .fab-container {
             position: absolute;
-            right: 20px;
             bottom: 40px;
+            right: 25px;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            z-index: 1001;
         }
 
-        .btn-tool {
-            width: 55px; height: 55px;
-            background: var(--accent);
-            border-radius: 16px;
+        .btn-elite {
+            width: 60px; height: 60px;
+            background: var(--neon);
+            border-radius: 20px;
             border: none;
             color: #000;
-            font-size: 1.4rem;
-            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+            font-size: 1.5rem;
             cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+            transition: 0.3s;
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* --- POPUPS ESTILO PREMIUM --- */
-        .leaflet-popup-content-wrapper {
+        .btn-elite:active { transform: scale(0.9); }
+
+        /* --- POPUP ELITE --- */
+        .maplibregl-popup-content {
             background: #0f172a !important;
             color: white !important;
-            border-radius: 15px !important;
-            padding: 5px;
-            border: 1px solid var(--accent);
+            border-radius: 20px !important;
+            padding: 20px !important;
+            border: 1px solid var(--neon) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
         }
-        .leaflet-popup-tip { background: var(--accent) !important; }
 
-        .popup-info h3 { color: var(--accent); margin-bottom: 5px; font-size: 1rem; }
-        .popup-info p { font-size: 0.8rem; margin-bottom: 12px; color: #cbd5e1; }
-        
-        .btn-route {
+        .maplibregl-popup-tip { border-top-color: var(--neon) !important; }
+
+        .btn-gps-go {
             display: block;
-            background: var(--accent);
+            background: var(--neon);
             color: #000;
             text-align: center;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 12px;
             text-decoration: none;
-            font-weight: 800;
-            font-size: 0.75rem;
+            font-weight: 900;
+            margin-top: 15px;
+            font-size: 0.8rem;
             text-transform: uppercase;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Corrección para que el mapa ocupe todo en móviles */
-        @media (max-width: 600px) {
-            header { height: 60px; }
-            #map-container { top: 60px; }
-            .search-overlay { top: 75px; }
-            .btn-tool { width: 50px; height: 50px; }
-        }
     </style>
 </head>
 <body>
 
-    <header>
-        <a href="index.html" class="logo">CENTRAL SANTUA</a>
+    <header class="elite-header">
+        <a href="index.html" class="brand">CENTRAL SANTUA</a>
         <nav>
-            <a href="index.html" class="nav-link">INICIO</a>
-            <a href="perfil.html" class="nav-link">PERFIL</a>
+            <a href="index.html" class="nav-btn">INICIO</a>
+            <a href="perfil.html" class="nav-btn">PERFIL</a>
         </nav>
     </header>
 
-    <div id="map-container">
-        <div id="map"></div>
+    <div id="map-master"></div>
 
-        <div class="search-overlay">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" id="input-search" placeholder="Buscar por ciudad, barrio o local..." autocomplete="off">
-            </div>
-            <div id="results-box">
-                </div>
+    <div class="search-container">
+        <div class="glass-input">
+            <i class="fa-solid fa-location-dot"></i>
+            <input type="text" id="engine-search" placeholder="¿Dónde estás buscando?" autocomplete="off">
         </div>
-
-        <div class="map-tools">
-            <button class="btn-tool" onclick="centrarEnMi()" title="Mi Ubicación">
-                <i class="fas fa-location-arrow"></i>
-            </button>
-        </div>
+        <div id="results-list"></div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+    <div class="fab-container">
+        <button class="btn-elite" onclick="getMyLocation()"><i class="fa-solid fa-crosshairs"></i></button>
+    </div>
+
     <script>
-        /**
-         * MOTOR DE MAPAS CENTRAL SANTUA V4.0
-         * Optimizado para renderizado inmediato
-         */
-        
-        let map, locales = [], markers = [], userMarker;
+        let map, locales = [], markers = [];
 
-        function initMap() {
-            // 1. Inicializar el mapa (se centra en Buenos Aires por defecto)
-            map = L.map('map', { 
-                zoomControl: false,
-                attributionControl: false 
-            }).setView([-34.6037, -58.3816], 12);
+        // 1. INICIALIZACIÓN DE MOTOR ELITE
+        function bootMap() {
+            map = new maplibregl.Map({
+                container: 'map-master',
+                style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', // Estilo High-Tech Dark
+                center: [-58.3816, -34.6037],
+                zoom: 11,
+                antialias: true
+            });
 
-            // 2. Capa de mapa: Estilo Voyager (Claro, nítido y pro)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-
-            // 3. Forzar el redimensionamiento (Esto arregla el bug de que no aparece)
-            setTimeout(() => { map.invalidateSize(); }, 500);
-
-            cargarDatos();
-        }
-
-        async function cargarDatos() {
-            // AQUÍ IRÍA TU FETCH('/api/puntos-venta')
-            // Ejemplo de datos para probar:
-            locales = [
-                { id: 1, nombre: "Repuestos 'La Tuerca'", zona: "Avellaneda", dir: "Av. Mitre 800", lat: -34.6621, lng: -58.3655 },
-                { id: 2, nombre: "Moto Service Premium", zona: "Quilmes", dir: "Rivadavia 150", lat: -34.7214, lng: -58.2566 },
-                { id: 3, nombre: "Accesorios Lanús", zona: "Lanús", dir: "25 de Mayo 120", lat: -34.7042, lng: -58.3912 }
-            ];
-
-            renderMarkers(locales);
-        }
-
-        function renderMarkers(data) {
-            // Limpiar markers anteriores
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-
-            data.forEach(l => {
-                const marker = L.marker([l.lat, l.lng]).addTo(map);
-                const googleUrl = `https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}`;
-                
-                marker.bindPopup(`
-                    <div class="popup-info">
-                        <h3>${l.nombre}</h3>
-                        <p><i class="fas fa-map-marker-alt"></i> ${l.zona} - ${l.dir}</p>
-                        <a href="${googleUrl}" target="_blank" class="btn-route">
-                            <i class="fas fa-directions"></i> CÓMO LLEGAR
-                        </a>
-                    </div>
-                `);
-                markers.push(marker);
+            // FORCE RENDER FIX: Redimensionar después de 100ms
+            map.on('load', () => {
+                map.resize();
+                loadCloudData();
             });
         }
 
-        // --- SISTEMA DE BÚSQUEDA ---
-        const input = document.getElementById('input-search');
-        const box = document.getElementById('results-box');
+        async function loadCloudData() {
+            // Datos quemados para test (Luego conectamos tu DB)
+            locales = [
+                { id: 1, n: "Taller San Justo", z: "La Matanza", d: "Av. Juan Manuel de Rosas 3000", lat: -34.685, lng: -58.551 },
+                { id: 2, n: "Moto Partes Avellaneda", z: "Zona Sur", d: "Av. Mitre 1500", lat: -34.661, lng: -58.366 },
+                { id: 3, n: "Service Oficial Quilmes", z: "Quilmes", d: "Calle 14 nro 450", lat: -34.721, lng: -58.256 }
+            ];
+
+            locales.forEach(loc => addEliteMarker(loc));
+        }
+
+        function addEliteMarker(loc) {
+            const popup = new maplibregl.Popup({ offset: 25 }).setHTML(`
+                <div style="min-width:180px">
+                    <h3 style="color:var(--neon); margin-bottom:5px">${loc.n}</h3>
+                    <p style="font-size:0.8rem; color:#ccc">${loc.d}</p>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" class="btn-gps-go">
+                        <i class="fa-solid fa-route"></i> Cómo llegar ahora
+                    </a>
+                </div>
+            `);
+
+            const el = document.createElement('div');
+            el.innerHTML = '<i class="fa-solid fa-location-pin" style="color:#00ff88; font-size:30px; filter:drop-shadow(0 0 10px #00ff88)"></i>';
+
+            new maplibregl.Marker({element: el})
+                .setLngLat([loc.lng, loc.lat])
+                .setPopup(popup)
+                .addTo(map);
+        }
+
+        // --- BUSCADOR ULTRA RÁPIDO ---
+        const input = document.getElementById('engine-search');
+        const list = document.getElementById('results-list');
 
         input.addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase();
-            if (val.length < 2) { box.style.display = 'none'; return; }
+            if(val.length < 2) { list.classList.remove('show'); return; }
 
-            const filtered = locales.filter(l => 
-                l.nombre.toLowerCase().includes(val) || 
-                l.zona.toLowerCase().includes(val)
-            );
-
-            if (filtered.length > 0) {
-                box.style.display = 'block';
-                box.innerHTML = filtered.map(l => `
-                    <div class="result-item" onclick="focusLocal(${l.lat}, ${l.lng}, '${l.nombre}')">
-                        <h4>${l.nombre}</h4>
-                        <p>${l.zona} - ${l.dir}</p>
+            const filtered = locales.filter(l => l.n.toLowerCase().includes(val) || l.z.toLowerCase().includes(val));
+            
+            if(filtered.length > 0) {
+                list.classList.add('show');
+                list.innerHTML = filtered.map(l => `
+                    <div class="local-card" onclick="flyToLoc(${l.lat}, ${l.lng}, '${l.n}')">
+                        <h4>${l.n}</h4>
+                        <p>${l.z} - ${l.d}</p>
                     </div>
                 `).join('');
             } else {
-                box.style.display = 'none';
+                list.classList.remove('show');
             }
         });
 
-        function focusLocal(lat, lng, nombre) {
-            map.flyTo([lat, lng], 16, { duration: 1.5 });
-            input.value = nombre;
-            box.style.display = 'none';
+        function flyToLoc(lat, lng, name) {
+            map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.5, curve: 1 });
+            input.value = name;
+            list.classList.remove('show');
         }
 
-        // --- GPS ---
-        function centrarEnMi() {
-            map.locate({ setView: true, maxZoom: 15 });
+        // --- GEOLOCALIZACIÓN ---
+        function getMyLocation() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 });
+                new maplibregl.Marker({ color: "#007bff" })
+                    .setLngLat([pos.coords.longitude, pos.coords.latitude])
+                    .addTo(map);
+            });
         }
 
-        map.on('locationfound', (e) => {
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.circleMarker(e.latlng, {
-                radius: 10, color: '#fff', fillColor: '#0066ff', fillOpacity: 0.9, weight: 3
-            }).addTo(map).bindPopup("Estás aquí").openPopup();
-        });
-
-        // Ejecutar al cargar la ventana
-        window.onload = initMap;
+        // BOOTING
+        window.onload = bootMap;
     </script>
 </body>
 </html>
