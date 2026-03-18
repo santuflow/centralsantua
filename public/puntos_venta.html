@@ -16,24 +16,29 @@
             --bg: #030712;
             --glass: rgba(17, 24, 39, 0.8);
             --border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --card-hover: rgba(255, 255, 255, 0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        /* --- MODO CLARO --- */
+        body.light-mode {
+            --bg: #f3f4f6;
+            --glass: rgba(255, 255, 255, 0.9);
+            --border: rgba(0, 0, 0, 0.1);
+            --text: #111827;
+            --card-hover: rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; transition: background 0.3s, border-color 0.3s; }
         
-        body, html { 
-            height: 100vh; 
-            width: 100vw; 
-            background: var(--bg); 
-            color: white; 
-            overflow: hidden;
-        }
+        body, html { height: 100vh; width: 100vw; background: var(--bg); color: var(--text); overflow: hidden; }
 
-        /* --- UI LAYER: HEADER --- */
+        /* --- HEADER --- */
         .elite-header {
             position: fixed;
             top: 0; left: 0; right: 0;
             height: 70px;
-            background: rgba(0,0,0,0.9);
+            background: var(--bg);
             border-bottom: 2px solid var(--neon);
             display: flex;
             justify-content: space-between;
@@ -44,25 +49,26 @@
         }
 
         .brand { font-weight: 900; font-size: 1.4rem; color: var(--neon); text-decoration: none; letter-spacing: -1px; }
-        .nav-btn { color: white; text-decoration: none; font-weight: 600; font-size: 0.9rem; margin-left: 20px; transition: 0.3s; }
-        .nav-btn:hover { color: var(--neon); }
-
-        /* --- MAP LAYER: FULLSCREEN --- */
-        #map-master {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .theme-toggle {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
 
-        /* --- SEARCH LAYER: APPLE STYLE --- */
+        /* --- MAPA --- */
+        #map-master { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        /* --- BUSCADOR --- */
         .search-container {
-            position: absolute;
-            top: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 500px;
-            z-index: 1000;
+            position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; z-index: 1000;
         }
 
         .glass-input {
@@ -71,15 +77,12 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 15px 25px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        .glass-input:focus-within { border-color: var(--neon); transform: translateX(-50%) scale(1.02); }
-        .glass-input i { color: var(--neon); margin-right: 15px; font-size: 1.2rem; }
-        .glass-input input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1.1rem; }
+        .glass-input i { color: var(--neon); margin-right: 15px; }
+        .glass-input input { background: transparent; border: none; color: var(--text); width: 100%; outline: none; font-size: 1.1rem; }
 
         #results-list {
             margin-top: 10px;
@@ -87,88 +90,66 @@
             backdrop-filter: blur(20px);
             border-radius: 20px;
             border: 1px solid var(--border);
-            max-height: 0;
-            overflow: hidden;
+            max-height: 0; overflow: hidden;
             transition: max-height 0.5s ease;
         }
 
-        #results-list.show { max-height: 400px; padding: 10px; overflow-y: auto; }
+        #results-list.show { max-height: 350px; padding: 10px; overflow-y: auto; }
 
         .local-card {
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid transparent;
+            padding: 15px; border-radius: 15px; margin-bottom: 8px;
+            cursor: pointer; border: 1px solid transparent;
         }
-
-        .local-card:hover { background: rgba(255,255,255,0.05); border-color: var(--neon); }
+        .local-card:hover { background: var(--card-hover); border-color: var(--neon); }
         .local-card h4 { color: var(--neon); margin-bottom: 4px; }
-        .local-card p { font-size: 0.8rem; color: #94a3b8; }
+        .local-card p { font-size: 0.8rem; color: var(--text); opacity: 0.7; }
 
-        /* --- CONTROLS --- */
+        /* --- CONTROLES GPS --- */
         .fab-container {
-            position: absolute;
-            bottom: 40px;
-            right: 25px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            position: absolute; bottom: 40px; right: 25px;
+            z-index: 1000; display: flex; flex-direction: column; gap: 15px;
         }
 
         .btn-elite {
             width: 60px; height: 60px;
             background: var(--neon);
-            border-radius: 20px;
-            border: none;
-            color: #000;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
-            transition: 0.3s;
+            border-radius: 20px; border: none;
+            color: #000; font-size: 1.5rem;
+            cursor: pointer; box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
             display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
+        .btn-elite.loading { opacity: 0.6; transform: scale(0.9); }
 
-        .btn-elite:active { transform: scale(0.9); }
-
-        /* --- POPUP ELITE --- */
+        /* --- POPUPS --- */
         .maplibregl-popup-content {
-            background: #0f172a !important;
-            color: white !important;
+            background: var(--bg) !important;
+            color: var(--text) !important;
             border-radius: 20px !important;
             padding: 20px !important;
             border: 1px solid var(--neon) !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
         }
-
-        .maplibregl-popup-tip { border-top-color: var(--neon) !important; }
 
         .btn-gps-go {
-            display: block;
-            background: var(--neon);
-            color: #000;
-            text-align: center;
-            padding: 12px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 900;
-            margin-top: 15px;
-            font-size: 0.8rem;
-            text-transform: uppercase;
+            display: block; background: var(--neon); color: #000;
+            text-align: center; padding: 12px; border-radius: 12px;
+            text-decoration: none; font-weight: 900; margin-top: 15px;
+            font-size: 0.8rem; text-transform: uppercase;
         }
-
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
     <header class="elite-header">
         <a href="index.html" class="brand">CENTRAL SANTUA</a>
-        <nav>
-            <a href="index.html" class="nav-btn">INICIO</a>
-            <a href="perfil.html" class="nav-btn">PERFIL</a>
-        </nav>
+        <div class="header-actions">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar Modo">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <nav>
+                <a href="perfil.html" class="nav-btn">PERFIL</a>
+            </nav>
+        </div>
     </header>
 
     <div id="map-master"></div>
@@ -176,67 +157,107 @@
     <div class="search-container">
         <div class="glass-input">
             <i class="fa-solid fa-location-dot"></i>
-            <input type="text" id="engine-search" placeholder="¿Dónde estás buscando?" autocomplete="off">
+            <input type="text" id="engine-search" placeholder="Buscar punto de venta..." autocomplete="off">
         </div>
         <div id="results-list"></div>
     </div>
 
     <div class="fab-container">
-        <button class="btn-elite" onclick="getMyLocation()"><i class="fa-solid fa-crosshairs"></i></button>
+        <button id="gps-btn" class="btn-elite" onclick="getMyLocation()" title="Mi Ubicación">
+            <i class="fa-solid fa-crosshairs"></i>
+        </button>
     </div>
 
     <script>
-        let map, locales = [], markers = [];
+        let map, locales = [], markers = [], userMarker, isDark = true;
 
-        // 1. INICIALIZACIÓN DE MOTOR ELITE
+        const STYLES = {
+            dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+            light: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
+        };
+
         function bootMap() {
             map = new maplibregl.Map({
                 container: 'map-master',
-                style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', // Estilo High-Tech Dark
+                style: STYLES.dark,
                 center: [-58.3816, -34.6037],
                 zoom: 11,
                 antialias: true
             });
 
-            // FORCE RENDER FIX: Redimensionar después de 100ms
             map.on('load', () => {
                 map.resize();
                 loadCloudData();
             });
         }
 
+        function toggleTheme() {
+            isDark = !isDark;
+            const icon = document.getElementById('theme-icon');
+            
+            if (isDark) {
+                document.body.classList.remove('light-mode');
+                icon.className = 'fas fa-moon';
+                map.setStyle(STYLES.dark);
+            } else {
+                document.body.classList.add('light-mode');
+                icon.className = 'fas fa-sun';
+                map.setStyle(STYLES.light);
+            }
+        }
+
         async function loadCloudData() {
-            // Datos quemados para test (Luego conectamos tu DB)
             locales = [
-                { id: 1, n: "Taller San Justo", z: "La Matanza", d: "Av. Juan Manuel de Rosas 3000", lat: -34.685, lng: -58.551 },
+                { id: 1, n: "Taller San Justo", z: "La Matanza", d: "Av. Rosas 3000", lat: -34.685, lng: -58.551 },
                 { id: 2, n: "Moto Partes Avellaneda", z: "Zona Sur", d: "Av. Mitre 1500", lat: -34.661, lng: -58.366 },
                 { id: 3, n: "Service Oficial Quilmes", z: "Quilmes", d: "Calle 14 nro 450", lat: -34.721, lng: -58.256 }
             ];
-
             locales.forEach(loc => addEliteMarker(loc));
         }
 
         function addEliteMarker(loc) {
-            const popup = new maplibregl.Popup({ offset: 25 }).setHTML(`
-                <div style="min-width:180px">
-                    <h3 style="color:var(--neon); margin-bottom:5px">${loc.n}</h3>
-                    <p style="font-size:0.8rem; color:#ccc">${loc.d}</p>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" class="btn-gps-go">
-                        <i class="fa-solid fa-route"></i> Cómo llegar ahora
-                    </a>
-                </div>
-            `);
-
             const el = document.createElement('div');
-            el.innerHTML = '<i class="fa-solid fa-location-pin" style="color:#00ff88; font-size:30px; filter:drop-shadow(0 0 10px #00ff88)"></i>';
-
+            el.innerHTML = '<i class="fa-solid fa-location-pin" style="color:#00ff88; font-size:30px; filter:drop-shadow(0 0 8px rgba(0,255,136,0.6))"></i>';
+            
             new maplibregl.Marker({element: el})
                 .setLngLat([loc.lng, loc.lat])
-                .setPopup(popup)
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
+                    <div style="min-width:160px">
+                        <h3 style="color:var(--neon); margin-bottom:5px">${loc.n}</h3>
+                        <p style="font-size:0.8rem;">${loc.d}</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" class="btn-gps-go">
+                            <i class="fa-solid fa-route"></i> Ir ahora
+                        </a>
+                    </div>
+                `))
                 .addTo(map);
         }
 
-        // --- BUSCADOR ULTRA RÁPIDO ---
+        function getMyLocation() {
+            const btn = document.getElementById('gps-btn');
+            btn.classList.add('loading');
+
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const { longitude, latitude } = pos.coords;
+                    map.flyTo({ center: [longitude, latitude], zoom: 15, speed: 1.8 });
+
+                    if (userMarker) userMarker.remove();
+                    userMarker = new maplibregl.Marker({ color: "#007bff" })
+                        .setLngLat([longitude, latitude])
+                        .addTo(map);
+                    
+                    btn.classList.remove('loading');
+                },
+                err => {
+                    alert("Por favor, activa el GPS de tu dispositivo.");
+                    btn.classList.remove('loading');
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        // Buscador
         const input = document.getElementById('engine-search');
         const list = document.getElementById('results-list');
 
@@ -245,37 +266,21 @@
             if(val.length < 2) { list.classList.remove('show'); return; }
 
             const filtered = locales.filter(l => l.n.toLowerCase().includes(val) || l.z.toLowerCase().includes(val));
-            
-            if(filtered.length > 0) {
-                list.classList.add('show');
-                list.innerHTML = filtered.map(l => `
-                    <div class="local-card" onclick="flyToLoc(${l.lat}, ${l.lng}, '${l.n}')">
-                        <h4>${l.n}</h4>
-                        <p>${l.z} - ${l.d}</p>
-                    </div>
-                `).join('');
-            } else {
-                list.classList.remove('show');
-            }
+            list.innerHTML = filtered.map(l => `
+                <div class="local-card" onclick="flyToLoc(${l.lat}, ${l.lng}, '${l.n}')">
+                    <h4>${l.n}</h4>
+                    <p>${l.z} - ${l.d}</p>
+                </div>
+            `).join('');
+            filtered.length > 0 ? list.classList.add('show') : list.classList.remove('show');
         });
 
         function flyToLoc(lat, lng, name) {
-            map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.5, curve: 1 });
+            map.flyTo({ center: [lng, lat], zoom: 16, speed: 1.5 });
             input.value = name;
             list.classList.remove('show');
         }
 
-        // --- GEOLOCALIZACIÓN ---
-        function getMyLocation() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 });
-                new maplibregl.Marker({ color: "#007bff" })
-                    .setLngLat([pos.coords.longitude, pos.coords.latitude])
-                    .addTo(map);
-            });
-        }
-
-        // BOOTING
         window.onload = bootMap;
     </script>
 </body>
