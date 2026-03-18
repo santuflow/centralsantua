@@ -149,48 +149,56 @@
             border: 1px dashed #444;
             margin-top: 5px;
         }
+
+        #sugerencias-dir div:hover {
+    background: var(--primary) !important;
+    color: black !important;
+    font-weight: bold;
+}
+
+#sugerencias-dir {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
 
    <div id="section-pdv" style="display:none;">
-        <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-            <i class="fas fa-store"></i> REGISTRO DE PUNTOS DE VENTA
-        </h3>
-        
-        <div class="pdv-container">
-            <div class="pdv-form">
-                <label>Nombre del Local</label>
-                <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
-                
-                <label>Dirección y Ciudad</label>
-                <input type="text" id="pdv-dir" placeholder="Av. Siempre Viva 123, CABA">
+    <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
+        <i class="fas fa-store"></i> REGISTRO DE PUNTOS DE VENTA
+    </h3>
+    
+    <div class="pdv-container">
+        <div class="pdv-form" style="position: relative;">
+            <label>Nombre del Local</label>
+            <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+            
+            <label>Dirección y Ciudad (Buscador Automático)</label>
+            <input type="text" id="pdv-dir" placeholder="Escribí calle y número..." oninput="buscarDireccion(this.value)" autocomplete="off">
+            <div id="sugerencias-dir" style="position: absolute; width: 100%; background: #1a1a1a; z-index: 100; border-radius: 0 0 8px 8px; box-shadow: 0 4px 15px #000;"></div>
 
-                <label>WhatsApp del Local (Con código de país)</label>
-                <input type="text" id="pdv-wa" placeholder="54911...">
+            <label>WhatsApp del Local</label>
+            <input type="text" id="pdv-wa" placeholder="54911...">
 
-                <label>Foto del Frente (URL o Base64)</label>
-                <input type="text" id="pdv-foto" placeholder="Link de la imagen..." oninput="document.getElementById('img-pre').src=this.value">
-                <img id="img-pre" src="" class="preview-img" alt="Vista previa">
+            <label>Foto del Frente (Subir Archivo)</label>
+            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="margin-bottom: 5px;">
+            <input type="hidden" id="pdv-foto"> <img id="img-pre" src="" class="preview-img" alt="Vista previa" style="display:none; width:100%; height:120px; object-fit:cover; border-radius:8px; margin-top:5px; border:1px solid #444;">
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div>
-                        <label>Latitud</label>
-                        <input type="text" id="pdv-lat" readonly>
-                    </div>
-                    <div>
-                        <label>Longitud</label>
-                        <input type="text" id="pdv-lng" readonly>
-                    </div>
-                </div>
-
-                <button class="btn-action btn-done" onclick="guardarPDV()" style="margin-top:10px;">
-                    <i class="fas fa-save"></i> GUARDAR COMERCIO
-                </button>
+            <div style="display: none;">
+                <input type="text" id="pdv-lat" readonly>
+                <input type="text" id="pdv-lng" readonly>
             </div>
-            <div id="map-admin-pdv"></div>
+
+            <button class="btn-action btn-done" onclick="guardarPDV()" style="margin-top:20px; width: 100%;">
+                <i class="fas fa-save"></i> GUARDAR COMERCIO
+            </button>
         </div>
+        <div id="map-admin-pdv" style="min-height: 400px; border-radius: 12px; border: 1px solid #333;"></div>
     </div>
+</div>
 
 <div class="overlay">
     <header>
@@ -808,6 +816,52 @@ async function guardarPDV() {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
+}
+
+// 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
+async function buscarDireccion(query) {
+    const lista = document.getElementById('sugerencias-dir');
+    if (query.length < 4) { lista.innerHTML = ''; return; }
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=ar&limit=5`);
+        const data = await res.json();
+
+        lista.innerHTML = data.map(item => `
+            <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.9rem;" 
+                 onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${item.display_name}')">
+                ${item.display_name}
+            </div>
+        `).join('');
+    } catch (e) { console.error("Error en GPS:", e); }
+}
+
+function seleccionarDireccion(lat, lon, nombreCompleto) {
+    document.getElementById('pdv-dir').value = nombreCompleto;
+    document.getElementById('pdv-lat').value = lat;
+    document.getElementById('pdv-lng').value = lon;
+    document.getElementById('sugerencias-dir').innerHTML = '';
+
+    // Mover el mapa y poner el marcador solo
+    mapAdmin.flyTo({ center: [lon, lat], zoom: 16 });
+    if (markerAdmin) markerAdmin.setLngLat([lon, lat]);
+    else markerAdmin = new maplibregl.Marker({ color: '#00ff88' }).setLngLat([lon, lat]).addTo(mapAdmin);
+}
+
+// 2. PROCESAR FOTO (Convierte el archivo a texto Base64 para el server.js)
+function procesarFoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        document.getElementById('pdv-foto').value = base64; 
+        const preview = document.getElementById('img-pre');
+        preview.src = base64;
+        preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
 }
 
 </script>
