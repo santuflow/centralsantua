@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puntos de Venta | Central Santua</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #111111;
+            --neon-green: #00ff88;
+            --text-gray: #aaaaaa;
+            --border-color: #222222;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- HEADER (Igual a tu Index) --- */
+        header {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .nav-buttons { display: flex; gap: 10px; }
+        .btn-nav {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .btn-nav:hover { border-color: var(--neon-green); color: var(--neon-green); }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .hero-section { text-align: center; margin-bottom: 40px; }
+        .hero-section h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .hero-section p { color: var(--text-gray); font-size: 1.1rem; }
+
+        /* --- MAPA --- */
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
+            margin-bottom: 40px;
+            z-index: 1;
+        }
+
+        /* --- LISTA DE LOCALES --- */
+        .locales-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .local-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            transition: 0.3s;
+        }
+        .local-card:hover { border-color: var(--neon-green); transform: translateY(-5px); }
+        .local-card h3 { margin-bottom: 10px; color: var(--neon-green); }
+        .local-card p { font-size: 0.9rem; color: var(--text-gray); margin-bottom: 15px; }
+
+        .btn-whatsapp {
+            display: inline-block;
+            background: #25d366;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Popups del Mapa (Estilo Dark) */
+        .leaflet-popup-content-wrapper { background: #222; color: #fff; border: 1px solid var(--neon-green); }
+        .leaflet-popup-tip { background: var(--neon-green); }
+
+        @media (max-width: 768px) {
+            #map { height: 350px; }
+            .hero-section h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">CENTRAL SANTUA</a>
+        <div class="nav-buttons">
+            <a href="index.html" class="btn-nav">Inicio</a>
+            <a href="perfil.html" class="btn-nav">Mi Perfil</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero-section">
+            <h1>Encontrá tu Punto de Venta</h1>
+            <p>Conseguí tus stickers oficiales y activalos en el acto.</p>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="hero-section" style="margin-top: 60px;">
+            <h2>Locales Cercanos</h2>
+        </div>
+
+        <div class="locales-grid" id="lista-locales">
+            </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Inicializar Mapa centrado en Buenos Aires por defecto
+        const map = L.map('map').setView([-34.6037, -58.3816], 11);
+
+        // Capa de mapa estilo Dark (CartoDB Dark Matter)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap | Central Santua'
+        }).addTo(map);
+
+        // Función para cargar los datos desde el servidor
+        async function cargarPuntosDeVenta() {
+            try {
+                const response = await fetch('/api/puntos-venta'); // Ruta que haremos en server.js
+                const locales = await response.json();
+                
+                const grid = document.getElementById('lista-locales');
+                grid.innerHTML = '';
+
+                locales.forEach(local => {
+                    // 1. Agregar marcador al mapa
+                    const marker = L.marker([local.lat, local.lng]).addTo(map);
+                    marker.bindPopup(`
+                        <b style="color:#000">${local.nombre}</b><br>
+                        ${local.direccion}<br>
+                        <a href="https://wa.me/${local.whatsapp}" style="color:green; font-weight:bold;">Contactar</a>
+                    `);
+
+                    // 2. Agregar tarjeta a la lista de abajo
+                    const card = `
+                        <div class="local-card">
+                            <h3><i class="fas fa-store"></i> ${local.nombre}</h3>
+                            <p><i class="fas fa-map-marker-alt"></i> ${local.direccion}</p>
+                            <a href="https://wa.me/${local.whatsapp}" class="btn-whatsapp">
+                                <i class="fab fa-whatsapp"></i> CONTACTAR LOCAL
+                            </a>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            } catch (error) {
+                console.error("Error cargando puntos de venta:", error);
+            }
+        }
+
+        // Ejecutar al cargar la página
+        window.onload = cargarPuntosDeVenta;
+    </script>
+</body>
+</html>
