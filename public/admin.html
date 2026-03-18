@@ -886,21 +886,41 @@ async function guardarPDV() {
 // 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
 async function buscarDireccion(query) {
     const lista = document.getElementById('sugerencias-dir');
-    if (query.length < 3) { lista.innerHTML = ''; return; }
+    if (query.length < 4) { lista.innerHTML = ''; return; }
 
     try {
-        // Photon es mejor para direcciones exactas en Argentina
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=-34.72&lon=-58.25&limit=5`);
+        // Usamos Nominatim con parámetros de dirección detallada
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=5`;
+        
+        const res = await fetch(url, {
+            headers: { 'Accept-Language': 'es' }
+        });
         const data = await res.json();
 
-        lista.innerHTML = data.features.map(f => {
-            const p = f.properties;
-            const dir = `${p.name || ''} ${p.housenumber || ''}, ${p.city || p.district || ''}`;
-            return `<div class="sugerencia-item" onclick="seleccionarDireccion(${f.geometry.coordinates[1]}, ${f.geometry.coordinates[0]}, '${dir}')">
-                <i class="fas fa-map-marker-alt"></i> ${dir}
-            </div>`;
+        // FILTRO DE CALIDAD: Solo mostramos resultados que tengan calle o nombre de lugar
+        lista.innerHTML = data.map(item => {
+            const addr = item.address;
+            const calle = addr.road || addr.pedestrian || '';
+            const altura = addr.house_number || '';
+            const ciudad = addr.city || addr.town || addr.village || '';
+            const provincia = addr.state || '';
+            
+            // Si el usuario puso un número y el resultado NO lo tiene, lo marcamos como "Aprox"
+            const tieneAltura = query.match(/\d+/) && !altura;
+            const aviso = tieneAltura ? '<span style="color:#ff4444; font-size:10px;"> [Sin altura exacta]</span>' : '';
+
+            const nombreMostrar = `${calle} ${altura}, ${ciudad}, ${provincia}`.replace(/^[ ,]+|[ ,]+$/g, "");
+
+            return `
+                <div class="sugerencia-item" 
+                     onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreMostrar.replace(/'/g, "\\'")}')"
+                     style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a;">
+                    <div style="font-weight: bold; color: white;">${calle} ${altura} ${aviso}</div>
+                    <div style="font-size: 12px; color: #888;">${ciudad}, ${provincia}</div>
+                </div>
+            `;
         }).join('');
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error GPS:", e); }
 }
 
 function seleccionarDireccion(lat, lon, texto) {
@@ -949,40 +969,43 @@ async function guardarPDV() {
 }
 
 function seleccionarDireccion(lat, lon, nombreCompleto) {
-    // 1. Llenamos los campos de texto y coordenadas
+    // 1. Llenamos los campos de texto y coordenadas con precisión
     document.getElementById('pdv-dir').value = nombreCompleto;
-    document.getElementById('pdv-lat').value = lat;
-    document.getElementById('pdv-lng').value = lon;
+    document.getElementById('pdv-lat').value = lat.toFixed(6);
+    document.getElementById('pdv-lng').value = lon.toFixed(6);
     
-    // 2. Limpiamos la lista de sugerencias inmediatamente
-    document.getElementById('sugerencias-dir').innerHTML = '';
+    // 2. Limpiamos la lista de sugerencias para que no tape nada
+    const lista = document.getElementById('sugerencias-dir');
+    if (lista) lista.innerHTML = '';
 
-    // 3. Movemos el mapa con estilo profesional
+    // 3. Movimiento de mapa nivel Google Maps
     if (mapAdmin) {
         mapAdmin.flyTo({
             center: [lon, lat],
-            zoom: 17, // Zoom más cerca para ver el local exacto
+            zoom: 18, // ZOOM MÁXIMO para ver la numeración y la puerta del local
             essential: true,
-            speed: 1.2
+            speed: 1.5
         });
 
-        // 4. Gestionamos el marcador (lo hacemos arrastrable por si hay que corregir a mano)
+        // 4. Marcador Arrastrable (DRAGGABLE) para precisión manual
         if (markerAdmin) {
             markerAdmin.setLngLat([lon, lat]);
         } else {
+            // Si no existe, lo creamos con color neón
             markerAdmin = new maplibregl.Marker({ 
                 color: '#00ff88', 
-                draggable: true // Esto permite que si la dirección falla por un metro, lo muevas vos
+                draggable: true 
             })
             .setLngLat([lon, lat])
             .addTo(mapAdmin);
             
-            // Si el usuario mueve el marcador manualmente, actualizamos los inputs de lat/lng
+            // EVENTO CRÍTICO: Si el buscador te tiró cerca pero no exacto, 
+            // el usuario mueve el marcador y los inputs se actualizan SOLOS.
             markerAdmin.on('dragend', () => {
                 const lngLat = markerAdmin.getLngLat();
                 document.getElementById('pdv-lat').value = lngLat.lat.toFixed(6);
                 document.getElementById('pdv-lng').value = lngLat.lng.toFixed(6);
-                console.log("📍 Ubicación ajustada manualmente");
+                console.log("📍 Ubicación ajustada manualmente a la puerta del local");
             });
         }
     }
