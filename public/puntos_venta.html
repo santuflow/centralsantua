@@ -3,127 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puntos de Venta | Central Santua</title>
+    <title>Encontrá tu Punto de Venta | Central Santua</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         :root {
-            --bg-color: #050505;
-            --card-bg: #111111;
-            --neon-green: #00ff88;
-            --text-gray: #aaaaaa;
-            --border-color: #222222;
+            --accent: #00ff88;
+            --bg: #0a0c10;
+            --panel: #161b22;
+            --text: #ffffff;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: white;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* --- HEADER (Igual a tu Index) --- */
+        /* --- HEADER --- */
         header {
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            padding: 15px 25px;
+            background: #000;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid var(--accent);
+        }
+        .logo { font-weight: 900; color: var(--accent); text-decoration: none; font-size: 1.4rem; letter-spacing: 1px; }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        .main-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--neon-green);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-decoration: none;
+        /* --- SIDEBAR DE BUSQUEDA --- */
+        .sidebar {
+            width: 350px;
+            background: var(--panel);
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
         }
 
-        .nav-buttons { display: flex; gap: 10px; }
-        .btn-nav {
-            background: transparent;
-            border: 1px solid var(--border-color);
+        .search-box {
+            padding: 20px;
+            background: #000;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 15px;
+            color: var(--accent);
+        }
+
+        #buscador {
+            width: 100%;
+            background: #1f242c;
+            border: 1px solid #30363d;
+            padding: 12px 12px 12px 40px;
+            border-radius: 8px;
             color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-        .btn-nav:hover { border-color: var(--neon-green); color: var(--neon-green); }
-
-        /* --- CONTENIDO PRINCIPAL --- */
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+            outline: none;
         }
 
-        .hero-section { text-align: center; margin-bottom: 40px; }
-        .hero-section h1 { font-size: 2.5rem; margin-bottom: 10px; }
-        .hero-section p { color: var(--text-gray); font-size: 1.1rem; }
+        #buscador:focus { border-color: var(--accent); }
+
+        .results-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .local-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #0d1117;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .local-item:hover { border-color: var(--accent); background: #1c2128; }
+
+        .local-item h4 { color: var(--accent); margin-bottom: 5px; font-size: 0.95rem; }
+        .local-item p { font-size: 0.8rem; color: #8b949e; }
 
         /* --- MAPA --- */
-        #map {
-            height: 500px;
-            width: 100%;
-            border-radius: 15px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
-            margin-bottom: 40px;
-            z-index: 1;
-        }
+        #map { flex: 1; position: relative; }
 
-        /* --- LISTA DE LOCALES --- */
-        .locales-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .local-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
+        /* Botón GPS */
+        .btn-gps {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: black;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+            z-index: 1000;
             transition: 0.3s;
         }
-        .local-card:hover { border-color: var(--neon-green); transform: translateY(-5px); }
-        .local-card h3 { margin-bottom: 10px; color: var(--neon-green); }
-        .local-card p { font-size: 0.9rem; color: var(--text-gray); margin-bottom: 15px; }
+        .btn-gps:hover { transform: scale(1.1); }
 
-        .btn-whatsapp {
-            display: inline-block;
+        /* Popups personalizados */
+        .leaflet-popup-content-wrapper { background: #0d1117; color: white; border-radius: 10px; border: 1px solid var(--accent); }
+        .btn-wa-popup {
             background: #25d366;
             color: white;
-            padding: 10px 20px;
+            padding: 5px 10px;
             border-radius: 5px;
             text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9rem;
-            width: 100%;
+            display: block;
             text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
         }
 
-        /* Popups del Mapa (Estilo Dark) */
-        .leaflet-popup-content-wrapper { background: #222; color: #fff; border: 1px solid var(--neon-green); }
-        .leaflet-popup-tip { background: var(--neon-green); }
-
         @media (max-width: 768px) {
-            #map { height: 350px; }
-            .hero-section h1 { font-size: 1.8rem; }
+            .main-wrapper { flex-direction: column; }
+            .sidebar { width: 100%; height: 35%; }
+            #map { height: 65%; }
         }
     </style>
 </head>
@@ -131,76 +145,116 @@
 
     <header>
         <a href="index.html" class="logo">CENTRAL SANTUA</a>
-        <div class="nav-buttons">
-            <a href="index.html" class="btn-nav">Inicio</a>
-            <a href="perfil.html" class="btn-nav">Mi Perfil</a>
+        <div style="display:flex; gap:10px;">
+            <a href="index.html" style="color:white; text-decoration:none; font-size: 0.8rem;">INICIO</a>
+            <a href="perfil.html" style="color:white; text-decoration:none; font-size: 0.8rem; margin-left:15px;">MI PERFIL</a>
         </div>
     </header>
 
-    <div class="container">
-        <div class="hero-section">
-            <h1>Encontrá tu Punto de Venta</h1>
-            <p>Conseguí tus stickers oficiales y activalos en el acto.</p>
-        </div>
-
-        <div id="map"></div>
-
-        <div class="hero-section" style="margin-top: 60px;">
-            <h2>Locales Cercanos</h2>
-        </div>
-
-        <div class="locales-grid" id="lista-locales">
+    <div class="main-wrapper">
+        <div class="sidebar">
+            <div class="search-box">
+                <h3 style="margin-bottom:15px; font-size: 1rem;">Puntos de Venta</h3>
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="buscador" placeholder="Buscar por barrio o zona...">
+                </div>
             </div>
+            <div class="results-list" id="lista-locales">
+                </div>
+        </div>
+
+        <div id="map">
+            <button class="btn-gps" onclick="miUbicacion()" title="Mi ubicación">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Inicializar Mapa centrado en Buenos Aires por defecto
-        const map = L.map('map').setView([-34.6037, -58.3816], 11);
+        let localesData = []; // Para guardar lo que viene del server
+        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 12);
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Capa de mapa estilo Dark (CartoDB Dark Matter)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap | Central Santua'
+        // Capa de mapa: Usamos una versión "Voyager Labels Under" que es oscura pero con más azul y vida
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Función para cargar los datos desde el servidor
-        async function cargarPuntosDeVenta() {
-            try {
-                const response = await fetch('/api/puntos-venta'); // Ruta que haremos en server.js
-                const locales = await response.json();
-                
-                const grid = document.getElementById('lista-locales');
-                grid.innerHTML = '';
+        let userMarker;
 
-                locales.forEach(local => {
-                    // 1. Agregar marcador al mapa
-                    const marker = L.marker([local.lat, local.lng]).addTo(map);
-                    marker.bindPopup(`
-                        <b style="color:#000">${local.nombre}</b><br>
-                        ${local.direccion}<br>
-                        <a href="https://wa.me/${local.whatsapp}" style="color:green; font-weight:bold;">Contactar</a>
-                    `);
-
-                    // 2. Agregar tarjeta a la lista de abajo
-                    const card = `
-                        <div class="local-card">
-                            <h3><i class="fas fa-store"></i> ${local.nombre}</h3>
-                            <p><i class="fas fa-map-marker-alt"></i> ${local.direccion}</p>
-                            <a href="https://wa.me/${local.whatsapp}" class="btn-whatsapp">
-                                <i class="fab fa-whatsapp"></i> CONTACTAR LOCAL
-                            </a>
-                        </div>
-                    `;
-                    grid.innerHTML += card;
-                });
-            } catch (error) {
-                console.error("Error cargando puntos de venta:", error);
-            }
+        // GPS: Detectar mi zona
+        function miUbicacion() {
+            map.locate({setView: true, maxZoom: 15});
         }
 
-        // Ejecutar al cargar la página
-        window.onload = cargarPuntosDeVenta;
+        map.on('locationfound', function(e) {
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.circleMarker(e.latlng, {
+                radius: 8,
+                fillColor: "#007bff",
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup("Estás aquí").openPopup();
+        });
+
+        // Cargar locales
+        async function cargarLocales() {
+            try {
+                // Simulación de datos (acá iría tu fetch('/api/puntos-venta'))
+                localesData = [
+                    { nombre: "Repuestos Avellaneda", zona: "Avellaneda", direccion: "Av. Mitre 1200", lat: -34.662, lng: -58.365, wa: "110000000" },
+                    { nombre: "Moto Shop Quilmes", zona: "Quilmes", direccion: "Rivadavia 400", lat: -34.721, lng: -58.256, wa: "110000001" }
+                ];
+
+                renderizarLocales(localesData);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderizarLocales(lista) {
+            const container = document.getElementById('lista-locales');
+            container.innerHTML = '';
+
+            lista.forEach(local => {
+                // Marker en mapa
+                const m = L.marker([local.lat, local.lng]).addTo(map);
+                m.bindPopup(`
+                    <div style="color:white">
+                        <b>${local.nombre}</b><br>${local.direccion}<br>
+                        <a href="https://wa.me/${local.wa}" class="btn-wa-popup">WhatsApp</a>
+                    </div>
+                `);
+
+                // Item en lista lateral
+                const item = document.createElement('div');
+                item.className = 'local-item';
+                item.innerHTML = `
+                    <h4>${local.nombre}</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> ${local.zona} - ${local.direccion}</p>
+                `;
+                item.onclick = () => {
+                    map.flyTo([local.lat, local.lng], 16);
+                    m.openPopup();
+                };
+                container.appendChild(item);
+            });
+        }
+
+        // Buscador por zonas
+        document.getElementById('buscador').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtrados = localesData.filter(l => 
+                l.zona.toLowerCase().includes(term) || 
+                l.nombre.toLowerCase().includes(term)
+            );
+            renderizarLocales(filtrados);
+        });
+
+        cargarLocales();
     </script>
 </body>
 </html>
