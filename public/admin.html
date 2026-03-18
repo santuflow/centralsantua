@@ -175,158 +175,99 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* Contenedor principal del Registro de PDV */
-.pdv-container {
-    display: grid;
-    grid-template-columns: 350px 1fr; /* Formulario a la izquierda, Mapa a la derecha */
-    gap: 20px;
-    background: #111;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #333;
-    margin-top: 10px;
-}
-
-/* Formulario */
-.pdv-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.pdv-form label {
-    font-size: 0.85rem;
-    color: #aaa;
-    margin-bottom: -5px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.pdv-form input {
-    background: #1a1a1a;
-    border: 1px solid #444;
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    outline: none;
-    transition: 0.3s;
-}
-
-.pdv-form input:focus {
-    border-color: #00ff88;
-    box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
-}
-
-/* EL BUSCADOR (Lo más importante) */
-#sugerencias-dir {
-    position: absolute;
-    top: 100%; /* Justo debajo del input */
-    left: 0;
-    right: 0;
-    background: #1a1a1a;
-    border: 1px solid #444;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 1000; /* Para que flote sobre el mapa */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-}
-
-.sugerencia-item {
-    padding: 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #333;
-    transition: 0.2s;
-}
-
-.sugerencia-item:hover {
-    background: #222;
-    border-left: 4px solid #00ff88;
-}
-
-.sugerencia-item strong {
-    display: block;
-    color: #fff;
-    font-size: 0.9rem;
-}
-
-.sugerencia-item small {
-    color: #888;
-    font-size: 0.75rem;
-}
-
-/* Mapa */
-#map-admin-pdv {
-    width: 100%;
-    min-height: 450px;
-    border-radius: 8px;
-    border: 1px solid #333;
-}
-
-/* Botón de Guardado */
-.btn-done {
-    background: linear-gradient(45deg, #00c6ff, #0072ff);
-    color: white;
-    font-weight: bold;
-    border: none;
-    padding: 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: 0.3s;
-}
-
-.btn-done:hover {
-    filter: brightness(1.2);
-    transform: translateY(-2px);
-}
-
-/* Responsivo para celulares */
-@media (max-width: 768px) {
-    .pdv-container {
-        grid-template-columns: 1fr;
-    }
-    #map-admin-pdv {
-        min-height: 300px;
-    }
-}
     </style>
 </head>
 <body>
 
-   <div id="section-pdv" style="display:none;">
-    <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
-        <i class="fas fa-store"></i> REGISTRO DE PUNTOS DE VENTA
+   <div id="section-pdv" style="display:none; padding: 20px;">
+    <h3 style="color:#00ff88; margin-bottom:20px; border-bottom:1px solid #222; padding-bottom:10px; text-transform: uppercase;">
+        <i class="fas fa-store"></i> Registro de Puntos de Venta
     </h3>
     
+    <style>
+        .pdv-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .pdv-form {
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            position: relative; /* Clave para que la lista flote */
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label { color: #00ff88; font-size: 0.8rem; font-weight: bold; }
+        .input-group input { 
+            background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px;
+        }
+        /* LISTA DE SUGERENCIAS PRO */
+        #sugerencias-dir {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #1a1a1a;
+            z-index: 9999; /* Máxima prioridad */
+            border: 1px solid #00ff88;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+        }
+        .sugerencia-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+            color: white;
+            font-size: 0.85rem;
+        }
+        .sugerencia-item:hover { background: #00ff88; color: #000; }
+        #map-admin-pdv { height: 500px; border-radius: 12px; border: 1px solid #333; }
+    </style>
+
     <div class="pdv-container">
-        <div class="pdv-form" style="position: relative;">
-            <label>Nombre del Local</label>
-            <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+        <div class="pdv-form">
+            <div class="input-group">
+                <label>Nombre del Local</label>
+                <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+            </div>
             
-            <label>Dirección y Ciudad (Buscador Automático)</label>
-            <input type="text" id="pdv-dir" placeholder="Escribí calle y número..." oninput="buscarDireccion(this.value)" autocomplete="off">
-            <div id="sugerencias-dir" style="position: absolute; width: 100%; background: #1a1a1a; z-index: 100; border-radius: 0 0 8px 8px; box-shadow: 0 4px 15px #000;"></div>
-
-            <label>WhatsApp del Local</label>
-            <input type="text" id="pdv-wa" placeholder="54911...">
-
-            <label>Foto del Frente (Subir Archivo)</label>
-            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="margin-bottom: 5px;">
-            <input type="hidden" id="pdv-foto"> <img id="img-pre" src="" class="preview-img" alt="Vista previa" style="display:none; width:100%; height:120px; object-fit:cover; border-radius:8px; margin-top:5px; border:1px solid #444;">
-
-            <div style="display: none;">
-                <input type="text" id="pdv-lat" readonly>
-                <input type="text" id="pdv-lng" readonly>
+            <div class="input-group">
+                <label>Dirección (Buscador Automático)</label>
+                <input type="text" id="pdv-dir" placeholder="Escribí calle y número..." oninput="buscarDireccion(this.value)" autocomplete="off">
+                <div id="sugerencias-dir"></div>
             </div>
 
-            <button class="btn-action btn-done" onclick="guardarPDV()" style="margin-top:20px; width: 100%;">
+            <div class="input-group">
+                <label>WhatsApp</label>
+                <input type="text" id="pdv-wa" placeholder="54911...">
+            </div>
+
+            <div class="input-group">
+                <label>Foto del Frente</label>
+                <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)">
+                <input type="hidden" id="pdv-foto">
+                <img id="img-pre" src="" style="display:none; width:100%; height:120px; object-fit:cover; border-radius:8px; margin-top:5px;">
+            </div>
+
+            <input type="hidden" id="pdv-lat">
+            <input type="hidden" id="pdv-lng">
+
+            <button class="btn-done" onclick="guardarPDV()" style="background:#00ff88; color:#000; border:none; padding:15px; font-weight:bold; border-radius:8px; cursor:pointer; margin-top:10px;">
                 <i class="fas fa-save"></i> GUARDAR COMERCIO
             </button>
         </div>
-        <div id="map-admin-pdv" style="min-height: 400px; border-radius: 12px; border: 1px solid #333;"></div>
+        <div id="map-admin-pdv"></div>
     </div>
 </div>
 
@@ -945,52 +886,66 @@ async function guardarPDV() {
 // 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
 async function buscarDireccion(query) {
     const lista = document.getElementById('sugerencias-dir');
-    if (query.length < 3) { 
-        lista.innerHTML = ''; 
-        return; 
-    }
-
-    // Coordenadas de referencia (Quilmes/Ezpeleta) para dar prioridad, pero sin bloquear el resto
-    const latRef = -34.7245;
-    const lonRef = -58.2520;
+    if (query.length < 3) { lista.innerHTML = ''; return; }
 
     try {
-        // Usamos Photon: es mucho más rápido y "entiende" mejor las alturas de las calles
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${latRef}&lon=${lonRef}&limit=6&lang=es`;
-        const res = await fetch(url);
+        // Photon es mejor para direcciones exactas en Argentina
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=-34.72&lon=-58.25&limit=5`);
         const data = await res.json();
 
-        lista.innerHTML = data.features.map(feature => {
-            const p = feature.properties;
-            const coords = feature.geometry.coordinates;
-            
-            // Construimos la dirección: Calle + Altura (si existe) + Ciudad + Provincia
-            const calle = p.name || '';
-            const altura = p.housenumber || '';
-            const ciudad = p.city || p.district || p.locality || '';
-            const provincia = p.state || '';
-            
-            const direccionCorta = `${calle} ${altura}`.trim();
-            const direccionLarga = `${direccionCorta}, ${ciudad}, ${provincia}`.replace(/, ,/g, ',');
-
-            return `
-                <div style="padding: 12px; cursor: pointer; border-bottom: 1px solid #333; background: #1a1a1a; transition: 0.2s;" 
-                     onmouseover="this.style.background='#222'" 
-                     onmouseout="this.style.background='#1a1a1a'"
-                     onclick="seleccionarDireccion(${coords[1]}, ${coords[0]}, '${direccionLarga}')">
-                    <div style="display: flex; align-items: center;">
-                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:10px;"></i>
-                        <div>
-                            <div style="color: white; font-weight: bold; font-size: 0.9rem;">${direccionCorta}</div>
-                            <div style="color: #888; font-size: 0.75rem;">${ciudad}, ${provincia}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
+        lista.innerHTML = data.features.map(f => {
+            const p = f.properties;
+            const dir = `${p.name || ''} ${p.housenumber || ''}, ${p.city || p.district || ''}`;
+            return `<div class="sugerencia-item" onclick="seleccionarDireccion(${f.geometry.coordinates[1]}, ${f.geometry.coordinates[0]}, '${dir}')">
+                <i class="fas fa-map-marker-alt"></i> ${dir}
+            </div>`;
         }).join('');
-    } catch (e) { 
-        console.error("Error en el motor de búsqueda:", e); 
+    } catch (e) { console.error(e); }
+}
+
+function seleccionarDireccion(lat, lon, texto) {
+    document.getElementById('pdv-dir').value = texto;
+    document.getElementById('pdv-lat').value = lat;
+    document.getElementById('pdv-lng').value = lon;
+    document.getElementById('sugerencias-dir').innerHTML = '';
+
+    // Mover mapa
+    mapAdmin.flyTo({ center: [lon, lat], zoom: 17 });
+    if (markerAdmin) markerAdmin.setLngLat([lon, lat]);
+    else markerAdmin = new maplibregl.Marker({color: '#00ff88'}).setLngLat([lon, lat]).addTo(mapAdmin);
+}
+
+async function guardarPDV() {
+    const lat = document.getElementById('pdv-lat').value;
+    const lng = document.getElementById('pdv-lng').value;
+
+    if (!lat || !lng) {
+        alert("❌ Debes elegir una dirección de la lista para obtener la ubicación.");
+        return;
     }
+
+    const datos = {
+        nombre: document.getElementById('pdv-nombre').value,
+        direccion: document.getElementById('pdv-dir').value,
+        whatsapp: document.getElementById('pdv-wa').value,
+        foto: document.getElementById('pdv-foto').value,
+        lat: parseFloat(lat),
+        lng: parseFloat(lng)
+    };
+
+    try {
+        const res = await fetch('/api/admin/guardar-pdv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        if (res.ok) {
+            alert("✅ Guardado con éxito");
+            location.reload();
+        } else {
+            alert("❌ El servidor rechazó los datos. Revisa el modelo de MongoDB.");
+        }
+    } catch (e) { alert("❌ Error de conexión"); }
 }
 
 function seleccionarDireccion(lat, lon, nombreCompleto) {
