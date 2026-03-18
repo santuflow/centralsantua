@@ -175,6 +175,18 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
+#sugerencias-dir {
+    position: absolute;
+    top: 100%; /* Justo debajo del input de dirección */
+    left: 0;
+    width: 100%;
+    background: #1a1a1a !important;
+    border: 1px solid var(--primary);
+    z-index: 10000 !important; /* Para que flote sobre el mapa */
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 8px 8px;
+}
     </style>
 </head>
 <body>
@@ -889,83 +901,28 @@ async function buscarDireccion(query) {
     if (query.length < 4) { lista.innerHTML = ''; return; }
 
     try {
-        // Usamos Nominatim con parámetros de dirección detallada
+        // Agregamos 'addressdetails=1' para que separe el número de casa (house_number)
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=5`;
         
-        const res = await fetch(url, {
-            headers: { 'Accept-Language': 'es' }
-        });
+        const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
         const data = await res.json();
 
-        // FILTRO DE CALIDAD: Solo mostramos resultados que tengan calle o nombre de lugar
         lista.innerHTML = data.map(item => {
-            const addr = item.address;
-            const calle = addr.road || addr.pedestrian || '';
-            const altura = addr.house_number || '';
-            const ciudad = addr.city || addr.town || addr.village || '';
-            const provincia = addr.state || '';
-            
-            // Si el usuario puso un número y el resultado NO lo tiene, lo marcamos como "Aprox"
-            const tieneAltura = query.match(/\d+/) && !altura;
-            const aviso = tieneAltura ? '<span style="color:#ff4444; font-size:10px;"> [Sin altura exacta]</span>' : '';
-
-            const nombreMostrar = `${calle} ${altura}, ${ciudad}, ${provincia}`.replace(/^[ ,]+|[ ,]+$/g, "");
+            const a = item.address;
+            const calle = a.road || a.pedestrian || '';
+            const nro = a.house_number || ''; // Aquí está la clave de la numeración
+            const ciudad = a.city || a.town || '';
+            const nombreFinal = `${calle} ${nro}, ${ciudad}`.trim();
 
             return `
                 <div class="sugerencia-item" 
-                     onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreMostrar.replace(/'/g, "\\'")}')"
-                     style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a;">
-                    <div style="font-weight: bold; color: white;">${calle} ${altura} ${aviso}</div>
-                    <div style="font-size: 12px; color: #888;">${ciudad}, ${provincia}</div>
-                </div>
-            `;
+                     onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal}')"
+                     style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white;">
+                    <b>${calle} ${nro}</b> <br>
+                    <small style="color: #888;">${ciudad}</small>
+                </div>`;
         }).join('');
-    } catch (e) { console.error("Error GPS:", e); }
-}
-
-function seleccionarDireccion(lat, lon, texto) {
-    document.getElementById('pdv-dir').value = texto;
-    document.getElementById('pdv-lat').value = lat;
-    document.getElementById('pdv-lng').value = lon;
-    document.getElementById('sugerencias-dir').innerHTML = '';
-
-    // Mover mapa
-    mapAdmin.flyTo({ center: [lon, lat], zoom: 17 });
-    if (markerAdmin) markerAdmin.setLngLat([lon, lat]);
-    else markerAdmin = new maplibregl.Marker({color: '#00ff88'}).setLngLat([lon, lat]).addTo(mapAdmin);
-}
-
-async function guardarPDV() {
-    const lat = document.getElementById('pdv-lat').value;
-    const lng = document.getElementById('pdv-lng').value;
-
-    if (!lat || !lng) {
-        alert("❌ Debes elegir una dirección de la lista para obtener la ubicación.");
-        return;
-    }
-
-    const datos = {
-        nombre: document.getElementById('pdv-nombre').value,
-        direccion: document.getElementById('pdv-dir').value,
-        whatsapp: document.getElementById('pdv-wa').value,
-        foto: document.getElementById('pdv-foto').value,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng)
-    };
-
-    try {
-        const res = await fetch('/api/admin/guardar-pdv', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-        if (res.ok) {
-            alert("✅ Guardado con éxito");
-            location.reload();
-        } else {
-            alert("❌ El servidor rechazó los datos. Revisa el modelo de MongoDB.");
-        }
-    } catch (e) { alert("❌ Error de conexión"); }
+    } catch (e) { console.error("Error en búsqueda:", e); }
 }
 
 function seleccionarDireccion(lat, lon, nombreCompleto) {
