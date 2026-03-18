@@ -306,6 +306,7 @@
 </head>
 <body>
    
+    <div id="section-pdv" style="display:none;">
     <div class="pdv-container">
     <div class="pdv-form">
         <div class="input-group">
@@ -531,7 +532,10 @@
         if(acordeon) acordeon.style.display = 'none';
         
         // Arrancamos el mapa
-        setTimeout(initMapAdmin, 100); 
+        setTimeout(() => {
+    initMapAdmin();
+    if (mapAdmin) mapAdmin.resize();
+}, 300);
     } else {
         // Volvemos a la normalidad: mostramos lo tuyo, ocultamos mapa
         if(sectionPdv) sectionPdv.style.display = 'none';
@@ -971,9 +975,9 @@ async function buscarDireccion(query) {
     // Esperamos 400ms antes de llamar a la API para no saturar
     timerBusqueda = setTimeout(async () => {
         try {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=8`;
+            const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query + ', Argentina')}&limit=8`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
-            const data = await res.json();
+            const data = (await res.json()).features;
 
             if (data.length === 0) {
                 lista.innerHTML = '<div style="padding:10px; color:#888;">No se encontró nada...</div>';
@@ -981,21 +985,24 @@ async function buscarDireccion(query) {
             }
 
             lista.innerHTML = data.map(item => {
-                const a = item.address;
-                const calle = a.road || a.pedestrian || a.suburb || '';
-                const nro = a.house_number || ''; 
-                const ciudad = a.city || a.town || a.village || 'Bs.As.';
-                const nombreFinal = `${calle} ${nro}, ${ciudad}`.replace(/, ,/g, ',');
+    const props = item.properties;
+    const nombre = props.name || '';
+    const calle = props.street || nombre;
+    const nro = props.housenumber || '';
+    const ciudad = props.city || props.state || '';
 
-                return `
-                    <div class="sugerencia-item" 
-                         onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal.replace(/'/g, "\\'")}')"
-                         style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white; background: #111;">
-                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:8px;"></i>
-                        <b>${calle} ${nro}</b> <br>
-                        <small style="color: #888; margin-left:22px;">${ciudad}</small>
-                    </div>`;
-            }).join('');
+    const lat = item.geometry.coordinates[1];
+    const lon = item.geometry.coordinates[0];
+
+    const nombreFinal = `${calle} ${nro}, ${ciudad}`;
+
+    return `
+        <div class="sugerencia-item"
+             onclick="seleccionarDireccion(${lat}, ${lon}, '${nombreFinal.replace(/'/g, "\\'")}')">
+            <b>${calle} ${nro}</b><br>
+            <small>${ciudad}</small>
+        </div>`;
+}).join('');
         } catch (e) { console.error("Error en búsqueda:", e); }
     }, 400);
 }
