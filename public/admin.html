@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -94,9 +96,101 @@
             justify-content: center; align-items: center;
         }
         .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
+
+        /* --- ESTILOS PUNTOS DE VENTA --- */
+        .pdv-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            height: 500px;
+        }
+
+        .pdv-form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            border-right: 1px solid #222;
+        }
+
+        .pdv-form input, .pdv-form textarea {
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .pdv-form label {
+            font-size: 0.7rem;
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        #map-admin-pdv {
+            width: 100%;
+            height: 100%;
+            background: #111;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px dashed #444;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
+
+   <div id="section-pdv" style="display:none;">
+        <h3 style="color:var(--success); margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">
+            <i class="fas fa-store"></i> REGISTRO DE PUNTOS DE VENTA
+        </h3>
+        
+        <div class="pdv-container">
+            <div class="pdv-form">
+                <label>Nombre del Local</label>
+                <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+                
+                <label>Dirección y Ciudad</label>
+                <input type="text" id="pdv-dir" placeholder="Av. Siempre Viva 123, CABA">
+
+                <label>WhatsApp del Local (Con código de país)</label>
+                <input type="text" id="pdv-wa" placeholder="54911...">
+
+                <label>Foto del Frente (URL o Base64)</label>
+                <input type="text" id="pdv-foto" placeholder="Link de la imagen..." oninput="document.getElementById('img-pre').src=this.value">
+                <img id="img-pre" src="" class="preview-img" alt="Vista previa">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Latitud</label>
+                        <input type="text" id="pdv-lat" readonly>
+                    </div>
+                    <div>
+                        <label>Longitud</label>
+                        <input type="text" id="pdv-lng" readonly>
+                    </div>
+                </div>
+
+                <button class="btn-action btn-done" onclick="guardarPDV()" style="margin-top:10px;">
+                    <i class="fas fa-save"></i> GUARDAR COMERCIO
+                </button>
+            </div>
+            <div id="map-admin-pdv"></div>
+        </div>
+    </div>
 
 <div class="overlay">
     <header>
@@ -127,6 +221,9 @@
     <button class="btn-cmd" id="btn-s" onclick="setView('s')" style="border-color:var(--primary)">
         <i class="fas fa-qrcode"></i> STICKERS
     </button>
+    <button class="btn-cmd" id="btn-pdv" onclick="setView('pdv')" style="border-color:var(--primary)">
+    <i class="fas fa-map-marker-alt"></i> PUNTOS DE VENTA
+</button>
 
     <div style="flex-grow: 1;"></div>
     
@@ -259,33 +356,38 @@
 
     function setView(v) {
     currentView = v;
-    // Esto quita la luz azul de todos los botones
+    
+    // 1. Esto es lo tuyo: quita la luz azul y la pone en el nuevo
     document.querySelectorAll('.btn-cmd').forEach(b => b.classList.remove('active'));
-    // Esto enciende el botón que tocaste
     if(document.getElementById('btn-'+v)) {
         document.getElementById('btn-'+v).classList.add('active');
     }
-    render(); // Y esto dibuja la lista
-}
 
-    async function borrar(tipo, nro) {
-    // Si es un match, usamos la ruta especial que limpia Hallazgos y Búsquedas
-    const endpoint = tipo === 'match' 
-        ? `/api/admin/borrar/match/${nro}` 
-        : `/api/admin/borrar/${tipo === 'h' ? 'hallazgo' : 'busqueda'}/${nro}`;
+    // 2. Seleccionamos las secciones (asegurate que los IDs coincidan)
+    const sectionPdv = document.getElementById('section-pdv');
+    const contNormal = document.getElementById('cont');
+    const statsGrid = document.querySelector('.stats-grid');
+    const acordeon = document.getElementById('lista-lotes-acordeon');
 
-    if(!confirm(`¿Confirmar eliminación definitiva del ID ${nro}?`)) return;
-
-    try {
-        const res = await fetch(endpoint, { method: 'DELETE' });
-        if (res.ok) {
-            console.log("Eliminación exitosa");
-            loadData(); // Recarga las estadísticas y la grilla
-        } else {
-            alert("Error al eliminar el registro");
-        }
-    } catch (error) {
-        console.error("Error en la conexión:", error);
+    // 3. EL "BYPASS":
+    if (v === 'pdv') {
+        // Ocultamos lo viejo y mostramos el mapa
+        if(sectionPdv) sectionPdv.style.display = 'block';
+        if(contNormal) contNormal.style.display = 'none';
+        if(statsGrid) statsGrid.style.display = 'none';
+        if(acordeon) acordeon.style.display = 'none';
+        
+        // Arrancamos el mapa
+        setTimeout(initMapAdmin, 100); 
+    } else {
+        // Volvemos a la normalidad: mostramos lo tuyo, ocultamos mapa
+        if(sectionPdv) sectionPdv.style.display = 'none';
+        if(contNormal) contNormal.style.display = 'grid';
+        if(statsGrid) statsGrid.style.display = 'grid';
+        if(acordeon) acordeon.style.display = 'block';
+        
+        // Ejecutamos TU render original sin tocarle una coma
+        render(); 
     }
 }
 
@@ -624,6 +726,88 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
     boton.innerHTML = textoOriginal;
     boton.disabled = false;
     document.body.removeChild(tempDiv);
+}
+
+//seccion mapa
+let mapAdmin;
+let markerAdmin;
+
+function initMapAdmin() {
+    if (mapAdmin) {
+        mapAdmin.resize(); // Si ya existe, solo lo ajustamos al tamaño actual
+        return;
+    }
+
+    mapAdmin = new maplibregl.Map({
+        container: 'map-admin-pdv',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [-58.3816, -34.6037], // Buenos Aires
+        zoom: 12
+    });
+
+    mapAdmin.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        document.getElementById('pdv-lat').value = lat.toFixed(6);
+        document.getElementById('pdv-lng').value = lng.toFixed(6);
+
+        if (markerAdmin) {
+            markerAdmin.setLngLat([lng, lat]);
+        } else {
+            markerAdmin = new maplibregl.Marker({ color: '#4facfe' })
+                .setLngLat([lng, lat])
+                .addTo(mapAdmin);
+        }
+    });
+}
+
+async function guardarPDV() {
+    // 1. Recolectamos los datos de los inputs
+    const data = {
+        nombre: document.getElementById('pdv-nombre').value,
+        direccion: document.getElementById('pdv-dir').value,
+        whatsapp: document.getElementById('pdv-wa').value,
+        foto: document.getElementById('pdv-foto').value,
+        lat: document.getElementById('pdv-lat').value,
+        lng: document.getElementById('pdv-lng').value
+    };
+
+    // 2. Validación básica
+    if(!data.nombre || !data.lat || !data.lng) {
+        return alert("⚠️ Error: Debes poner un nombre y marcar la ubicación en el mapa.");
+    }
+
+    const btn = document.querySelector('button[onclick="guardarPDV()"]');
+    const originalText = btn.innerHTML;
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO EN BASE DE DATOS...';
+
+        // 3. Envío al servidor (Asegúrate que tu ruta en el backend sea /api/admin/guardar-pdv)
+        const response = await fetch('/api/admin/guardar-pdv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert("✅ ¡Punto de Venta guardado con éxito!");
+            // Limpiamos los campos para el próximo local
+            document.getElementById('pdv-nombre').value = '';
+            document.getElementById('pdv-wa').value = '';
+            document.getElementById('pdv-foto').value = '';
+            document.getElementById('img-pre').src = '';
+            if(markerAdmin) markerAdmin.remove();
+            markerAdmin = null;
+        } else {
+            throw new Error("El servidor rechazó los datos");
+        }
+    } catch (error) {
+        alert("❌ ERROR al guardar: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
 }
 
 </script>

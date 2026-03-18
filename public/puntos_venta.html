@@ -31,7 +31,7 @@
             --header-bg: rgba(255, 255, 255, 0.9);
             --text-main: #000000;
             --text-muted: #545454;
-            --neon: #276ef1; /* Azul Uber para acentos en modo claro */
+            --neon: #276ef1; 
             --border: rgba(0, 0, 0, 0.08);
             --shadow: rgba(0, 0, 0, 0.12);
             --card-hover: #f3f3f3;
@@ -142,6 +142,17 @@
         body.light-mode .custom-pin { background: #000; border-color: #fff; }
         body.dark-mode .custom-pin { background: var(--neon); border-color: #000; }
 
+        /* Estilos Popup */
+        .maplibregl-popup-content {
+            border-radius: 15px !important;
+            padding: 0 !important;
+            overflow: hidden;
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border);
+        }
+        .maplibregl-popup-close-button { color: white; font-size: 20px; padding: 5px; z-index: 10; }
+
     </style>
 </head>
 <body class="dark-mode">
@@ -178,13 +189,14 @@
         <div class="modal-card" id="modal-content">
             <i class="fa-solid fa-shop"></i>
             <h2>Puntos de Venta</h2>
-            <p>Esta zona está diseñada para que puedas localizar rápidamente todos los locales comerciales que venden nuestros stickers oficiales.</p>
+            <p>Localiza rápidamente todos los locales comerciales que venden nuestros stickers oficiales.</p>
             <button class="modal-close" onclick="document.getElementById('info-modal').style.display='none'">ENTENDIDO</button>
         </div>
     </div>
 
     <script>
         let map, locales = [], isDark = true;
+        let userMarker;
 
         const STYLES = {
             dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -206,6 +218,64 @@
             });
         }
 
+        async function loadCloudData() {
+            try {
+                const res = await fetch('/api/puntos-venta');
+                locales = await res.json();
+                locales.forEach(loc => addMarker(loc));
+            } catch (err) {
+                console.error("Error cargando locales:", err);
+            }
+        }
+
+        function addMarker(loc) {
+            const el = document.createElement('div');
+            el.className = 'custom-pin';
+            
+            const popupHTML = `
+                <div style="width:220px; font-family:'Outfit', sans-serif; background: var(--surface);">
+                    ${loc.foto ? `<img src="${loc.foto}" style="width:100%; height:120px; object-fit:cover; display:block;">` : ''}
+                    <div style="padding:15px; color: white;">
+                        <strong style="display:block; font-size:1.1rem; margin-bottom:4px">${loc.nombre}</strong>
+                        <span style="color:#aaa; font-size:0.85rem; display:block; margin-bottom:12px">${loc.direccion}</span>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            <a href="https://wa.me/${loc.whatsapp}" target="_blank" 
+                               style="background:#25d366; color:#fff; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.75rem">
+                               <i class="fab fa-whatsapp"></i> WHATSAPP
+                            </a>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" 
+                               style="background:#fff; color:#000; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.75rem">
+                               GPS
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            new maplibregl.Marker({element: el})
+                .setLngLat([parseFloat(loc.lng), parseFloat(loc.lat)])
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(popupHTML))
+                .addTo(map);
+        }
+
+        function getMyLocation() {
+            if (!navigator.geolocation) return alert("GPS no soportado");
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { longitude, latitude } = pos.coords;
+                map.flyTo({ center: [longitude, latitude], zoom: 15, speed: 1.5 });
+
+                if (!userMarker) {
+                    const userEl = document.createElement('div');
+                    userEl.innerHTML = `<div style="width:14px; height:14px; background:#276ef1; border:3px solid white; border-radius:50%; position:relative; z-index:2;"></div>
+                                       <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40px; height:40px; background:rgba(39,110,241,0.4); border-radius:50%; animation:pulse-dot 2s infinite;"></div>`;
+                    userMarker = new maplibregl.Marker({ element: userEl }).setLngLat([longitude, latitude]).addTo(map);
+                } else {
+                    userMarker.setLngLat([longitude, latitude]);
+                }
+            }, null, { enableHighAccuracy: true });
+        }
+
         function toggleTheme() {
             isDark = !isDark;
             const icon = document.getElementById('theme-icon');
@@ -221,8 +291,7 @@
         }
 
         function openInfo() {
-            const m = document.getElementById('info-modal');
-            m.style.display = 'flex';
+            document.getElementById('info-modal').style.display = 'flex';
             setTimeout(() => document.getElementById('modal-content').classList.add('show'), 10);
         }
 
@@ -233,85 +302,17 @@
             }
         }
 
-        async function loadCloudData() {
-            locales = [
-                { id: 1, n: "Taller San Justo", d: "Av. Juan Manuel de Rosas 3000", lat: -34.685, lng: -58.551 },
-                { id: 2, n: "Moto Partes Avellaneda", d: "Av. Mitre 1500", lat: -34.661, lng: -58.366 },
-                { id: 3, n: "Service Oficial Quilmes", d: "Calle 14 nro 450", lat: -34.721, lng: -58.256 }
-            ];
-            locales.forEach(loc => addMarker(loc));
-        }
-
-        function addMarker(loc) {
-            const el = document.createElement('div');
-            el.className = 'custom-pin';
-            
-            new maplibregl.Marker({element: el})
-                .setLngLat([loc.lng, loc.lat])
-                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
-                    <div style="padding:5px; min-width:150px">
-                        <strong style="display:block; font-size:1.1rem; margin-bottom:4px">${loc.n}</strong>
-                        <span style="color:#666; font-size:0.85rem">${loc.d}</span>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" 
-                           style="display:block; background:#000; color:#fff; text-align:center; padding:10px; border-radius:8px; text-decoration:none; margin-top:12px; font-weight:600; font-size:0.8rem">
-                           CÓMO LLEGAR
-                        </a>
-                    </div>
-                `))
-                .addTo(map);
-        }
-
-        let userMarker; // Variable para controlar el punto azul del usuario
-
-        function getMyLocation() {
-            if (!navigator.geolocation) {
-                alert("Tu navegador no soporta geolocalización");
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(pos => {
-                const { longitude, latitude } = pos.coords;
-                
-                // Centrar mapa suavemente
-                map.flyTo({ 
-                    center: [longitude, latitude], 
-                    zoom: 16, 
-                    speed: 1.5 
-                });
-
-                // Crear o mover el marcador azul
-                if (!userMarker) {
-                    const userEl = document.createElement('div');
-                    userEl.innerHTML = `
-                        <div style="width: 14px; height: 14px; background: #276ef1; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative; z-index: 2;"></div>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(39, 110, 241, 0.4); border-radius: 50%; animation: pulse-dot 2s infinite; z-index: 1;"></div>
-                    `;
-                    userEl.style.position = 'relative';
-                    userEl.style.display = 'flex';
-                    userEl.style.alignItems = 'center';
-                    userEl.style.justifyContent = 'center';
-
-                    userMarker = new maplibregl.Marker({ element: userEl })
-                        .setLngLat([longitude, latitude])
-                        .addTo(map);
-                } else {
-                    userMarker.setLngLat([longitude, latitude]);
-                }
-            }, err => alert("GPS no disponible o denegado"), { enableHighAccuracy: true });
-        }
-
         const input = document.getElementById('engine-search');
         const list = document.getElementById('results-list');
 
         input.addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase();
             if(val.length < 2) { list.classList.remove('show'); return; }
-
-            const filtered = locales.filter(l => l.n.toLowerCase().includes(val));
+            const filtered = locales.filter(l => l.nombre.toLowerCase().includes(val));
             list.innerHTML = filtered.map(l => `
-                <div class="local-item" onclick="flyTo(${l.lat}, ${l.lng}, '${l.n}')">
-                    <h4>${l.n}</h4>
-                    <p>${l.d}</p>
+                <div class="local-item" onclick="flyTo(${l.lat}, ${l.lng}, '${l.nombre}')">
+                    <h4>${l.nombre}</h4>
+                    <p>${l.direccion}</p>
                 </div>
             `).join('');
             filtered.length > 0 ? list.classList.add('show') : list.classList.remove('show');
@@ -323,7 +324,6 @@
             list.classList.remove('show');
         }
 
-        // Animación de pulso para el punto azul (agrega esto al CSS si no lo tienes)
         const style = document.createElement('style');
         style.innerHTML = `@keyframes pulse-dot { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }`;
         document.head.appendChild(style);
