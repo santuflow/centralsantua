@@ -8,163 +8,179 @@
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* MODO OSCURO - DEFAULT PRO */
-            --neon: #00ffa3;
-            --bg: #0a0f18;
-            --header-bg: rgba(10, 15, 24, 0.85);
-            --surface: rgba(23, 32, 48, 0.9);
+            /* MODO OSCURO - HIGH END */
+            --bg: #000000;
+            --surface: #121212;
+            --header-bg: rgba(0, 0, 0, 0.8);
             --text-main: #ffffff;
-            --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.08);
-            --shadow: rgba(0, 0, 0, 0.4);
-            --marker-color: #00ffa3;
+            --text-muted: #a0a0a0;
+            --neon: #00ff88;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow: rgba(0, 0, 0, 0.5);
+            --card-hover: #1e1e1e;
         }
 
         body.light-mode {
-            /* MODO CLARO - ESTILO UBER/APPLE */
-            --neon: #000000; /* Negro sólido para elegancia */
-            --bg: #f8fafc;
-            --header-bg: rgba(255, 255, 255, 0.9);
+            /* MODO CLARO - ESTILO UBER PURE */
+            --bg: #ffffff;
             --surface: #ffffff;
-            --text-main: #1e293b; /* Azul medianoche */
-            --text-muted: #64748b;
-            --border: rgba(0, 0, 0, 0.06);
-            --shadow: rgba(0, 0, 0, 0.08);
-            --marker-color: #1e293b;
+            --header-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #000000;
+            --text-muted: #545454;
+            --neon: #276ef1; /* Azul Uber para acentos en modo claro */
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow: rgba(0, 0, 0, 0.12);
+            --card-hover: #f3f3f3;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body, html { height: 100vh; width: 100vw; background: var(--bg); color: var(--text-main); overflow: hidden; }
 
         /* --- HEADER --- */
         .elite-header {
-            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            position: fixed; top: 0; left: 0; right: 0; height: 72px;
             background: var(--header-bg); border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; z-index: 1000; backdrop-filter: blur(20px);
+            padding: 0 20px; z-index: 1000; backdrop-filter: blur(20px);
         }
 
-        .brand { font-weight: 900; font-size: 1.3rem; color: var(--text-main); text-decoration: none; letter-spacing: -0.5px; }
-        .brand span { color: #00ffa3; }
+        .brand { font-weight: 900; font-size: 1.4rem; color: var(--text-main); text-decoration: none; letter-spacing: -1px; }
+        .brand span { color: var(--neon); }
 
-        .theme-toggle {
+        .header-controls { display: flex; gap: 12px; }
+
+        .circle-btn {
             background: var(--surface); border: 1px solid var(--border);
-            color: var(--text-main); width: 44px; height: 44px;
+            color: var(--text-main); width: 42px; height: 42px;
             border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px var(--shadow);
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px var(--shadow); transition: 0.2s;
+            font-size: 1.1rem;
         }
+        .circle-btn:active { transform: scale(0.9); }
 
         /* --- MAPA --- */
         #map-master { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
         /* --- BUSCADOR --- */
         .search-container {
-            position: absolute; top: 95px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 480px; z-index: 1000;
+            position: absolute; top: 88px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 500px; z-index: 1000;
         }
 
-        .glass-input {
+        .uber-input {
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 16px; padding: 16px 20px; display: flex; align-items: center;
-            box-shadow: 0 10px 30px var(--shadow);
+            border-radius: 12px; padding: 14px 18px; display: flex; align-items: center;
+            box-shadow: 0 8px 25px var(--shadow);
         }
 
-        .glass-input i { color: var(--text-muted); font-size: 1.1rem; }
-        .glass-input input { 
+        .uber-input i { color: var(--text-main); font-size: 1rem; }
+        .uber-input input { 
             background: transparent; border: none; color: var(--text-main); 
-            width: 100%; outline: none; font-size: 1rem; font-weight: 500;
+            width: 100%; outline: none; font-size: 1.05rem; font-weight: 400;
             margin-left: 12px;
         }
 
         #results-list {
-            margin-top: 8px; background: var(--surface); border-radius: 16px;
+            margin-top: 6px; background: var(--surface); border-radius: 12px;
             border: 1px solid var(--border); max-height: 0; overflow: hidden;
-            box-shadow: 0 20px 40px var(--shadow); transition: 0.4s;
+            box-shadow: 0 15px 35px var(--shadow); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #results-list.show { max-height: 320px; padding: 8px; overflow-y: auto; }
+        #results-list.show { max-height: 350px; padding: 6px; overflow-y: auto; }
 
-        .local-card { 
-            padding: 14px; border-radius: 12px; margin-bottom: 4px; 
-            cursor: pointer; border-left: 3px solid transparent;
+        .local-item { 
+            padding: 15px; border-radius: 8px; cursor: pointer; 
+            display: flex; flex-direction: column; gap: 2px;
         }
-        .local-card:hover { background: var(--bg); border-left-color: #00ffa3; }
-        .local-card h4 { font-size: 1rem; margin-bottom: 2px; }
-        .local-card p { font-size: 0.8rem; color: var(--text-muted); }
+        .local-item:hover { background: var(--card-hover); }
+        .local-item h4 { font-size: 1rem; font-weight: 600; }
+        .local-item p { font-size: 0.85rem; color: var(--text-muted); }
 
-        /* --- GPS BUTTON --- */
-        .fab-container { position: absolute; bottom: 35px; right: 25px; z-index: 1000; }
-        .btn-elite {
-            width: 60px; height: 60px; background: var(--surface);
+        /* --- FAB & GPS --- */
+        .fab-group { position: absolute; bottom: 30px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; }
+        
+        .btn-gps {
+            width: 56px; height: 56px; background: var(--surface);
             border-radius: 50%; border: 1px solid var(--border); color: var(--text-main);
-            font-size: 1.4rem; cursor: pointer;
-            box-shadow: 0 8px 24px var(--shadow);
+            font-size: 1.3rem; cursor: pointer; box-shadow: 0 8px 20px var(--shadow);
             display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
         }
-        .btn-elite:active { transform: scale(0.9); }
-        .btn-elite i { color: #3b82f6; } /* Azul GPS clásico */
 
-        /* --- POPUPS PROFESIONALES --- */
-        .maplibregl-popup-content {
-            background: var(--surface) !important; color: var(--text-main) !important;
-            border-radius: 16px !important; padding: 15px !important;
-            border: 1px solid var(--border) !important;
-            box-shadow: 0 15px 35px var(--shadow) !important;
+        /* --- MODAL INFO --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center;
+            z-index: 2000; padding: 20px; backdrop-filter: blur(4px);
         }
-        .maplibregl-popup-close-button { color: var(--text-muted); padding: 5px; }
+        .modal-card {
+            background: var(--surface); border-radius: 20px; width: 100%; max-width: 400px;
+            padding: 30px; border: 1px solid var(--border); text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); transform: translateY(20px); transition: 0.3s;
+        }
+        .modal-card.show { transform: translateY(0); }
+        .modal-card i { font-size: 3rem; color: var(--neon); margin-bottom: 20px; }
+        .modal-card h2 { margin-bottom: 12px; font-weight: 700; }
+        .modal-card p { color: var(--text-muted); line-height: 1.5; margin-bottom: 25px; }
+        .modal-close {
+            background: var(--text-main); color: var(--bg); border: none;
+            width: 100%; padding: 15px; border-radius: 12px; font-weight: 700;
+            font-size: 1rem; cursor: pointer;
+        }
 
-        .btn-gps-go {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: #1e293b; color: #fff !important;
-            text-align: center; padding: 12px; border-radius: 10px;
-            text-decoration: none; font-weight: 700; margin-top: 12px;
-            font-size: 0.8rem; transition: 0.2s;
+        /* --- MARKER PIN --- */
+        .custom-pin {
+            width: 24px; height: 24px; background: #000;
+            border: 3px solid #fff; border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer;
         }
-        body.light-mode .btn-gps-go { background: #000; }
-        .btn-gps-go:hover { opacity: 0.9; }
+        body.light-mode .custom-pin { background: #000; border-color: #fff; }
+        body.dark-mode .custom-pin { background: var(--neon); border-color: #000; }
 
-        /* Marker Custom Pin */
-        .marker-pin {
-            width: 32px; height: 32px;
-            background: var(--marker-color);
-            border: 4px solid white; border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-        }
     </style>
 </head>
 <body class="dark-mode">
 
     <header class="elite-header">
-        <a href="index.html" class="brand">CENTRAL <span>SANTUA</span></a>
-        <button class="theme-toggle" onclick="toggleTheme()">
-            <i id="theme-icon" class="fas fa-moon"></i>
-        </button>
+        <a href="index.html" class="brand">SANTUA <span>STORES</span></a>
+        <div class="header-controls">
+            <button class="circle-btn" onclick="openInfo()" title="Ayuda">
+                <i class="fa-solid fa-question"></i>
+            </button>
+            <button class="circle-btn" onclick="toggleTheme()">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+        </div>
     </header>
 
     <div id="map-master"></div>
 
     <div class="search-container">
-        <div class="glass-input">
+        <div class="uber-input">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="engine-search" placeholder="¿A dónde vamos?" autocomplete="off">
+            <input type="text" id="engine-search" placeholder="Buscar local..." autocomplete="off">
         </div>
         <div id="results-list"></div>
     </div>
 
-    <div class="fab-container">
-        <button id="gps-btn" class="btn-elite" onclick="getMyLocation()">
+    <div class="fab-group">
+        <button class="btn-gps" onclick="getMyLocation()">
             <i class="fa-solid fa-location-arrow"></i>
         </button>
+    </div>
+
+    <div id="info-modal" class="modal-overlay" onclick="closeInfo(event)">
+        <div class="modal-card" id="modal-content">
+            <i class="fa-solid fa-shop"></i>
+            <h2>Puntos de Venta</h2>
+            <p>Esta zona está diseñada para que puedas localizar rápidamente todos los locales comerciales que venden nuestros stickers oficiales.</p>
+            <button class="modal-close" onclick="document.getElementById('info-modal').style.display='none'">ENTENDIDO</button>
+        </div>
     </div>
 
     <script>
@@ -193,7 +209,6 @@
         function toggleTheme() {
             isDark = !isDark;
             const icon = document.getElementById('theme-icon');
-            
             if (isDark) {
                 document.body.classList.remove('light-mode');
                 icon.className = 'fas fa-moon';
@@ -205,28 +220,41 @@
             }
         }
 
+        function openInfo() {
+            const m = document.getElementById('info-modal');
+            m.style.display = 'flex';
+            setTimeout(() => document.getElementById('modal-content').classList.add('show'), 10);
+        }
+
+        function closeInfo(e) {
+            if(e.target.id === 'info-modal') {
+                document.getElementById('info-modal').style.display = 'none';
+                document.getElementById('modal-content').classList.remove('show');
+            }
+        }
+
         async function loadCloudData() {
-            // Estos datos vendrán de tu DB Render luego
             locales = [
                 { id: 1, n: "Taller San Justo", d: "Av. Juan Manuel de Rosas 3000", lat: -34.685, lng: -58.551 },
                 { id: 2, n: "Moto Partes Avellaneda", d: "Av. Mitre 1500", lat: -34.661, lng: -58.366 },
                 { id: 3, n: "Service Oficial Quilmes", d: "Calle 14 nro 450", lat: -34.721, lng: -58.256 }
             ];
-            locales.forEach(loc => addEliteMarker(loc));
+            locales.forEach(loc => addMarker(loc));
         }
 
-        function addEliteMarker(loc) {
+        function addMarker(loc) {
             const el = document.createElement('div');
-            el.className = 'marker-pin';
+            el.className = 'custom-pin';
             
             new maplibregl.Marker({element: el})
                 .setLngLat([loc.lng, loc.lat])
-                .setPopup(new maplibregl.Popup({ offset: 35 }).setHTML(`
-                    <div style="min-width:180px">
-                        <h3 style="margin-bottom:4px; font-weight:700">${loc.n}</h3>
-                        <p style="font-size:0.8rem; color:var(--text-muted)">${loc.d}</p>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" class="btn-gps-go">
-                            <i class="fa-solid fa-paper-plane"></i> INDICACIONES
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
+                    <div style="padding:5px; min-width:150px">
+                        <strong style="display:block; font-size:1.1rem; margin-bottom:4px">${loc.n}</strong>
+                        <span style="color:#666; font-size:0.85rem">${loc.d}</span>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}" target="_blank" 
+                           style="display:block; background:#000; color:#fff; text-align:center; padding:10px; border-radius:8px; text-decoration:none; margin-top:12px; font-weight:600; font-size:0.8rem">
+                           CÓMO LLEGAR
                         </a>
                     </div>
                 `))
@@ -234,24 +262,12 @@
         }
 
         function getMyLocation() {
-            navigator.geolocation.getCurrentPosition(
-                pos => {
-                    const { longitude, latitude } = pos.coords;
-                    map.flyTo({ center: [longitude, latitude], zoom: 15, speed: 1.2 });
-                    
-                    const el = document.createElement('div');
-                    el.innerHTML = '<div style="width:18px; height:18px; background:#3b82f6; border:3px solid white; border-radius:50%; box-shadow:0 0 10px rgba(0,0,0,0.3)"></div>';
-                    
-                    new maplibregl.Marker({element: el})
-                        .setLngLat([longitude, latitude])
-                        .addTo(map);
-                },
-                err => alert("Activa el GPS para localizarte."),
-                { enableHighAccuracy: true }
-            );
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { longitude, latitude } = pos.coords;
+                map.flyTo({ center: [longitude, latitude], zoom: 15 });
+            }, err => alert("GPS no disponible"));
         }
 
-        // Buscador Inteligente
         const input = document.getElementById('engine-search');
         const list = document.getElementById('results-list');
 
@@ -261,7 +277,7 @@
 
             const filtered = locales.filter(l => l.n.toLowerCase().includes(val));
             list.innerHTML = filtered.map(l => `
-                <div class="local-card" onclick="flyToLoc(${l.lat}, ${l.lng}, '${l.n}')">
+                <div class="local-item" onclick="flyTo(${l.lat}, ${l.lng}, '${l.n}')">
                     <h4>${l.n}</h4>
                     <p>${l.d}</p>
                 </div>
@@ -269,9 +285,9 @@
             filtered.length > 0 ? list.classList.add('show') : list.classList.remove('show');
         });
 
-        function flyToLoc(lat, lng, name) {
+        function flyTo(lat, lng, n) {
             map.flyTo({ center: [lng, lat], zoom: 16 });
-            input.value = name;
+            input.value = n;
             list.classList.remove('show');
         }
 
