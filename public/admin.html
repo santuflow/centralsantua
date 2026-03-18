@@ -245,6 +245,21 @@
         }
         .sugerencia-item:hover { background: #00ff88; color: #000; }
         #map-admin-pdv { height: 500px; border-radius: 12px; border: 1px solid #333; }
+
+        #sugerencias-dir {
+    background: #111;
+    border: 1px solid #00ff88; /* Verde neón como tu marca */
+    position: absolute;
+    z-index: 9999; /* Para que flote ARRIBA del mapa */
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.sugerencia-item:hover {
+    background: #00ff88 !important;
+    color: #000 !important;
+}
     </style>
 
     <div class="pdv-container">
@@ -254,12 +269,16 @@
                 <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
             </div>
             
-            <div class="input-group">
-                <label>Dirección (Buscador Automático)</label>
-                <input type="text" id="pdv-dir" placeholder="Escribí calle y número..." oninput="buscarDireccion(this.value)" autocomplete="off">
-                <div id="sugerencias-dir"></div>
-            </div>
-
+            <div class="input-group" style="position: relative;"> 
+    <label>DIRECCIÓN Y CIUDAD (BUSCADOR AUTOMÁTICO)</label>
+    <input type="text" id="pdv-dir" 
+           placeholder="Escribí calle y número..." 
+           oninput="buscarDireccion(this.value)" 
+           autocomplete="off"
+           style="width: 100%; padding: 10px; background: #111; color: white; border: 1px solid #333;">
+    
+    <div id="sugerencias-dir" class="sugerencias-container"></div>
+</div>
             <div class="input-group">
                 <label>WhatsApp</label>
                 <input type="text" id="pdv-wa" placeholder="54911...">
@@ -896,33 +915,46 @@ async function guardarPDV() {
 }
 
 // 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
+let timerBusqueda;
 async function buscarDireccion(query) {
     const lista = document.getElementById('sugerencias-dir');
-    if (query.length < 4) { lista.innerHTML = ''; return; }
+    clearTimeout(timerBusqueda);
 
-    try {
-        // Agregamos 'addressdetails=1' para que separe el número de casa (house_number)
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=5`;
-        
-        const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
-        const data = await res.json();
+    if (query.length < 4) { 
+        lista.innerHTML = ''; 
+        return; 
+    }
 
-        lista.innerHTML = data.map(item => {
-            const a = item.address;
-            const calle = a.road || a.pedestrian || '';
-            const nro = a.house_number || ''; // Aquí está la clave de la numeración
-            const ciudad = a.city || a.town || '';
-            const nombreFinal = `${calle} ${nro}, ${ciudad}`.trim();
+    // Esperamos 400ms antes de llamar a la API para no saturar
+    timerBusqueda = setTimeout(async () => {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=8`;
+            const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+            const data = await res.json();
 
-            return `
-                <div class="sugerencia-item" 
-                     onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal}')"
-                     style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white;">
-                    <b>${calle} ${nro}</b> <br>
-                    <small style="color: #888;">${ciudad}</small>
-                </div>`;
-        }).join('');
-    } catch (e) { console.error("Error en búsqueda:", e); }
+            if (data.length === 0) {
+                lista.innerHTML = '<div style="padding:10px; color:#888;">No se encontró nada...</div>';
+                return;
+            }
+
+            lista.innerHTML = data.map(item => {
+                const a = item.address;
+                const calle = a.road || a.pedestrian || a.suburb || '';
+                const nro = a.house_number || ''; 
+                const ciudad = a.city || a.town || a.village || 'Bs.As.';
+                const nombreFinal = `${calle} ${nro}, ${ciudad}`.replace(/, ,/g, ',');
+
+                return `
+                    <div class="sugerencia-item" 
+                         onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal.replace(/'/g, "\\'")}')"
+                         style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white; background: #111;">
+                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:8px;"></i>
+                        <b>${calle} ${nro}</b> <br>
+                        <small style="color: #888; margin-left:22px;">${ciudad}</small>
+                    </div>`;
+            }).join('');
+        } catch (e) { console.error("Error en búsqueda:", e); }
+    }, 400);
 }
 
 function seleccionarDireccion(lat, lon, nombreCompleto) {
