@@ -162,6 +162,136 @@
     border: 1px solid #444;
     cursor: pointer;
 }
+
+#sugerencias-dir {
+    position: absolute; /* Queda flotando sobre el resto */
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 9999; /* Siempre arriba de todo */
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Contenedor principal del Registro de PDV */
+.pdv-container {
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Formulario a la izquierda, Mapa a la derecha */
+    gap: 20px;
+    background: #111;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    margin-top: 10px;
+}
+
+/* Formulario */
+.pdv-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pdv-form label {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: -5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pdv-form input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.pdv-form input:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+/* EL BUSCADOR (Lo más importante) */
+#sugerencias-dir {
+    position: absolute;
+    top: 100%; /* Justo debajo del input */
+    left: 0;
+    right: 0;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000; /* Para que flote sobre el mapa */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.sugerencia-item {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+    transition: 0.2s;
+}
+
+.sugerencia-item:hover {
+    background: #222;
+    border-left: 4px solid #00ff88;
+}
+
+.sugerencia-item strong {
+    display: block;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.sugerencia-item small {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+/* Mapa */
+#map-admin-pdv {
+    width: 100%;
+    min-height: 450px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+/* Botón de Guardado */
+.btn-done {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+
+.btn-done:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
+/* Responsivo para celulares */
+@media (max-width: 768px) {
+    .pdv-container {
+        grid-template-columns: 1fr;
+    }
+    #map-admin-pdv {
+        min-height: 300px;
+    }
+}
     </style>
 </head>
 <body>
@@ -815,36 +945,92 @@ async function guardarPDV() {
 // 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
 async function buscarDireccion(query) {
     const lista = document.getElementById('sugerencias-dir');
-    if (query.length < 3) { lista.innerHTML = ''; return; }
+    if (query.length < 3) { 
+        lista.innerHTML = ''; 
+        return; 
+    }
 
-    // Coordenadas aproximadas de Quilmes/Ezpeleta para priorizar la zona
-    const viewbox = "-58.30,-34.70,-58.20,-34.78"; 
+    // Coordenadas de referencia (Quilmes/Ezpeleta) para dar prioridad, pero sin bloquear el resto
+    const latRef = -34.7245;
+    const lonRef = -58.2520;
 
     try {
-        // Agregamos 'bounded=1' para que priorice tu zona de operación
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=ar&viewbox=${viewbox}&bounded=1&limit=6`);
+        // Usamos Photon: es mucho más rápido y "entiende" mejor las alturas de las calles
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${latRef}&lon=${lonRef}&limit=6&lang=es`;
+        const res = await fetch(url);
         const data = await res.json();
 
-        lista.innerHTML = data.map(item => `
-            <div style="padding: 12px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.85rem;" 
-                 onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${item.display_name}')">
-                <i class="fas fa-map-marker-alt" style="color:var(--primary); margin-right:8px;"></i>
-                ${item.display_name}
-            </div>
-        `).join('');
-    } catch (e) { console.error("Error en GPS:", e); }
+        lista.innerHTML = data.features.map(feature => {
+            const p = feature.properties;
+            const coords = feature.geometry.coordinates;
+            
+            // Construimos la dirección: Calle + Altura (si existe) + Ciudad + Provincia
+            const calle = p.name || '';
+            const altura = p.housenumber || '';
+            const ciudad = p.city || p.district || p.locality || '';
+            const provincia = p.state || '';
+            
+            const direccionCorta = `${calle} ${altura}`.trim();
+            const direccionLarga = `${direccionCorta}, ${ciudad}, ${provincia}`.replace(/, ,/g, ',');
+
+            return `
+                <div style="padding: 12px; cursor: pointer; border-bottom: 1px solid #333; background: #1a1a1a; transition: 0.2s;" 
+                     onmouseover="this.style.background='#222'" 
+                     onmouseout="this.style.background='#1a1a1a'"
+                     onclick="seleccionarDireccion(${coords[1]}, ${coords[0]}, '${direccionLarga}')">
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:10px;"></i>
+                        <div>
+                            <div style="color: white; font-weight: bold; font-size: 0.9rem;">${direccionCorta}</div>
+                            <div style="color: #888; font-size: 0.75rem;">${ciudad}, ${provincia}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) { 
+        console.error("Error en el motor de búsqueda:", e); 
+    }
 }
 
 function seleccionarDireccion(lat, lon, nombreCompleto) {
+    // 1. Llenamos los campos de texto y coordenadas
     document.getElementById('pdv-dir').value = nombreCompleto;
     document.getElementById('pdv-lat').value = lat;
     document.getElementById('pdv-lng').value = lon;
+    
+    // 2. Limpiamos la lista de sugerencias inmediatamente
     document.getElementById('sugerencias-dir').innerHTML = '';
 
-    // Mover el mapa y poner el marcador solo
-    mapAdmin.flyTo({ center: [lon, lat], zoom: 16 });
-    if (markerAdmin) markerAdmin.setLngLat([lon, lat]);
-    else markerAdmin = new maplibregl.Marker({ color: '#00ff88' }).setLngLat([lon, lat]).addTo(mapAdmin);
+    // 3. Movemos el mapa con estilo profesional
+    if (mapAdmin) {
+        mapAdmin.flyTo({
+            center: [lon, lat],
+            zoom: 17, // Zoom más cerca para ver el local exacto
+            essential: true,
+            speed: 1.2
+        });
+
+        // 4. Gestionamos el marcador (lo hacemos arrastrable por si hay que corregir a mano)
+        if (markerAdmin) {
+            markerAdmin.setLngLat([lon, lat]);
+        } else {
+            markerAdmin = new maplibregl.Marker({ 
+                color: '#00ff88', 
+                draggable: true // Esto permite que si la dirección falla por un metro, lo muevas vos
+            })
+            .setLngLat([lon, lat])
+            .addTo(mapAdmin);
+            
+            // Si el usuario mueve el marcador manualmente, actualizamos los inputs de lat/lng
+            markerAdmin.on('dragend', () => {
+                const lngLat = markerAdmin.getLngLat();
+                document.getElementById('pdv-lat').value = lngLat.lat.toFixed(6);
+                document.getElementById('pdv-lng').value = lngLat.lng.toFixed(6);
+                console.log("📍 Ubicación ajustada manualmente");
+            });
+        }
+    }
 }
 
 // 2. PROCESAR FOTO (Convierte el archivo a texto Base64 para el server.js)
