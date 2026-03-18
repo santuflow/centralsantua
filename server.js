@@ -7,9 +7,6 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-app.use(express.json({ limit: '10mb' })); 
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
 // --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
 const mongoose = require('mongoose');
 
@@ -935,19 +932,18 @@ app.use((req, res, next) => {
     }
 });
 
-
-// Ruta para que el Admin guarde un nuevo Punto de Venta
 // Ruta para que el Admin guarde un nuevo Punto de Venta
 app.post('/api/admin/guardar-pdv', async (req, res) => {
     try {
-        const nuevoPDV = new PDV(req.body); // Crea el objeto usando el modelo de MongoDB
-        await nuevoPDV.save(); // Lo guarda en la nube (MongoDB Atlas)
+        // 'PDV' es el modelo que moviste arriba en el paso 3
+        const nuevoPDV = new PDV(req.body); 
+        await nuevoPDV.save(); 
         
-        console.log("✅ Nuevo local registrado:", req.body.nombre);
-        res.status(200).json({ message: "Local guardado con éxito" });
+        console.log("✅ Guardado en la nube:", req.body.nombre);
+        res.status(200).json({ message: "OK" });
     } catch (error) {
-        console.error("❌ Error al guardar en MongoDB:", error);
-        res.status(500).json({ error: "Error al guardar en el servidor" });
+        console.error(error);
+        res.status(500).json({ error: "Error en el servidor" });
     }
 });
 
