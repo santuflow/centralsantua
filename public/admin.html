@@ -97,95 +97,79 @@
         }
         .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
 
-        /* --- ESTILOS PUNTOS DE VENTA --- */
-        .pdv-container {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
-            background: rgba(0,0,0,0.8);
-            border: 1px solid var(--success);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 25px;
-            height: 500px;
-        }
-
-        .pdv-form {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            border-right: 1px solid #222;
-        }
-
-        .pdv-form input, .pdv-form textarea {
-            background: #000;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-
-        .pdv-form label {
-            font-size: 0.7rem;
-            color: var(--primary);
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        #map-admin-pdv {
-            width: 100%;
-            height: 100%;
-            background: #111;
-        }
-
-        .preview-img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px dashed #444;
-            margin-top: 5px;
-        }
-
-        #sugerencias-dir div:hover {
-    background: var(--primary) !important;
-    color: black !important;
-    font-weight: bold;
+        /* --- ESTILOS PUNTOS DE VENTA (LIMPIO) --- */
+.pdv-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--success);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    height: 550px; /* Un poco más de aire */
 }
 
-#sugerencias-dir {
-    max-height: 250px;
+.pdv-form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     overflow-y: auto;
-    border: 1px solid #444;
-    cursor: pointer;
+    border-right: 1px solid #222;
+    background: #0a0a0a;
 }
 
-#sugerencias-dir {
-    position: absolute; /* Queda flotando sobre el resto */
-    width: 100%;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 9999; /* Siempre arriba de todo */
-    background: #1a1a1a;
+.pdv-form input, .pdv-form textarea {
+    background: #000;
     border: 1px solid #333;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
 }
 
+.pdv-form label {
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#map-admin-pdv {
+    width: 100%;
+    height: 100%;
+    background: #111;
+}
+
+/* --- BUSCADOR DE DIRECCIONES UNIFICADO --- */
 #sugerencias-dir {
     position: absolute;
-    top: 100%; /* Justo debajo del input de dirección */
+    top: 100%; 
     left: 0;
     width: 100%;
-    background: #1a1a1a !important;
+    background: #111 !important;
     border: 1px solid var(--primary);
-    z-index: 10000 !important; /* Para que flote sobre el mapa */
+    z-index: 10000 !important; /* Prioridad máxima sobre el mapa */
     max-height: 200px;
     overflow-y: auto;
     border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    cursor: pointer;
+}
+
+.sugerencia-item {
+    padding: 12px;
+    border-bottom: 1px solid #222;
+    color: white;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+
+.sugerencia-item:hover {
+    background: var(--primary) !important;
+    color: black !important;
+    font-weight: bold;
 }
     </style>
 </head>
