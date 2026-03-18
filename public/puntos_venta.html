@@ -3,362 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Red de Distribución | Central Santua</title>
+    <title>Puntos de Venta | Central Santua</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
         :root {
             --accent: #00ff88;
-            --accent-glow: rgba(0, 255, 136, 0.4);
-            --bg-dark: #020617;
-            --surface: rgba(15, 23, 42, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --header-h: 70px;
+            --dark: #020617;
+            --panel: rgba(15, 23, 42, 0.95);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
-        /* --- Reset y Estilos Base --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { 
-            height: 100%; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg-dark); 
-            color: var(--text-main);
-            overflow: hidden;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Forzar altura total para que el mapa NO desaparezca */
+        html, body { height: 100%; width: 100%; background: #000; overflow: hidden; }
 
-        /* --- Layout Maestro --- */
-        .app-shell {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* --- Header Premium --- */
-        .main-header {
-            height: var(--header-h);
+        /* --- HEADER ESTILO NEÓN --- */
+        header {
+            height: 65px;
             background: #000;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 25px;
-            border-bottom: 1px solid var(--border);
-            z-index: 5000;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-
-        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .brand-logo { 
-            width: 35px; height: 35px; background: var(--accent); 
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            color: #000; font-weight: 800; font-size: 1.2rem;
-        }
-        .brand-name { font-weight: 800; font-size: 1.3rem; color: var(--accent); letter-spacing: -0.5px; }
-
-        .nav-links { display: flex; gap: 20px; }
-        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
-        .nav-item:hover, .nav-item.active { color: var(--accent); }
-
-        /* --- Contenedor de Mapa y UI --- */
-        .map-viewport {
+            padding: 0 20px;
+            border-bottom: 2px solid var(--accent);
+            z-index: 2000;
             position: relative;
-            flex: 1;
-            width: 100%;
         }
+        .logo { font-weight: 800; color: var(--accent); text-decoration: none; font-size: 1.2rem; }
+        .nav-link { color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-left: 15px; }
 
-        #map-canvas {
+        /* --- CONTENEDOR DEL MAPA --- */
+        #map-container {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 65px;
+            bottom: 0;
+            left: 0;
+            right: 0;
             z-index: 1;
-            background: #0b0e14;
+            background: #111; /* Color de fondo mientras carga el mapa */
         }
 
-        /* --- Interfaz Flotante (Search) --- */
-        .floating-search-wrap {
+        #map { width: 100%; height: 100%; }
+
+        /* --- BUSCADOR FLOTANTE (ESTILO SMARTPHONE) --- */
+        .search-overlay {
             position: absolute;
-            top: 25px;
+            top: 85px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 480px;
-            z-index: 2000;
+            max-width: 450px;
+            z-index: 1001;
         }
 
-        .search-card {
-            background: var(--surface);
-            backdrop-filter: blur(16px);
+        .search-bar {
+            background: var(--panel);
+            backdrop-filter: blur(15px);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 10px 15px;
+            border-radius: 14px;
+            padding: 12px 18px;
             display: flex;
             align-items: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        .search-card:focus-within { border-color: var(--accent); transform: translateX(-50%) translateY(-2px); width: 92%; }
-
-        .search-card i { color: var(--accent); font-size: 1.1rem; margin-right: 15px; }
-        .search-card input {
-            flex: 1;
+        .search-bar i { color: var(--accent); margin-right: 15px; }
+        .search-bar input {
             background: transparent;
             border: none;
             color: white;
-            font-size: 1rem;
+            width: 100%;
             outline: none;
-            font-weight: 400;
+            font-size: 1rem;
         }
 
-        /* --- Lista de Resultados Sugeridos --- */
-        .suggestions-panel {
-            margin-top: 10px;
-            background: var(--surface);
-            backdrop-filter: blur(16px);
+        /* --- LISTA DE RESULTADOS DINÁMICA --- */
+        #results-box {
+            margin-top: 8px;
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border-radius: 14px;
             border: 1px solid var(--border);
-            border-radius: 16px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            animation: fadeIn 0.3s ease;
         }
 
-        .suggestions-panel.active { max-height: 350px; overflow-y: auto; padding: 10px; }
-
-        .suggest-item {
-            padding: 14px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
             cursor: pointer;
-            border: 1px solid transparent;
-            margin-bottom: 5px;
-            animation: fadeIn 0.3s forwards;
+            transition: 0.2s;
         }
+        .result-item:hover { background: rgba(0, 255, 136, 0.05); }
+        .result-item h4 { color: var(--accent); font-size: 0.95rem; }
+        .result-item p { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
 
-        .suggest-item:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
-        .suggest-icon { width: 40px; height: 40px; background: #1e293b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .suggest-info h4 { font-size: 0.9rem; margin-bottom: 2px; }
-        .suggest-info p { font-size: 0.75rem; color: var(--text-dim); }
-
-        /* --- Botones de Control --- */
-        .map-actions {
+        /* --- BOTONES DE ACCIÓN (ESQUINA INFERIOR) --- */
+        .map-tools {
             position: absolute;
             right: 20px;
             bottom: 40px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            z-index: 2000;
+            z-index: 1001;
         }
 
-        .fab-btn {
-            width: 56px; height: 56px;
+        .btn-tool {
+            width: 55px; height: 55px;
             background: var(--accent);
-            border: none; border-radius: 18px;
-            color: #000; font-size: 1.4rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 25px var(--accent-glow);
-            transition: 0.3s;
+            border-radius: 16px;
+            border: none;
+            color: #000;
+            font-size: 1.4rem;
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .fab-btn:active { transform: scale(0.9); }
-        .fab-btn.secondary { background: #1e293b; color: white; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        /* --- POPUPS ESTILO PREMIUM --- */
+        .leaflet-popup-content-wrapper {
+            background: #0f172a !important;
+            color: white !important;
+            border-radius: 15px !important;
+            padding: 5px;
+            border: 1px solid var(--accent);
+        }
+        .leaflet-popup-tip { background: var(--accent) !important; }
 
-        /* --- Custom Popups Leaflet --- */
-        .leaflet-popup-content-wrapper { background: #0f172a; color: white; border-radius: 18px; border: 1px solid var(--border); padding: 0; overflow: hidden; }
-        .leaflet-popup-tip { background: #0f172a; }
+        .popup-info h3 { color: var(--accent); margin-bottom: 5px; font-size: 1rem; }
+        .popup-info p { font-size: 0.8rem; margin-bottom: 12px; color: #cbd5e1; }
         
-        .venue-popup { width: 220px; }
-        .venue-img { width: 100%; height: 100px; background: #1e293b; object-fit: cover; }
-        .venue-content { padding: 15px; }
-        .venue-content h3 { font-size: 1rem; color: var(--accent); margin-bottom: 5px; }
-        .venue-content p { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 15px; }
-        
-        .route-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: var(--accent); color: #000;
-            padding: 10px; border-radius: 10px;
-            text-decoration: none; font-weight: 800; font-size: 0.85rem;
-            text-transform: uppercase; transition: 0.3s;
+        .btn-route {
+            display: block;
+            background: var(--accent);
+            color: #000;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
 
-        /* --- Media Queries (Mobile Fixes) --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Corrección para que el mapa ocupe todo en móviles */
         @media (max-width: 600px) {
-            .brand-name { display: none; }
-            .floating-search-wrap { top: 15px; }
-            .suggestions-panel.active { max-height: 45vh; }
-            .nav-links { gap: 10px; }
-            .fab-btn { width: 50px; height: 50px; border-radius: 14px; }
+            header { height: 60px; }
+            #map-container { top: 60px; }
+            .search-overlay { top: 75px; }
+            .btn-tool { width: 50px; height: 50px; }
         }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="app-shell">
-    <header class="main-header">
-        <a href="index.html" class="brand">
-            <div class="brand-logo">S</div>
-            <span class="brand-name">CENTRAL SANTUA</span>
-        </a>
-        <nav class="nav-links">
-            <a href="index.html" class="nav-item">Inicio</a>
-            <a href="#" class="nav-item active">Puntos</a>
-            <a href="perfil.html" class="nav-item">Perfil</a>
+    <header>
+        <a href="index.html" class="logo">CENTRAL SANTUA</a>
+        <nav>
+            <a href="index.html" class="nav-link">INICIO</a>
+            <a href="perfil.html" class="nav-link">PERFIL</a>
         </nav>
     </header>
 
-    <main class="map-viewport">
-        <div class="floating-search-wrap">
-            <div class="search-card">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="main-search" placeholder="Buscar barrio, ciudad o local..." autocomplete="off">
+    <div id="map-container">
+        <div id="map"></div>
+
+        <div class="search-overlay">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="input-search" placeholder="Buscar por ciudad, barrio o local..." autocomplete="off">
             </div>
-            <div id="suggestions" class="suggestions-panel">
+            <div id="results-box">
                 </div>
         </div>
 
-        <div id="map-canvas"></div>
-
-        <div class="map-actions">
-            <button class="fab-btn secondary" onclick="changeMapStyle()" title="Cambiar Estilo"><i class="fa-solid fa-layer-group"></i></button>
-            <button class="fab-btn" onclick="geolocalizar()" title="Mi Ubicación"><i class="fa-solid fa-location-arrow"></i></button>
+        <div class="map-tools">
+            <button class="btn-tool" onclick="centrarEnMi()" title="Mi Ubicación">
+                <i class="fas fa-location-arrow"></i>
+            </button>
         </div>
-    </main>
-</div>
+    </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    /** * CENTRAL SANTUA - MAP ENGINE V3.0
-     * Lógica profesional de geolocalización y renderizado
-     */
-
-    const CONFIG = {
-        center: [-34.6037, -58.3816],
-        zoom: 12,
-        styles: [
-            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        ]
-    };
-
-    let map, markers = [], currentStyle = 0, userPos = null;
-    let localesData = [];
-
-    // Inicialización del Motor
-    function initApp() {
-        map = L.map('map-canvas', { 
-            zoomControl: false,
-            attributionControl: false 
-        }).setView(CONFIG.center, CONFIG.zoom);
-
-        L.tileLayer(CONFIG.styles[currentStyle]).addTo(map);
-
-        // Simular Carga de Datos (Aquí conectarás tu fetch real)
-        fetchLocales();
-    }
-
-    async function fetchLocales() {
-        // Simulación de delay de red para efectos pro
-        setTimeout(() => {
-            localesData = [
-                { id: 1, name: "Repuestos 'El Titán'", barrio: "Lanús Este", dir: "H. Yrigoyen 4200", lat: -34.704, lng: -58.391 },
-                { id: 2, name: "Motosur Quilmes", barrio: "Quilmes Centro", dir: "Rivadavia 320", lat: -34.722, lng: -58.257 },
-                { id: 3, name: "Taller Santua Oficial", barrio: "Avellaneda", dir: "Av. Mitre 900", lat: -34.661, lng: -58.366 },
-                { id: 4, name: "Accesorios Speed", barrio: "Lomas de Zamora", dir: "Laprida 150", lat: -34.759, lng: -58.402 }
-            ];
-            renderMarkers();
-        }, 800);
-    }
-
-    function renderMarkers() {
-        markers.forEach(m => map.removeLayer(m));
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        /**
+         * MOTOR DE MAPAS CENTRAL SANTUA V4.0
+         * Optimizado para renderizado inmediato
+         */
         
-        localesData.forEach(loc => {
-            const m = L.marker([loc.lat, loc.lng]).addTo(map);
-            const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}`;
-            
-            m.bindPopup(`
-                <div class="venue-popup">
-                    <div class="venue-content">
-                        <h3>${loc.name}</h3>
-                        <p><i class="fa-solid fa-location-dot"></i> ${loc.dir}, ${loc.barrio}</p>
-                        <a href="${routeUrl}" target="_blank" class="route-btn">
-                            <i class="fa-solid fa-diamond-turn-right"></i> Cómo llegar
+        let map, locales = [], markers = [], userMarker;
+
+        function initMap() {
+            // 1. Inicializar el mapa (se centra en Buenos Aires por defecto)
+            map = L.map('map', { 
+                zoomControl: false,
+                attributionControl: false 
+            }).setView([-34.6037, -58.3816], 12);
+
+            // 2. Capa de mapa: Estilo Voyager (Claro, nítido y pro)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+            // 3. Forzar el redimensionamiento (Esto arregla el bug de que no aparece)
+            setTimeout(() => { map.invalidateSize(); }, 500);
+
+            cargarDatos();
+        }
+
+        async function cargarDatos() {
+            // AQUÍ IRÍA TU FETCH('/api/puntos-venta')
+            // Ejemplo de datos para probar:
+            locales = [
+                { id: 1, nombre: "Repuestos 'La Tuerca'", zona: "Avellaneda", dir: "Av. Mitre 800", lat: -34.6621, lng: -58.3655 },
+                { id: 2, nombre: "Moto Service Premium", zona: "Quilmes", dir: "Rivadavia 150", lat: -34.7214, lng: -58.2566 },
+                { id: 3, nombre: "Accesorios Lanús", zona: "Lanús", dir: "25 de Mayo 120", lat: -34.7042, lng: -58.3912 }
+            ];
+
+            renderMarkers(locales);
+        }
+
+        function renderMarkers(data) {
+            // Limpiar markers anteriores
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            data.forEach(l => {
+                const marker = L.marker([l.lat, l.lng]).addTo(map);
+                const googleUrl = `https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}`;
+                
+                marker.bindPopup(`
+                    <div class="popup-info">
+                        <h3>${l.nombre}</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> ${l.zona} - ${l.dir}</p>
+                        <a href="${googleUrl}" target="_blank" class="btn-route">
+                            <i class="fas fa-directions"></i> CÓMO LLEGAR
                         </a>
                     </div>
-                </div>
-            `);
-            markers.push(m);
-        });
-    }
-
-    // Sistema de Búsqueda Reactiva
-    const searchInput = document.getElementById('main-search');
-    const suggestPanel = document.getElementById('suggestions');
-
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        if (query.length < 2) {
-            suggestPanel.classList.remove('active');
-            return;
+                `);
+                markers.push(marker);
+            });
         }
 
-        const filtered = localesData.filter(l => 
-            l.name.toLowerCase().includes(query) || 
-            l.barrio.toLowerCase().includes(query)
-        );
+        // --- SISTEMA DE BÚSQUEDA ---
+        const input = document.getElementById('input-search');
+        const box = document.getElementById('results-box');
 
-        if (filtered.length > 0) {
-            suggestPanel.innerHTML = filtered.map(l => `
-                <div class="suggest-item" onclick="focusLocal(${l.lat}, ${l.lng}, '${l.name}')">
-                    <div class="suggest-icon"><i class="fa-solid fa-shop"></i></div>
-                    <div class="suggest-info">
-                        <h4>${l.name}</h4>
-                        <p>${l.barrio} - ${l.dir}</p>
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            if (val.length < 2) { box.style.display = 'none'; return; }
+
+            const filtered = locales.filter(l => 
+                l.nombre.toLowerCase().includes(val) || 
+                l.zona.toLowerCase().includes(val)
+            );
+
+            if (filtered.length > 0) {
+                box.style.display = 'block';
+                box.innerHTML = filtered.map(l => `
+                    <div class="result-item" onclick="focusLocal(${l.lat}, ${l.lng}, '${l.nombre}')">
+                        <h4>${l.nombre}</h4>
+                        <p>${l.zona} - ${l.dir}</p>
                     </div>
-                </div>
-            `).join('');
-            suggestPanel.classList.add('active');
-        } else {
-            suggestPanel.classList.remove('active');
+                `).join('');
+            } else {
+                box.style.display = 'none';
+            }
+        });
+
+        function focusLocal(lat, lng, nombre) {
+            map.flyTo([lat, lng], 16, { duration: 1.5 });
+            input.value = nombre;
+            box.style.display = 'none';
         }
-    });
 
-    function focusLocal(lat, lng, name) {
-        map.flyTo([lat, lng], 16, { duration: 1.5 });
-        searchInput.value = name;
-        suggestPanel.classList.remove('active');
-    }
+        // --- GPS ---
+        function centrarEnMi() {
+            map.locate({ setView: true, maxZoom: 15 });
+        }
 
-    // Geolocalización Avanzada
-    function geolocalizar() {
-        map.locate({ setView: true, maxZoom: 15 });
-    }
+        map.on('locationfound', (e) => {
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.circleMarker(e.latlng, {
+                radius: 10, color: '#fff', fillColor: '#0066ff', fillOpacity: 0.9, weight: 3
+            }).addTo(map).bindPopup("Estás aquí").openPopup();
+        });
 
-    map.on('locationfound', (e) => {
-        if (userPos) map.removeLayer(userPos);
-        userPos = L.circleMarker(e.latlng, {
-            radius: 10, weight: 3, color: '#fff', fillColor: '#007bff', fillOpacity: 0.8
-        }).addTo(map);
-        userPos.bindPopup("Estás aquí").openPopup();
-    });
-
-    function changeMapStyle() {
-        currentStyle = (currentStyle + 1) % CONFIG.styles.length;
-        L.tileLayer(CONFIG.styles[currentStyle]).addTo(map);
-    }
-
-    // Iniciar
-    initApp();
-
-</script>
+        // Ejecutar al cargar la ventana
+        window.onload = initMap;
+    </script>
 </body>
 </html>
