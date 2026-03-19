@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         :root {
             --primary: #4facfe; --accent: #00f2fe; --bg: #050505; --card: #0f0f0f;
@@ -94,9 +96,254 @@
             justify-content: center; align-items: center;
         }
         .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
-    </style>
+
+        /* --- ESTILOS PUNTOS DE VENTA (LIMPIO) --- */
+.pdv-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--success);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    height: 550px; /* Un poco más de aire */
+}
+
+.pdv-form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    border-right: 1px solid #222;
+    background: #0a0a0a;
+}
+
+.pdv-form input, .pdv-form textarea {
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.pdv-form label {
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#map-admin-pdv {
+    width: 100%;
+    height: 100%;
+    background: #111;
+}
+
+/* --- BUSCADOR DE DIRECCIONES UNIFICADO --- */
+#sugerencias-dir {
+    position: absolute;
+    top: 100%; 
+    left: 0;
+    width: 100%;
+    background: #111 !important;
+    border: 1px solid var(--primary);
+    z-index: 10000 !important; /* Prioridad máxima sobre el mapa */
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    cursor: pointer;
+}
+
+.sugerencia-item {
+    padding: 12px;
+    border-bottom: 1px solid #222;
+    color: white;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+
+.sugerencia-item:hover {
+    background: var(--primary) !important;
+    color: black !important;
+    font-weight: bold;
+}
+
+/* Esto hace que la lista aparezca ARRIBA de todo y no se mueva */
+#sugerencias-dir {
+    position: absolute;
+    z-index: 9999; /* Valor altísimo para que no lo tape nada */
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #111;
+    border: 1px solid #00ff88;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.sugerencia-item:hover {
+    background: #222 !important;
+    color: #00ff88 !important;
+}
+
+/* --- SECCIÓN PUNTOS DE VENTA (ADMIN) --- */
+.pdv-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--success);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    height: 550px;
+}
+
+.pdv-form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    border-right: 1px solid #222;
+    background: #0a0a0a;
+}
+
+/* --- GRUPOS DE INPUT --- */
+.input-group {
+    position: relative; /* CRÍTICO: Mantiene la lista de direcciones en su lugar */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label { 
+    color: var(--success); 
+    font-size: 0.75rem; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+}
+
+.input-group input { 
+    background: #000; 
+    border: 1px solid #333; 
+    color: #fff; 
+    padding: 12px; 
+    border-radius: 6px; 
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: var(--primary);
+}
+
+/* --- BUSCADOR DE DIRECCIONES (AUTOCOMPLETE) --- */
+#sugerencias-dir {
+    position: absolute;
+    top: 100%; /* Aparece justo debajo del input */
+    left: 0;
+    width: 100%;
+    background: #111;
+    border: 1px solid var(--success);
+    z-index: 99999; /* Por encima de cualquier mapa o elemento */
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+}
+
+.sugerencia-item {
+    padding: 12px;
+    border-bottom: 1px solid #222;
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.sugerencia-item:hover {
+    background: var(--success) !important;
+    color: black !important;
+    font-weight: bold;
+}
+
+/* --- MAPA Y PREVIEW --- */
+#map-admin-pdv { 
+    width: 100%; 
+    height: 100%; 
+    background: #111; 
+}
+
+.preview-img { 
+    display: none; 
+    width: 100%; 
+    height: 120px; 
+    object-fit: cover; 
+    border-radius: 8px; 
+    margin-top: 5px;
+    border: 1px solid #333;
+}
+
+.pdv-container, .pdv-form {
+    background-color: #0a0a0a !important;
+    background-image: none !important;
+}
+
+.input-group input {
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+#sugerencias-dir {
+    background-color: #111 !important;
+}
+</style>
 </head>
 <body>
+   
+    <div class="pdv-container">
+    <div class="pdv-form">
+        <div class="input-group">
+            <label>Nombre del Local</label>
+            <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+        </div>
+        
+        <div class="input-group group-relativo"> 
+            <label>DIRECCIÓN Y CIUDAD (BUSCADOR AUTOMÁTICO)</label>
+            <input type="text" id="pdv-dir" 
+                   placeholder="Escribí calle y número..." 
+                   oninput="buscarDireccion(this.value)" 
+                   autocomplete="off">
+            
+            <div id="sugerencias-dir" class="sugerencias-container"></div>
+        </div>
+
+        <div class="input-group">
+            <label>WhatsApp</label>
+            <input type="text" id="pdv-wa" placeholder="54911...">
+        </div>
+
+        <div class="input-group">
+            <label>Foto del Frente</label>
+            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)">
+            <input type="hidden" id="pdv-foto">
+            <img id="img-pre" src="" class="preview-img">
+        </div>
+
+        <input type="hidden" id="pdv-lat">
+        <input type="hidden" id="pdv-lng">
+
+        <button class="btn-done" onclick="guardarPDV()">
+            <i class="fas fa-save"></i> GUARDAR COMERCIO
+        </button>
+    </div>
+    <div id="map-admin-pdv"></div>
+</div>
 
 <div class="overlay">
     <header>
@@ -127,6 +374,9 @@
     <button class="btn-cmd" id="btn-s" onclick="setView('s')" style="border-color:var(--primary)">
         <i class="fas fa-qrcode"></i> STICKERS
     </button>
+    <button class="btn-cmd" id="btn-pdv" onclick="setView('pdv')" style="border-color:var(--primary)">
+    <i class="fas fa-map-marker-alt"></i> PUNTOS DE VENTA
+</button>
 
     <div style="flex-grow: 1;"></div>
     
@@ -163,7 +413,7 @@
     <div class="stat-box" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.8); border: 1px solid var(--primary); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
     
     <span class="stat-label" style="color: var(--primary); font-weight: bold; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
-        <i class="fas fa-qrcode"></i> Producción de Stickers Premium
+        <i class="fas fa-qrcode"></i> Producción de Stickers
     </span>
     
     <div style="display: flex; gap: 15px; align-items: flex-end; margin-top: 15px; flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 20px;">
@@ -203,18 +453,6 @@
     </div>
 
     <div id="cont" class="grid"></div>
-</div>
-
-<div id="protocol-modal" onclick="toggleProtocol()">
-    <div class="protocol-box" onclick="event.stopPropagation()">
-        <h3 style="color:var(--primary)">Protocolo Operativo</h3>
-        <p style="font-size: 0.85rem; color: #ccc;">
-            - Use <b>tornillos de 13-14cm</b> para fijación de equipos.<br>
-            - Los Matches se cruzan por número de identificación.<br>
-            - Verifique siempre la identidad antes de borrar un registro.
-        </p>
-        <button class="btn-cmd" style="width:100%; margin-top:15px;" onclick="toggleProtocol()">CERRAR</button>
-    </div>
 </div>
 
 <script>
@@ -271,33 +509,38 @@
 
     function setView(v) {
     currentView = v;
-    // Esto quita la luz azul de todos los botones
+    
+    // 1. Esto es lo tuyo: quita la luz azul y la pone en el nuevo
     document.querySelectorAll('.btn-cmd').forEach(b => b.classList.remove('active'));
-    // Esto enciende el botón que tocaste
     if(document.getElementById('btn-'+v)) {
         document.getElementById('btn-'+v).classList.add('active');
     }
-    render(); // Y esto dibuja la lista
-}
 
-    async function borrar(tipo, nro) {
-    // Si es un match, usamos la ruta especial que limpia Hallazgos y Búsquedas
-    const endpoint = tipo === 'match' 
-        ? `/api/admin/borrar/match/${nro}` 
-        : `/api/admin/borrar/${tipo === 'h' ? 'hallazgo' : 'busqueda'}/${nro}`;
+    // 2. Seleccionamos las secciones (asegurate que los IDs coincidan)
+    const sectionPdv = document.getElementById('section-pdv');
+    const contNormal = document.getElementById('cont');
+    const statsGrid = document.querySelector('.stats-grid');
+    const acordeon = document.getElementById('lista-lotes-acordeon');
 
-    if(!confirm(`¿Confirmar eliminación definitiva del ID ${nro}?`)) return;
-
-    try {
-        const res = await fetch(endpoint, { method: 'DELETE' });
-        if (res.ok) {
-            console.log("Eliminación exitosa");
-            loadData(); // Recarga las estadísticas y la grilla
-        } else {
-            alert("Error al eliminar el registro");
-        }
-    } catch (error) {
-        console.error("Error en la conexión:", error);
+    // 3. EL "BYPASS":
+    if (v === 'pdv') {
+        // Ocultamos lo viejo y mostramos el mapa
+        if(sectionPdv) sectionPdv.style.display = 'block';
+        if(contNormal) contNormal.style.display = 'none';
+        if(statsGrid) statsGrid.style.display = 'none';
+        if(acordeon) acordeon.style.display = 'none';
+        
+        // Arrancamos el mapa
+        setTimeout(initMapAdmin, 100); 
+    } else {
+        // Volvemos a la normalidad: mostramos lo tuyo, ocultamos mapa
+        if(sectionPdv) sectionPdv.style.display = 'none';
+        if(contNormal) contNormal.style.display = 'grid';
+        if(statsGrid) statsGrid.style.display = 'grid';
+        if(acordeon) acordeon.style.display = 'block';
+        
+        // Ejecutamos TU render original sin tocarle una coma
+        render(); 
     }
 }
 
@@ -485,7 +728,7 @@ function filtrarStickers() {
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO PDF...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO LOTE...';
 
         const response = await fetch('/api/generar-lote-seguro', {
             method: 'POST',
@@ -495,15 +738,13 @@ function filtrarStickers() {
 
         if (!response.ok) throw new Error("Error en el servidor");
         
-        const data = await response.json();
-        const listaIDs = data.ids; 
-
-        // LLAMADA AL GENERADOR DE PDF ÚNICO
-        await generarPdfFinalTodoJunto(listaIDs, tipo);
+        // Refrescamos la data para que aparezca el lote en la lista
+        await loadData();
         
-        if (typeof loadData === "function") {
-            setTimeout(loadData, 1000); 
-        }
+        alert("✅ Lote guardado en Base de Datos. Iniciando descarga automática...");
+
+        // Lanzamos la descarga usando el botón de la lista (reutilizamos la lógica)
+        reimprimirLote(nuevoLoteId);
 
     } catch (error) {
         alert("ERROR: " + error.message);
@@ -516,146 +757,306 @@ function filtrarStickers() {
 /**
  * 2. Módulo de Impresión: Genera el HTML y CSS de los stickers
  */
-function reimprimirLote(loteId) {
+/**
+ * Módulo de Impresión Corregido
+ */
+async function reimprimirLote(loteId) {
     if (!db.stickers) return alert("Error: No hay base de datos de stickers.");
     
-    // 1. Buscamos los stickers de ese lote
     const stickersDelLote = db.stickers.filter(s => s.lote_id === loteId);
     if (stickersDelLote.length === 0) return alert("No hay datos para el lote: " + loteId);
 
-    // 2. EXTRAEMOS EL TIPO AUTOMÁTICAMENTE (Si no tiene, por defecto es 'moto')
     const tipoDetectado = stickersDelLote[0].tipo || 'moto';
-    
     const listaIDs = stickersDelLote.map(s => s.id_qr);
 
-    // 3. Abrimos la ventana sin preguntar nada
-    const win = window.open('', '_blank');
-    if (!win) return alert("El navegador bloqueó la ventana emergente.");
+    const botones = document.querySelectorAll('button');
+    let btnTarget = Array.from(botones).find(b => b.textContent.includes('REIMPRIMIR LOTE') && b.onclick?.toString().includes(loteId));
+    
+    if(!btnTarget) btnTarget = document.querySelector('button[onclick="prepararLote()"]');
 
-    win.document.write(generarHTMLImpresion(listaIDs, tipoDetectado));
-    win.document.close();
+    await generarPdfFinalTodoJunto(listaIDs, tipoDetectado, btnTarget);
 }
 
-async function generarPdfFinalTodoJunto(listaIDs, tipo) {
+async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
     const { jsPDF } = window.jspdf;
+    const textoOriginal = boton.innerHTML;
+    boton.disabled = true;
+
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'fixed';
     tempDiv.style.left = '-10000px';
     tempDiv.style.top = '0';
     
-    let stickersHTML = '';
-    listaIDs.forEach(idUnico => {
-        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
-        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
-
-        const estructura = `
-            <div class="final-unit">
-                <div class="b-red-ext">
-                    <div class="b-yellow-mid">
-                        <div class="b-red-int">
-                            <div class="final-body">
-                                <div class="final-header">
-                                    <div class="final-logo">S</div>
-                                    <div class="final-header-txt">
-                                        <div class="final-main-t">SI ME PERDI ESCANEAME ASI VUELVO CON MI DUEÑO</div>
-                                        <div class="final-sub-t">CENTRAL SANTUA</div>
-                                    </div>
-                                </div>
-
-                                <div class="final-center">
-                                    <div class="final-qr-box">
-                                        <img src="${qrImg}" class="final-qr">
-                                    </div>
-
-                                    <div class="final-id-container">
-                                        <span class="final-id-label">ID DE CONTROL</span>
-                                        <div class="final-id-val">${idUnico}</div>
-                                    </div>
-                                </div>
-
-                                <div class="final-footer">
-                                    <div class="final-test-tag">www.centralsantua.com.ar</div>
-                                    <div class="final-rights">© 2026 SANTUA SECURITY</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        stickersHTML += (tipo === 'auto') ? `<div class="final-page-auto">${estructura}${estructura}</div>` : estructura;
-    });
-
-    tempDiv.innerHTML = `
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
-            
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            .final-page-auto { width: 240mm; height: 110mm; display: flex; background: #fff; }
-            
-            .final-unit { 
-                width: 120mm; height: 110mm; padding: 0.5mm; /* Menos borde blanco exterior */
-                background: #fff; display: flex; 
-            }
-
-            /* Marco Triple */
-            .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
-            .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
-            .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
-
-            .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
-
-            .final-header { 
-                background: #000; color: #fff; padding: 4mm; 
-                display: flex; align-items: center; gap: 10px;
-            }
-            .final-logo {
-                background: #e60000; width: 9mm; height: 9mm; 
-                display: flex; align-items: center; justify-content: center;
-                font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt;
-            }
-            .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
-            .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
-
-            .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pb: 4mm; gap: 4mm; }
-
-            /* QR con marco negro fino */
-            .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
-            .final-qr { width: 38mm; height: 38mm; display: block; }
-
-            /* ID Box NEGRO + ROJO */
-            .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
-            .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
-            .final-id-val {
-                font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700;
-                color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px;
-                margin-top: 1mm; width: 100%;
-            }
-
-            .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
-            .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
-            .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
-        </style>
-        <div>${stickersHTML}</div>
-    `;
+    // CSS CORREGIDO: flex-direction row y flex-shrink para que no se deformen
+    tempDiv.innerHTML = `<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        .final-page-auto { 
+            width: 240mm; 
+            height: 110mm; 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: nowrap; 
+            background: #fff; 
+        }
+        .final-unit { 
+            width: 120mm; 
+            height: 110mm; 
+            padding: 0.5mm; 
+            background: #fff; 
+            display: flex; 
+            flex-shrink: 0;
+        }
+        .b-red-ext { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; }
+        .b-yellow-mid { border: 2.5pt solid #ffcc00; width: 100%; height: 100%; display: flex; flex: 1; }
+        .b-red-int { border: 2.5pt solid #e60000; width: 100%; height: 100%; display: flex; flex: 1; }
+        .final-body { background: #fff; flex: 1; display: flex; flex-direction: column; }
+        .final-header { background: #000; color: #fff; padding: 4mm; display: flex; align-items: center; gap: 10px; }
+        .final-logo { background: #e60000; width: 9mm; height: 9mm; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 900; border-radius: 2px; font-size: 14pt; }
+        .final-main-t { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; letter-spacing: 0.5px; }
+        .final-sub-t { font-family: 'Inter', sans-serif; font-size: 7pt; color: #ffcc00; font-weight: 700; }
+        .final-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4mm; gap: 4mm; }
+        .final-qr-box { padding: 2mm; border: 1pt solid #000; background: #fff; margin-top: 2mm; }
+        .final-qr { width: 38mm; height: 38mm; display: block; }
+        .final-id-container { text-align: center; width: 100%; padding: 0 10mm; }
+        .final-id-label { font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 900; color: #000; letter-spacing: 1px; }
+        .final-id-val { font-family: 'Space Mono', monospace; font-size: 24pt; font-weight: 700; color: #ff3333; background: #000; padding: 2mm 0; border-radius: 2px; margin-top: 1mm; width: 100%; }
+        .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
+        .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
+        .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
+    </style><div id="render-area"></div>`;
+    
     document.body.appendChild(tempDiv);
+    const renderArea = document.getElementById('render-area');
 
     const anchoMm = (tipo === 'auto') ? 240 : 120;
     const altoMm = 110;
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm] });
+    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm], compress: true });
 
-    const selectores = tipo === 'auto' ? '.final-page-auto' : '.final-unit';
-    const elementos = tempDiv.querySelectorAll(selectores);
+    for (let i = 0; i < listaIDs.length; i++) {
+        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> ${i + 1} / ${listaIDs.length}`;
 
-    for (let i = 0; i < elementos.length; i++) {
+        const idUnico = listaIDs[i];
+        const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+
+        const estructura = `
+            <div class="final-unit">
+                <div class="b-red-ext"><div class="b-yellow-mid"><div class="b-red-int">
+                    <div class="final-body">
+                        <div class="final-header"><div class="final-logo">S</div><div class="final-header-txt"><div class="final-main-t">SI ME PERDI ESCANEAME</div><div class="final-sub-t">CENTRAL SANTUA</div></div></div>
+                        <div class="final-center"><div class="final-qr-box"><img src="${qrImg}" class="final-qr"></div><div class="final-id-container"><span class="final-id-label">ID DE CONTROL</span><div class="final-id-val">${idUnico}</div></div></div>
+                        <div class="final-footer"><div class="final-test-tag">www.centralsantua.com.ar</div><div class="final-rights">© 2026 SANTUA</div></div>
+                    </div>
+                </div></div></div>
+            </div>`;
+
+        // Generamos el HTML según tipo
+        renderArea.innerHTML = (tipo === 'auto') 
+            ? `<div class="final-page-auto">${estructura}${estructura}</div>` 
+            : estructura;
+
+        await new Promise(resolve => {
+            const img = renderArea.querySelector('img');
+            if (img.complete) resolve(); else img.onload = resolve;
+        });
+
+        const elemento = renderArea.children[0];
+        const canvas = await html2canvas(elemento, { scale: 1.5, useCORS: true });
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+
         if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-        const canvas = await html2canvas(elementos[i], { scale: 3, useCORS: true });
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm);
+        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm, undefined, 'FAST');
+
+        renderArea.innerHTML = '';
+        canvas.remove();
+        
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 1000));
     }
 
-    doc.save(`SANTUA_ELITE_FINAL_${tipo.toUpperCase()}.pdf`);
+    doc.save(`SANTUA_${tipo.toUpperCase()}_LOTE_${Date.now()}.pdf`);
+    
+    boton.innerHTML = textoOriginal;
+    boton.disabled = false;
     document.body.removeChild(tempDiv);
+}
+
+//seccion mapa
+let mapAdmin;
+let markerAdmin;
+
+function initMapAdmin() {
+    if (mapAdmin) {
+        mapAdmin.resize(); // Si ya existe, solo lo ajustamos al tamaño actual
+        return;
+    }
+
+    mapAdmin = new maplibregl.Map({
+        container: 'map-admin-pdv',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [-58.3816, -34.6037], // Buenos Aires
+        zoom: 12
+    });
+
+    mapAdmin.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        document.getElementById('pdv-lat').value = lat.toFixed(6);
+        document.getElementById('pdv-lng').value = lng.toFixed(6);
+
+        if (markerAdmin) {
+            markerAdmin.setLngLat([lng, lat]);
+        } else {
+            markerAdmin = new maplibregl.Marker({ color: '#4facfe' })
+                .setLngLat([lng, lat])
+                .addTo(mapAdmin);
+        }
+    });
+}
+
+async function guardarPDV() {
+    const btn = document.querySelector('.btn-done');
+    const originalText = btn.innerHTML;
+    
+    const datos = {
+        nombre: document.getElementById('pdv-nombre').value,
+        direccion: document.getElementById('pdv-dir').value,
+        whatsapp: document.getElementById('pdv-wa').value,
+        foto: document.getElementById('pdv-foto').value,
+        lat: document.getElementById('pdv-lat').value,
+        lng: document.getElementById('pdv-lng').value
+    };
+
+    if (!datos.lat) {
+        alert("❌ Error: Debes seleccionar una dirección de la lista para obtener las coordenadas.");
+        return;
+    }
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/admin/guardar-pdv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert("✅ ¡Comercio guardado con éxito!");
+            location.reload(); // Recargamos para limpiar todo
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
+    } catch (err) {
+        alert("❌ ERROR al guardar: " + err.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// 1. BUSCADOR DE DIRECCIONES (Sin usar coordenadas manuales)
+let timerBusqueda;
+async function buscarDireccion(query) {
+    const lista = document.getElementById('sugerencias-dir');
+    clearTimeout(timerBusqueda);
+
+    if (query.length < 4) { 
+        lista.innerHTML = ''; 
+        return; 
+    }
+
+    // Esperamos 400ms antes de llamar a la API para no saturar
+    timerBusqueda = setTimeout(async () => {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=8`;
+            const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+            const data = await res.json();
+
+            if (data.length === 0) {
+                lista.innerHTML = '<div style="padding:10px; color:#888;">No se encontró nada...</div>';
+                return;
+            }
+
+            lista.innerHTML = data.map(item => {
+                const a = item.address;
+                const calle = a.road || a.pedestrian || a.suburb || '';
+                const nro = a.house_number || ''; 
+                const ciudad = a.city || a.town || a.village || 'Bs.As.';
+                const nombreFinal = `${calle} ${nro}, ${ciudad}`.replace(/, ,/g, ',');
+
+                return `
+                    <div class="sugerencia-item" 
+                         onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal.replace(/'/g, "\\'")}')"
+                         style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white; background: #111;">
+                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:8px;"></i>
+                        <b>${calle} ${nro}</b> <br>
+                        <small style="color: #888; margin-left:22px;">${ciudad}</small>
+                    </div>`;
+            }).join('');
+        } catch (e) { console.error("Error en búsqueda:", e); }
+    }, 400);
+}
+
+function seleccionarDireccion(lat, lon, nombreCompleto) {
+    // 1. Llenamos los campos de texto y coordenadas con precisión
+    document.getElementById('pdv-dir').value = nombreCompleto;
+    document.getElementById('pdv-lat').value = lat.toFixed(6);
+    document.getElementById('pdv-lng').value = lon.toFixed(6);
+    
+    // 2. Limpiamos la lista de sugerencias para que no tape nada
+    const lista = document.getElementById('sugerencias-dir');
+    if (lista) lista.innerHTML = '';
+
+    // 3. Movimiento de mapa nivel Google Maps
+    if (mapAdmin) {
+        mapAdmin.flyTo({
+            center: [lon, lat],
+            zoom: 18, // ZOOM MÁXIMO para ver la numeración y la puerta del local
+            essential: true,
+            speed: 1.5
+        });
+
+        // 4. Marcador Arrastrable (DRAGGABLE) para precisión manual
+        if (markerAdmin) {
+            markerAdmin.setLngLat([lon, lat]);
+        } else {
+            // Si no existe, lo creamos con color neón
+            markerAdmin = new maplibregl.Marker({ 
+                color: '#00ff88', 
+                draggable: true 
+            })
+            .setLngLat([lon, lat])
+            .addTo(mapAdmin);
+            
+            // EVENTO CRÍTICO: Si el buscador te tiró cerca pero no exacto, 
+            // el usuario mueve el marcador y los inputs se actualizan SOLOS.
+            markerAdmin.on('dragend', () => {
+                const lngLat = markerAdmin.getLngLat();
+                document.getElementById('pdv-lat').value = lngLat.lat.toFixed(6);
+                document.getElementById('pdv-lng').value = lngLat.lng.toFixed(6);
+                console.log("📍 Ubicación ajustada manualmente a la puerta del local");
+            });
+        }
+    }
+}
+
+// 2. PROCESAR FOTO (Convierte el archivo a texto Base64 para el server.js)
+function procesarFoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        document.getElementById('pdv-foto').value = base64; 
+        const preview = document.getElementById('img-pre');
+        preview.src = base64;
+        preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
 }
 
 </script>
