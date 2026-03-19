@@ -97,55 +97,44 @@
         }
         .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
 
+/* --- PANEL PUNTOS DE VENTA (ESTRUCTURA PRO) --- */
+.pdv-container {
+    display: none; /* Se activa por JS */
+    grid-template-columns: 350px 1fr; /* Columna fija para datos, resto para mapa */
+    background: #0d0d0d;
+    border: 1px solid #222;
+    border-radius: 12px;
+    height: 650px; /* Altura fija para que sea cómodo */
+    margin: 20px 0;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Columna de Formulario */
 .pdv-form {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    border-right: 1px solid #222;
-    background: #0a0a0a;
-}
-
-.pdv-form input, .pdv-form textarea {
-    background: #000;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-}
-
-.pdv-form label {
-    font-size: 0.7rem;
-    color: var(--primary);
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-/* --- PANEL PUNTOS DE VENTA --- */
-.pdv-container {
-    display: none; /* Se activa por setView */
-    grid-template-columns: 380px 1fr;
-    background: #080808;
-    border: 1px solid var(--primary);
-    border-radius: 12px;
-    overflow: hidden;
-    height: 600px;
-    margin-bottom: 30px;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.8);
-}
-
-.pdv-form {
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
     gap: 15px;
-    background: #0d0d0d;
+    background: #0a0a0a;
     border-right: 1px solid #222;
-    overflow-y: auto;
+    overflow-y: auto; /* Si hay muchos campos, scrollea acá adentro */
 }
 
+/* Columna de Mapa */
+.pdv-map-side {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+#map-admin-pdv {
+    width: 100%;
+    height: 100%; /* Ocupa todo el alto de su columna */
+}
+
+/* Inputs con estilo Central Santua */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -155,50 +144,39 @@
 .input-group label {
     color: var(--primary);
     font-size: 0.7rem;
-    font-weight: 900;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .input-group input {
     background: #000 !important;
-    border: 1px solid #222 !important;
+    border: 1px solid #333 !important;
     color: #fff !important;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+/* Botón de Guardar */
+.btn-done {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #000;
+    font-weight: bold;
+    border: none;
     padding: 12px;
     border-radius: 6px;
-    font-size: 0.9rem;
-    outline: none;
-    transition: 0.3s;
-}
-
-.input-group input:focus {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 10px rgba(79, 172, 254, 0.2);
-}
-
-.preview-img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid var(--primary);
+    cursor: pointer;
     margin-top: 10px;
 }
 
-/* --- ESTILO DE MARCADOR NEÓN --- */
-.maplibregl-marker {
-    cursor: pointer;
-    filter: drop-shadow(0 0 5px var(--primary));
-}
-
-#map-admin-pdv {
+/* Vista previa de foto */
+#img-pre {
     width: 100%;
-    height: 400px; /* Esto es lo que hace que se vea */
-    border-radius: 12px;
-    margin-top: 15px;
-    border: 1px solid var(--border);
-    position: relative; 
-    background-color: #000; 
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #333;
+    display: none; /* Se muestra al cargar foto */
 }
 </style>
 </head>
@@ -330,7 +308,7 @@
                 <input type="text" id="pdv-lng" placeholder="-58.3816" readonly style="background: #111; color: var(--success); border-color: #222;">
             </div>
         </div>
-        <small style="color: #666; font-size: 0.65rem;">* Hacé clic en el mapa para capturar las coordenadas exactas.</small>
+        <small style="color: #666; font-size: 0.65rem; margin-bottom: 10px; display: block;">* Hacé clic en el mapa para capturar las coordenadas.</small>
 
         <div class="input-group">
             <label>WhatsApp del Local</label>
@@ -341,23 +319,23 @@
             <label>Foto de Fachada</label>
             <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="font-size: 0.7rem;">
             <input type="hidden" id="pdv-foto">
-            <img id="img-pre" src="" class="preview-img" style="height: 80px; margin-top: 5px; border: 1px solid var(--primary); display:none;">
+            <img id="img-pre" src="" style="height: 100px; width: 100%; object-fit: cover; margin-top: 5px; border: 1px solid var(--primary); display:none; border-radius: 8px;">
         </div>
 
-        <button class="btn-done" onclick="guardarPDV()" style="margin-top: 10px; background: var(--success); color: #000; font-weight: bold; height: 45px;">
+        <button class="btn-done" onclick="guardarPDV()" style="margin-top: 10px; background: var(--success); color: #000; font-weight: bold; height: 45px; width: 100%; border: none; border-radius: 6px; cursor: pointer;">
             <i class="fas fa-save"></i> GUARDAR PUNTO DE VENTA
         </button>
     </div>
-    <div id="map-admin-pdv" style="border-left: 1px solid #222; background: #000;"></div>
+
+    <div id="map-admin-pdv" style="border-left: 1px solid #222; background: #000; width: 100%; height: 100%;"></div>
 </div>
 
-    <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input type="text" id="bus" placeholder="Filtrar registros..." onkeyup="render()">
-    </div>
-
-    <div id="cont" class="grid"></div>
+<div class="search-container">
+    <i class="fas fa-search"></i>
+    <input type="text" id="bus" placeholder="Filtrar registros..." onkeyup="render()">
 </div>
+
+<div id="cont" class="grid"></div>
 
 <script>
 
@@ -849,6 +827,7 @@ function initMapAdmin() {
 
     mapAdmin.on('click', (e) => {
         const { lng, lat } = e.lngLat;
+        // LLENAR LOS INPUTS DEL HTML
         document.getElementById('pdv-lat').value = lat.toFixed(6);
         document.getElementById('pdv-lng').value = lng.toFixed(6);
 
@@ -858,12 +837,6 @@ function initMapAdmin() {
             markerAdmin = new maplibregl.Marker({ color: '#00ff88', draggable: true })
                 .setLngLat([lng, lat])
                 .addTo(mapAdmin);
-            
-            markerAdmin.on('dragend', () => {
-                const pos = markerAdmin.getLngLat();
-                document.getElementById('pdv-lat').value = pos.lat.toFixed(6);
-                document.getElementById('pdv-lng').value = pos.lng.toFixed(6);
-            });
         }
     });
 }
