@@ -291,44 +291,53 @@
 </style>
 </head>
 <body>
+
+    <div id="section-pdv" class="pdv-container" style="display: none; margin: 20px;">
+   </div>
    
-    <div class="pdv-container">
+    <div id="section-pdv" class="pdv-container" style="display: none; margin: 20px;">
     <div class="pdv-form">
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-store"></i> NUEVO COMERCIO</h3>
+        
         <div class="input-group">
             <label>Nombre del Local</label>
-            <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos">
+            <input type="text" id="pdv-nombre" placeholder="Ej: Moto Repuestos 'El Rayo'">
         </div>
         
-        <div class="input-group group-relativo"> 
-            <label>DIRECCIÓN Y CIUDAD (BUSCADOR AUTOMÁTICO)</label>
-            <input type="text" id="pdv-dir" 
-                   placeholder="Escribí calle y número..." 
-                   oninput="buscarDireccion(this.value)" 
-                   autocomplete="off">
-            
-            <div id="sugerencias-dir" class="sugerencias-container"></div>
+        <div class="input-group">
+            <label>Dirección (Texto para mostrar)</label>
+            <input type="text" id="pdv-dir" placeholder="Ej: Av. Rivadavia 1234, CABA">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+                <label>Latitud</label>
+                <input type="text" id="pdv-lat" placeholder="-34.6037" readonly style="background: #111; color: var(--success);">
+            </div>
+            <div class="input-group">
+                <label>Longitud</label>
+                <input type="text" id="pdv-lng" placeholder="-58.3816" readonly style="background: #111; color: var(--success);">
+            </div>
+        </div>
+        <small style="color: #666; font-size: 0.65rem;">* Hacé clic en el mapa para marcar la ubicación exacta.</small>
+
+        <div class="input-group">
+            <label>WhatsApp (Sin +)</label>
+            <input type="text" id="pdv-wa" placeholder="5491122334455">
         </div>
 
         <div class="input-group">
-            <label>WhatsApp</label>
-            <input type="text" id="pdv-wa" placeholder="54911...">
-        </div>
-
-        <div class="input-group">
-            <label>Foto del Frente</label>
-            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)">
+            <label>Foto del Local</label>
+            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="font-size: 0.7rem;">
             <input type="hidden" id="pdv-foto">
-            <img id="img-pre" src="" class="preview-img">
+            <img id="img-pre" src="" class="preview-img" style="height: 80px; margin-top: 5px;">
         </div>
 
-        <input type="hidden" id="pdv-lat">
-        <input type="hidden" id="pdv-lng">
-
-        <button class="btn-done" onclick="guardarPDV()">
-            <i class="fas fa-save"></i> GUARDAR COMERCIO
+        <button class="btn-done" onclick="guardarPDV()" style="margin-top: 10px; background: var(--success); color: #000;">
+            <i class="fas fa-check-circle"></i> REGISTRAR PUNTO DE VENTA
         </button>
     </div>
-    <div id="map-admin-pdv"></div>
+    <div id="map-admin-pdv" style="border-left: 1px solid #222;"></div>
 </div>
 
 <div class="overlay">
@@ -873,28 +882,36 @@ let markerAdmin;
 
 function initMapAdmin() {
     if (mapAdmin) {
-        mapAdmin.resize(); // Si ya existe, solo lo ajustamos al tamaño actual
+        mapAdmin.resize();
         return;
     }
 
     mapAdmin = new maplibregl.Map({
         container: 'map-admin-pdv',
         style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        center: [-58.3816, -34.6037], // Buenos Aires
+        center: [-58.3816, -34.6037], 
         zoom: 12
     });
 
     mapAdmin.on('click', (e) => {
         const { lng, lat } = e.lngLat;
+        // Llenamos los inputs automáticamente al hacer clic
         document.getElementById('pdv-lat').value = lat.toFixed(6);
         document.getElementById('pdv-lng').value = lng.toFixed(6);
 
         if (markerAdmin) {
             markerAdmin.setLngLat([lng, lat]);
         } else {
-            markerAdmin = new maplibregl.Marker({ color: '#4facfe' })
+            markerAdmin = new maplibregl.Marker({ color: '#00ff88', draggable: true })
                 .setLngLat([lng, lat])
                 .addTo(mapAdmin);
+            
+            // Si lo arrastrás, también actualiza
+            markerAdmin.on('dragend', () => {
+                const pos = markerAdmin.getLngLat();
+                document.getElementById('pdv-lat').value = pos.lat.toFixed(6);
+                document.getElementById('pdv-lng').value = pos.lng.toFixed(6);
+            });
         }
     });
 }
