@@ -97,86 +97,123 @@
         }
         .protocol-box { background: #111; border: 1px solid var(--primary); width: 90%; max-width: 450px; padding: 20px; border-radius: 6px; }
 
-/* --- PANEL PUNTOS DE VENTA (ESTRUCTURA PRO) --- */
+/* --- PANEL PUNTOS DE VENTA (ESTRUCTURA PRO CORREGIDA) --- */
 .pdv-container {
-    display: none; /* Se activa por JS */
-    grid-template-columns: 350px 1fr; /* Columna fija para datos, resto para mapa */
+    /* IMPORTANTE: No pongas display: none acá, se maneja con la lógica de secciones */
+    display: grid; 
+    grid-template-columns: 380px 1fr; /* Formulario a la izquierda, mapa a la derecha */
     background: #0d0d0d;
     border: 1px solid #222;
     border-radius: 12px;
-    height: 650px; /* Altura fija para que sea cómodo */
+    height: 650px; 
     margin: 20px 0;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+/* Si tu JS oculta secciones, asegúrate de que cuando se muestre use 'display: grid' */
+.pdv-container[style*="display: block"] {
+    display: grid !important;
 }
 
 /* Columna de Formulario */
 .pdv-form {
-    padding: 20px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     background: #0a0a0a;
     border-right: 1px solid #222;
-    overflow-y: auto; /* Si hay muchos campos, scrollea acá adentro */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) #000;
+}
+
+/* Inputs con estilo Central Santua */
+.pdv-form .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pdv-form .input-group label {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pdv-form .input-group input {
+    background: #000 !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s;
+}
+
+.pdv-form .input-group input:focus {
+    border-color: var(--primary) !important;
+    outline: none;
 }
 
 /* Columna de Mapa */
 .pdv-map-side {
-    position: relative;
     width: 100%;
     height: 100%;
     background: #000;
+    position: relative;
 }
 
 #map-admin-pdv {
     width: 100%;
-    height: 100%; /* Ocupa todo el alto de su columna */
-}
-
-/* Inputs con estilo Central Santua */
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.input-group label {
-    color: var(--primary);
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-}
-
-.input-group input {
-    background: #000 !important;
-    border: 1px solid #333 !important;
-    color: #fff !important;
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    height: 100%;
 }
 
 /* Botón de Guardar */
 .btn-done {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: #000;
-    font-weight: bold;
-    border: none;
-    padding: 12px;
-    border-radius: 6px;
+    background: #00ff88 !important; /* Verde Neón para resaltar acción */
+    color: #000 !important;
+    font-weight: 900 !important;
+    border: none !important;
+    padding: 15px !important;
+    border-radius: 6px !important;
     cursor: pointer;
     margin-top: 10px;
+    text-transform: uppercase;
+    transition: 0.3s ease;
+}
+
+.btn-done:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
 }
 
 /* Vista previa de foto */
 #img-pre {
     width: 100%;
-    height: 150px;
+    height: 140px;
     object-fit: cover;
     border-radius: 8px;
-    border: 1px solid #333;
-    display: none; /* Se muestra al cargar foto */
+    border: 1px solid var(--primary);
+    margin-top: 10px;
+}
+
+/* RESPONSIVE: Si la pantalla es chica, se pone uno arriba del otro */
+@media (max-width: 900px) {
+    .pdv-container {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .pdv-form {
+        border-right: none;
+        border-bottom: 1px solid #222;
+    }
+    #map-admin-pdv {
+        height: 350px;
+    }
 }
 </style>
 </head>
@@ -286,7 +323,7 @@
 
 <div id="section-pdv" class="pdv-container" style="display: none; margin-bottom: 25px;">
     <div class="pdv-form">
-        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-store"></i> PANEL DE COMERCIOS</h3>
+        <h3 style="color:var(--primary); margin:0 0 10px 0;"><i class="fas fa-store"></i> PANEL DE COMERCIOS</h3>
         
         <div class="input-group">
             <label>Nombre del Local (Público)</label>
@@ -301,14 +338,20 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="input-group">
                 <label>Latitud Exacta</label>
-                <input type="text" id="pdv-lat" placeholder="-34.6037" readonly style="background: #111; color: var(--success); border-color: #222;">
+                <input type="text" id="pdv-lat" placeholder="-34.6037" 
+                       style="background: #000; color: var(--success); border: 1px solid #444;"
+                       oninput="actualizarMapaDesdeInputs()">
             </div>
             <div class="input-group">
                 <label>Longitud Exacta</label>
-                <input type="text" id="pdv-lng" placeholder="-58.3816" readonly style="background: #111; color: var(--success); border-color: #222;">
+                <input type="text" id="pdv-lng" placeholder="-58.3816" 
+                       style="background: #000; color: var(--success); border: 1px solid #444;"
+                       oninput="actualizarMapaDesdeInputs()">
             </div>
         </div>
-        <small style="color: #666; font-size: 0.65rem; margin-bottom: 10px; display: block;">* Hacé clic en el mapa para capturar las coordenadas.</small>
+        <small style="color: var(--primary); font-size: 0.65rem; margin-bottom: 10px; display: block; opacity: 0.8;">
+            <i class="fas fa-info-circle"></i> Podés escribir las coordenadas o tocar el mapa.
+        </small>
 
         <div class="input-group">
             <label>WhatsApp del Local</label>
@@ -317,17 +360,17 @@
 
         <div class="input-group">
             <label>Foto de Fachada</label>
-            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="font-size: 0.7rem;">
+            <input type="file" id="pdv-file" accept="image/*" onchange="procesarFoto(this)" style="font-size: 0.7rem; color: #888;">
             <input type="hidden" id="pdv-foto">
-            <img id="img-pre" src="" style="height: 100px; width: 100%; object-fit: cover; margin-top: 5px; border: 1px solid var(--primary); display:none; border-radius: 8px;">
+            <img id="img-pre" src="" style="height: 120px; width: 100%; object-fit: cover; margin-top: 8px; border: 1px solid var(--primary); display:none; border-radius: 8px; box-shadow: 0 0 10px rgba(79, 172, 254, 0.2);">
         </div>
 
-        <button class="btn-done" onclick="guardarPDV()" style="margin-top: 10px; background: var(--success); color: #000; font-weight: bold; height: 45px; width: 100%; border: none; border-radius: 6px; cursor: pointer;">
+        <button class="btn-done" onclick="guardarPDV()" style="margin-top: 10px; background: var(--success); color: #000; font-weight: 900; height: 50px; width: 100%; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
             <i class="fas fa-save"></i> GUARDAR PUNTO DE VENTA
         </button>
     </div>
 
-    <div id="map-admin-pdv" style="border-left: 1px solid #222; background: #000; width: 100%; height: 100%;"></div>
+    <div id="map-admin-pdv" style="border-left: 1px solid #222; background: #000; position: relative;"></div>
 </div>
 
 <div class="search-container">
@@ -763,26 +806,113 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
     document.body.removeChild(tempDiv);
 }
 
-//seccion mapa
+// ==========================================
+// SECCIÓN MAPA Y COMERCIOS - CENTRAL SANTUA
+// ==========================================
 let mapAdmin;
 let markerAdmin;
+let timerBusqueda;
 
+function initMapAdmin() {
+    if (mapAdmin) {
+        // Aumentamos a 300ms para asegurar que el CSS Grid terminó de acomodarse
+        setTimeout(() => mapAdmin.resize(), 300);
+        return;
+    }
+
+    mapAdmin = new maplibregl.Map({
+        container: 'map-admin-pdv',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [-58.3816, -34.6037], 
+        zoom: 12,
+        antialias: true,
+        trackResize: true // Esto ayuda a que el mapa detecte cambios de tamaño automáticamente
+    });
+
+    mapAdmin.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    // ESTO ES LO QUE FALTA: Fuerza el resize apenas el mapa termina de cargar
+    mapAdmin.on('load', () => {
+        mapAdmin.resize();
+    });
+
+    mapAdmin.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        actualizarPosicionPDV(lat, lng);
+    });
+}
+
+// 2. ACTUALIZAR POSICIÓN (Desde clic o desde buscador)
+function actualizarPosicionPDV(lat, lng) {
+    document.getElementById('pdv-lat').value = parseFloat(lat).toFixed(6);
+    document.getElementById('pdv-lng').value = parseFloat(lng).toFixed(6);
+
+    if (markerAdmin) {
+        markerAdmin.setLngLat([lng, lat]);
+    } else {
+        markerAdmin = new maplibregl.Marker({ color: '#00ff88', draggable: true })
+            .setLngLat([lng, lat])
+            .addTo(mapAdmin);
+        
+        markerAdmin.on('dragend', () => {
+            const pos = markerAdmin.getLngLat();
+            actualizarPosicionPDV(pos.lat, pos.lng);
+        });
+    }
+    mapAdmin.flyTo({ center: [lng, lat], zoom: 15 });
+}
+
+// 3. PERMITIR ESCRIBIR COORDENADAS A MANO
+function actualizarMapaDesdeInputs() {
+    const lat = parseFloat(document.getElementById('pdv-lat').value);
+    const lng = parseFloat(document.getElementById('pdv-lng').value);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+        if (markerAdmin) {
+            markerAdmin.setLngLat([lng, lat]);
+        } else {
+            markerAdmin = new maplibregl.Marker({ color: '#00ff88', draggable: true })
+                .setLngLat([lng, lat])
+                .addTo(mapAdmin);
+        }
+        mapAdmin.setCenter([lng, lat]);
+    }
+}
+
+// 4. PROCESAR FOTO (Base64 + Preview)
+function procesarFoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        document.getElementById('pdv-foto').value = base64; 
+        const preview = document.getElementById('img-pre');
+        if(preview) {
+            preview.src = base64;
+            preview.style.display = 'block';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// 5. GUARDAR EN BASE DE DATOS
 async function guardarPDV() {
     const btn = document.querySelector('.btn-done');
     const originalText = btn.innerHTML;
     
     const datos = {
-        nombre: document.getElementById('pdv-nombre').value,
-        direccion: document.getElementById('pdv-dir').value,
-        whatsapp: document.getElementById('pdv-wa').value,
+        nombre: document.getElementById('pdv-nombre').value.trim(),
+        direccion: document.getElementById('pdv-dir').value.trim(),
+        whatsapp: document.getElementById('pdv-wa').value.trim(),
         foto: document.getElementById('pdv-foto').value, 
-        lat: document.getElementById('pdv-lat').value,
-        lng: document.getElementById('pdv-lng').value
+        lat: parseFloat(document.getElementById('pdv-lat').value),
+        lng: parseFloat(document.getElementById('pdv-lng').value)
     };
 
-    // Validación: que no falte lo básico
-    if (!datos.nombre || !datos.lat || !datos.lng) {
-        alert("❌ ERROR: Falta el nombre del local o marcar la ubicación exacta en el mapa.");
+    if (!datos.nombre || isNaN(datos.lat) || isNaN(datos.lng)) {
+        alert("⚠️ Falta el nombre o la ubicación en el mapa.");
         return;
     }
 
@@ -796,96 +926,19 @@ async function guardarPDV() {
             body: JSON.stringify(datos)
         });
 
-        const result = await res.json();
-
         if (res.ok) {
-            alert("✅ ¡Comercio guardado con éxito en Central Santua!");
+            alert("✅ ¡Punto de Venta guardado!");
             location.reload(); 
         } else {
+            const result = await res.json();
             throw new Error(result.error || "Error en el servidor");
         }
     } catch (err) {
-        alert("❌ ERROR al guardar: " + err.message);
+        alert("❌ Error: " + err.message);
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
-}
-// --- INICIALIZAR MAPA (SOLO CLIC) ---
-function initMapAdmin() {
-    if (mapAdmin) {
-        setTimeout(() => mapAdmin.resize(), 100);
-        return;
-    }
-
-    mapAdmin = new maplibregl.Map({
-        container: 'map-admin-pdv',
-        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        center: [-58.3816, -34.6037], 
-        zoom: 12
-    });
-
-    mapAdmin.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        // LLENAR LOS INPUTS DEL HTML
-        document.getElementById('pdv-lat').value = lat.toFixed(6);
-        document.getElementById('pdv-lng').value = lng.toFixed(6);
-
-        if (markerAdmin) {
-            markerAdmin.setLngLat([lng, lat]);
-        } else {
-            markerAdmin = new maplibregl.Marker({ color: '#00ff88', draggable: true })
-                .setLngLat([lng, lat])
-                .addTo(mapAdmin);
-        }
-    });
-}
-
-    // Esperamos 400ms antes de llamar a la API para no saturar
-    timerBusqueda = setTimeout(async () => {
-        try {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=8`;
-            const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
-            const data = await res.json();
-
-            if (data.length === 0) {
-                lista.innerHTML = '<div style="padding:10px; color:#888;">No se encontró nada...</div>';
-                return;
-            }
-
-            lista.innerHTML = data.map(item => {
-                const a = item.address;
-                const calle = a.road || a.pedestrian || a.suburb || '';
-                const nro = a.house_number || ''; 
-                const ciudad = a.city || a.town || a.village || 'Bs.As.';
-                const nombreFinal = `${calle} ${nro}, ${ciudad}`.replace(/, ,/g, ',');
-
-                return `
-                    <div class="sugerencia-item" 
-                         onclick="seleccionarDireccion(${item.lat}, ${item.lon}, '${nombreFinal.replace(/'/g, "\\'")}')"
-                         style="padding: 12px; border-bottom: 1px solid #333; cursor: pointer; color: white; background: #111;">
-                        <i class="fas fa-map-marker-alt" style="color:#00ff88; margin-right:8px;"></i>
-                        <b>${calle} ${nro}</b> <br>
-                        <small style="color: #888; margin-left:22px;">${ciudad}</small>
-                    </div>`;
-            }).join('');
-        } catch (e) { console.error("Error en búsqueda:", e); }
-    }, 400);
-
-// 2. PROCESAR FOTO (Convierte el archivo a texto Base64 para el server.js)
-function procesarFoto(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64 = e.target.result;
-        document.getElementById('pdv-foto').value = base64; 
-        const preview = document.getElementById('img-pre');
-        preview.src = base64;
-        preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
 }
 
 </script>
