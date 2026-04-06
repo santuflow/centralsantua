@@ -6,7 +6,6 @@
     <title>Central Santua | Red Oficial de Hallazgos</title>
     <link rel="stylesheet" href="style.css">
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
 
@@ -69,13 +68,6 @@
     </div>
 </div>
 <div class="button-group">
-    <button class="btn btn-activar-negro" onclick="verificarAccesoActivacion()" style="grid-column: 1 / -1; margin-bottom: 10px;">
-    <span class="icon">✨</span>
-    <div class="btn-content">
-        <span class="text">ACTIVAR STICKER QR</span>
-    </div>
-    <span class="icon">✨</span>
-</button>
 
     <a href="encontre.html" class="btn btn-encontre">
         <span class="icon">🔍</span>
@@ -357,108 +349,8 @@ async function cerrarSesionTotal() {
     }
 }
 
-let html5QrCode; // Variable global para el control de la cámara
-
-function verificarAccesoActivacion() {
-    // Verificamos si el usuario está logueado con tu variable actual
-    const logueado = localStorage.getItem('estaLogueado');
-
-    if (logueado !== 'true') {
-        alert("¡Hola! Para activar tu sticker y proteger tus objetos, primero debés iniciar sesión.");
-        window.location.href = "login.html";
-        return;
-    }
-
-    // Si está logueado, abrimos la interfaz del escáner
-    abrirInterfazCamara();
-}
-
-function abrirInterfazCamara() {
-    // Mostramos el contenedor negro que ya creaste
-    document.getElementById('scanner-wrapper').style.display = 'flex';
-    
-    html5QrCode = new Html5Qrcode("reader");
-    
-    const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0 
-    };
-
-    // Iniciamos la cámara trasera
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        (decodedText) => {
-    detenerEscaneo();
-    
-// Extraemos solo el ID si es una URL completa (ej: santua.com?id=SN123 -> SN123)
-let idLimpio = decodedText;
-if(decodedText.includes('id=')) {
-    idLimpio = decodedText.split('id=')[1].split('&')[0];
-}
-
-// Le preguntamos al servidor qué hacer con este ID
-fetch(`/api/validar-qr/${idLimpio}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "activado") {
-            // Si ya está pago, lo mandamos a recuperar (no importa si está logueado)
-            window.location.href = `recuperar.html?id=${idLimpio}`;
-        } else {
-            // --- CAMBIO AQUÍ: VALIDACIÓN DE LOGIN ---
-            const logueado = localStorage.getItem('estaLogueado');
-
-            if (logueado !== 'true') {
-                // Si no está logueado, avisamos y mandamos al login
-                alert("¡Sticker detectado! Para activarlo y proteger tu patente, primero debes Iniciar Sesión o Registrarte.");
-                localStorage.setItem("qr_escaneado_pendiente", idLimpio);
-                window.location.href = "login.html";
-            } else {
-                // Si está logueado y es nuevo, lo mandamos a pagar
-                localStorage.setItem("qr_escaneado_pendiente", idLimpio);
-                window.location.href = `presentacion_pago.html?id=${idLimpio}`;
-            }
-        }
-    })
-    .catch(err => {
-        console.error("Error validando:", err);
-        // Si falla el servidor, por seguridad mandamos a recuperar
-        window.location.href = `recuperar.html?id=${idLimpio}`;
-    });
-}
-
-    ).catch(err => {
-        // En lugar de un alert seco, damos instrucciones
-        console.error("Error de cámara:", err);
-        alert("¡Ups! Para escanear el sticker necesitamos permiso para usar la cámara.\n\n" + 
-              "Si no te apareció el cartel, buscá el ícono de la 'Cámara' o un 'Candado' en la barra de direcciones (arriba) y dale a 'Permitir'.");
-        detenerEscaneo();
-    });
-}
-
-function detenerEscaneo() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            document.getElementById('scanner-wrapper').style.display = 'none';
-        }).catch(() => {
-            document.getElementById('scanner-wrapper').style.display = 'none';
-        });
-    } else {
-        document.getElementById('scanner-wrapper').style.display = 'none';
-    }
-}
-
 </script>
 
-<div id="scanner-wrapper" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
-    <div style="background: #111; padding: 20px; border-radius: 15px; border: 2px solid #4facfe; width: 90%; max-width: 450px; text-align: center;">
-        <h2 style="color: white; margin-bottom: 20px;">Escaneá tu Sticker QR</h2>
-        <div id="reader" style="width: 100%; border-radius: 10px; overflow: hidden; background: black;"></div>
-        <button onclick="detenerEscaneo()" style="margin-top: 25px; background: #ff4d4d; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-            CANCELAR
-        </button>
-    </div>
 </div>
 </body>
 </html>

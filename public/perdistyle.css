@@ -8,7 +8,7 @@
 }
 
 body {
-    background: url('bandera.jpg') no-repeat center center fixed;
+    background: url('fondo.jpg') no-repeat center center fixed;
     background-size: cover;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #ffffff;
