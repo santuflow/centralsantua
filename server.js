@@ -910,28 +910,6 @@ app.get('/api/mis-stickers', async (req, res) => {
     }
 });
 
-const ipsAutorizadas = ['190.99.71.6']; // Tu IP
-
-app.use((req, res, next) => {
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const esAutorizado = ipsAutorizadas.some(ip => clientIp.includes(ip));
-
-    if (esAutorizado) {
-        next();
-    } else {
-        res.status(403).send(`
-            <div style="text-align: center; padding: 100px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff; height: 100vh; margin: 0;">
-                <h1 style="font-size: 80px; margin-bottom: 20px;">🚀</h1>
-                <h2 style="color: #1a1a1a; font-size: 32px; letter-spacing: 2px;">¡PRÓXIMAMENTE!</h2>
-                <p style="color: #666; font-size: 20px; margin-bottom: 40px;">Estamos preparando algo increíble para vos.</p>
-                <div style="width: 100px; height: 4px; background-color: #d32f2f; margin: 0 auto 30px;"></div>
-                <p style="font-weight: bold; color: #333; font-size: 22px; text-transform: uppercase;">SANTUA</p>
-                <p style="margin-top: 50px; font-size: 14px; color: #bbb;">© 2026 - Todos los derechos reservados</p>
-            </div>
-        `);
-    }
-});
-
 // Ruta para que el Admin guarde un nuevo Punto de Venta
 app.post('/api/admin/guardar-pdv', async (req, res) => {
     try {
