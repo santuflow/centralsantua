@@ -9,7 +9,7 @@
 
 body {
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    background: url('bandera.jpg') no-repeat center center fixed;
+    background: url('fondo.jpg') no-repeat center center fixed;
     background-size: cover;
     color: #ffffff;
     display: flex;
