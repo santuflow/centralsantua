@@ -906,17 +906,6 @@ app.get('/api/puntos-venta', async (req, res) => {
     }
 });
 
-const PdvSchema = new mongoose.Schema({
-    nombre: String,
-    direccion: String,
-    whatsapp: String,
-    foto: String,
-    lat: Number,
-    lng: Number,
-    fecha_registro: { type: Date, default: Date.now }
-});
-const PDV = mongoose.model('PuntosDeVenta', PdvSchema);
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);
