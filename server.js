@@ -250,68 +250,77 @@ app.post('/api/reportar', async (req, res) => {
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
 app.post('/api/buscar', async (req, res) => { 
-    // 1. Extraemos capturando ambas posibilidades para el contacto
-    const { nro, categoria, telefono, whatsapp } = req.body;
-    const nroLimpio = normalizar(nro);
-    const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+    try {
+        // 1. Extraemos capturando ambas posibilidades para el contacto
+        const { nro, categoria, telefono, whatsapp } = req.body;
+        const nroLimpio = normalizar(nro);
+        const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-    // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
-    const telefonoFinal = telefono || whatsapp || "S/D";
+        // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
+        const telefonoFinal = telefono || whatsapp || "S/D";
 
-    // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
-    const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
+        // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
+        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
 
-    // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
-    const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
+        // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+        const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
-    // --- LÓGICA DE REGISTRO EN ADMIN ---
-    if (!yaExisteBusquedaEnAdmin) {
-        const busqueda = { 
-            ...req.body, 
-            nro: nroLimpio, 
-            categoria: catFija,
-            telefono: telefonoFinal, // <--- Guardamos el contacto verificado
-            fecha: new Date().toLocaleString() 
-        };
-        
-        // Guardamos en la memoria local (Panel Admin actual)
-        busquedas.push(busqueda);
+        // --- LÓGICA DE REGISTRO EN ADMIN ---
+        if (!yaExisteBusquedaEnAdmin) {
+            const busqueda = { 
+                ...req.body, 
+                nro: nroLimpio, 
+                categoria: catFija,
+                telefono: telefonoFinal, // <--- Guardamos el contacto verificado
+                fecha: new Date().toLocaleString() 
+            };
+            
+            // Guardamos en la memoria local (Panel Admin actual)
+            busquedas.push(busqueda);
 
-        // --- GUARDADO EN LA NUBE (MONGODB) ---
-        try {
-            const nuevaBusquedaNube = new Busqueda(busqueda);
-            await nuevaBusquedaNube.save(); 
-            console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
-        } catch (error) {
-            console.error("❌ Error al guardar en MongoDB:", error.message);
+            // --- GUARDADO EN LA NUBE (MONGODB) ---
+            try {
+                const nuevaBusquedaNube = new Busqueda(busqueda);
+                await nuevaBusquedaNube.save(); 
+                console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
+            } catch (error) {
+                console.error("❌ Error al guardar en MongoDB:", error.message);
+            }
+        }
+
+        // --- LÓGICA DE RESPUESTA AL USUARIO ---
+
+        // SI YA APARECIÓ (MATCH)
+        if (yaEncontrado) {
+            return res.json({ 
+                success: true, 
+                found: true, // Mantengo compatibilidad si usas 'found' o 'encontrado'
+                encontrado: true, 
+                datos: yaEncontrado 
+            });
+        }
+
+        // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO
+        if (yaExisteBusquedaEnAdmin) {
+            return res.json({ 
+                success: false, 
+                error: "repetido",
+                message: `Ya tienes una búsqueda activa para el número ${nroLimpio}.` 
+            });
+        }
+
+        // SI ES TODO NUEVO Y NO HAY MATCH
+        res.json({ 
+            success: true, 
+            encontrado: false 
+        });
+
+    } catch (err) {
+        console.error("Error crítico en /api/buscar:", err);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Error interno del servidor" });
         }
     }
-
-    // --- LÓGICA DE RESPUESTA AL USUARIO ---
-
-    // SI YA APARECIÓ (MATCH): No importa si es repetido, ¡BOMBAZO SIEMPRE!
-    if (yaEncontrado) {
-        return res.json({ 
-            success: true, 
-            encontrado: true, 
-            datos: yaEncontrado 
-        });
-    }
-
-    // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO: Avisamos que está repetido
-    if (yaExisteBusquedaEnAdmin) {
-        return res.json({ 
-            success: false, 
-            error: "repetido",
-            message: `Ya tienes una búsqueda activa para el número ${nroLimpio}.` 
-        });
-    }
-
-    // SI ES TODO NUEVO Y NO HAY MATCH: Éxito sin encuentro todavía
-    res.json({ 
-        success: true, 
-        encontrado: false 
-    });
 });
 
 // =========================================
