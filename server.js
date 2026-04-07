@@ -262,7 +262,7 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
-app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
+app.post('/api/buscar', async (req, res) => { 
     const { nro, categoria, telefono } = req.body;
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
@@ -274,22 +274,26 @@ app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
     const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
     // --- LÓGICA DE REGISTRO EN ADMIN ---
-    // Si la búsqueda es nueva, la guardamos para que aparezca en el panel admin
     if (!yaExisteBusquedaEnAdmin) {
         const busqueda = { 
             ...req.body, 
             nro: nroLimpio, 
             categoria: catFija,
-            telefono: telefono,
+            telefono: telefono, // <--- Esto asegura que guarde el dato real del formulario
             fecha: new Date().toLocaleString() 
         };
+        
+        // Guardamos en la memoria local (Panel Admin actual)
         busquedas.push(busqueda);
 
-        // --- SOLO AGREGAMOS ESTO PARA LA NUBE ---
-        await new Busqueda(busqueda).save(); 
-        // ----------------------------------------
-
-        console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN Y NUBE: [${catFija}] ${nroLimpio}`);
+        // --- GUARDADO EN LA NUBE (MONGODB) ---
+        try {
+            const nuevaBusquedaNube = new Busqueda(busqueda);
+            await nuevaBusquedaNube.save(); 
+            console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN Y NUBE: [${catFija}] ${nroLimpio} - Tel: ${telefono}`);
+        } catch (error) {
+            console.error("❌ Error al guardar en MongoDB:", error.message);
+        }
     }
 
     // --- LÓGICA DE RESPUESTA AL USUARIO ---
