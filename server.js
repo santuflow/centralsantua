@@ -195,10 +195,15 @@ function asegurarAdmin(req, res, next) {
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
-app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el 'async'
-    const { nro, categoria, telefono } = req.body;
+app.post('/api/reportar', async (req, res) => {
+    // 1. Extraemos los datos intentando capturar 'telefono' o 'whatsapp'
+    const { nro, categoria, telefono, whatsapp } = req.body;
+    
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+    
+    // 2. Definimos el teléfono final: usa 'telefono', si no 'whatsapp', y si no hay nada 'S/D'
+    const telefonoFinal = telefono || whatsapp || "S/D";
 
     const yaExisteEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
     const alguienLoBusca = busquedas.find(b => b.nro === nroLimpio && b.categoria === catFija);
@@ -208,39 +213,22 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
             ...req.body, 
             nro: nroLimpio, 
             categoria: catFija,
-            telefono: telefono, 
+            telefono: telefonoFinal, // <--- Usamos la variable blindada
             fecha: new Date().toLocaleString(),
             idInterno: Date.now() 
         };
+        
         hallazgos.push(nuevo);
-
-        // --- SOLO AGREGAMOS ESTO ---
         await new Hallazgo(nuevo).save(); 
-        console.log(`✅ NUBE: Hallazgo guardado en base de datos: ${nroLimpio}`);
-        // ---------------------------
+        console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
     }
 
+    // ... (El resto del código de la función queda igual)
     if (alguienLoBusca) {
-        return res.json({ 
-            success: true, 
-            matchInmediato: true, 
-            datosDuenio: alguienLoBusca 
-        });
+        return res.json({ success: true, matchInmediato: true, datosDuenio: alguienLoBusca });
     }
-
-    if (yaExisteEnAdmin) {
-        return res.json({ 
-            success: false, 
-            error: "repetido",
-            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
-        });
-    }
-
-    res.json({ 
-        success: true, 
-        matchInmediato: false, 
-        datosDuenio: null 
-    });
+    res.json({ success: true, matchInmediato: false, datosDuenio: null });
+});
 
     // SI NO HAY MATCH Y YA EXISTÍA: Entonces avisamos que es repetido
     if (yaExisteEnAdmin) {
@@ -257,20 +245,23 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
         matchInmediato: false, 
         datosDuenio: null 
     });
-});
 
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
 app.post('/api/buscar', async (req, res) => { 
-    const { nro, categoria, telefono } = req.body;
+    // 1. Extraemos capturando ambas posibilidades para el contacto
+    const { nro, categoria, telefono, whatsapp } = req.body;
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-    // 1. BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
+    // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
+    const telefonoFinal = telefono || whatsapp || "S/D";
+
+    // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
     const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
 
-    // 2. BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+    // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
     const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
     // --- LÓGICA DE REGISTRO EN ADMIN ---
@@ -279,7 +270,7 @@ app.post('/api/buscar', async (req, res) => {
             ...req.body, 
             nro: nroLimpio, 
             categoria: catFija,
-            telefono: telefono, // <--- Esto asegura que guarde el dato real del formulario
+            telefono: telefonoFinal, // <--- Guardamos el contacto verificado
             fecha: new Date().toLocaleString() 
         };
         
@@ -290,7 +281,7 @@ app.post('/api/buscar', async (req, res) => {
         try {
             const nuevaBusquedaNube = new Busqueda(busqueda);
             await nuevaBusquedaNube.save(); 
-            console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN Y NUBE: [${catFija}] ${nroLimpio} - Tel: ${telefono}`);
+            console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
         } catch (error) {
             console.error("❌ Error al guardar en MongoDB:", error.message);
         }
