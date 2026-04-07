@@ -196,41 +196,21 @@ function asegurarAdmin(req, res, next) {
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
 app.post('/api/reportar', async (req, res) => {
-    // 1. Extraemos los datos intentando capturar 'telefono' o 'whatsapp'
     const { nro, categoria, telefono, whatsapp } = req.body;
     
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
-    
-    // 2. Definimos el teléfono final: usa 'telefono', si no 'whatsapp', y si no hay nada 'S/D'
     const telefonoFinal = telefono || whatsapp || "S/D";
 
-    const yaExisteBusquedaEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
-    const alguienLoBusca = busquedas.find(b => b.nro === nroLimpio && b.categoria === catFija);
+    const yaExisteBusquedaEnAdmin = hallazgos.some(
+        h => h.nro === nroLimpio && h.categoria === catFija
+    );
 
-    if (!yaExisteBusquedaEnAdmin) {
-        const nuevo = { 
-            ...req.body, 
-            nro: nroLimpio, 
-            categoria: catFija,
-            telefono: telefonoFinal, // <--- Usamos la variable blindada
-            fecha: new Date().toLocaleString(),
-            idInterno: Date.now() 
-        };
-        
-        hallazgos.push(nuevo);
-        await new Hallazgo(nuevo).save(); 
-        console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
-    }
+    const alguienLoBusca = busquedas.find(
+        b => b.nro === nroLimpio && b.categoria === catFija
+    );
 
-    // ... (El resto del código de la función queda igual)
-    if (alguienLoBusca) {
-        return res.json({ success: true, matchInmediato: true, datosDuenio: alguienLoBusca });
-    }
-    res.json({ success: true, matchInmediato: false, datosDuenio: null });
-});
-
-    // SI NO HAY MATCH Y YA EXISTÍA: Entonces avisamos que es repetido
+    // ❌ SI YA EXISTE → cortar acá
     if (yaExisteBusquedaEnAdmin) {
         return res.json({ 
             success: false, 
@@ -239,13 +219,41 @@ app.post('/api/reportar', async (req, res) => {
         });
     }
 
-    // SI ES TODO NUEVO Y NO HUBO MATCH: Registro normal exitoso
+    // ✅ SI NO EXISTE → guardamos
+    const nuevo = { 
+        ...req.body, 
+        nro: nroLimpio, 
+        categoria: catFija,
+        telefono: telefonoFinal,
+        fecha: new Date().toLocaleString(),
+        idInterno: Date.now() 
+    };
+
+    hallazgos.push(nuevo);
+
+    try {
+        await new Hallazgo(nuevo).save(); 
+        console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
+    } catch (error) {
+        console.error("❌ Error guardando hallazgo:", error.message);
+    }
+
+    // 🔍 SI HAY MATCH
+    if (alguienLoBusca) {
+        return res.json({ 
+            success: true, 
+            matchInmediato: true, 
+            datosDuenio: alguienLoBusca 
+        });
+    }
+
+    // ✅ TODO OK
     res.json({ 
         success: true, 
         matchInmediato: false, 
         datosDuenio: null 
     });
-
+});
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
