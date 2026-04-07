@@ -222,7 +222,7 @@ async function gestionarInterfaz() {
 
     const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
 
-    // 2. APLICAR CAMBIOS VISUALES (Usamos setProperty para forzar el !important)
+
     if (logueadoLocal) {
         authContainer.style.setProperty('display', 'none', 'important');
         botonMenuPrivado.style.setProperty('display', 'flex', 'important');
@@ -249,11 +249,10 @@ async function gestionarInterfaz() {
 // Inicialización limpia
 document.addEventListener("DOMContentLoaded", () => {
     gestionarInterfaz(); 
-    // ... acá seguí con tu lógica de idEscaneado que ya tenías ...
+    
 });
 
-// 2. Escucha de cambios en tiempo real (Storage Event)
-// Si otra pestaña o el popup de Google cambia el login, esto lo detecta al instante.
+
 window.addEventListener('storage', (event) => {
     if (event.key === 'estaLogueado') gestionarInterfaz();
 });
@@ -275,27 +274,26 @@ document.addEventListener("DOMContentLoaded", () => {
             return; 
         }
 
-        // 1. Consultamos el estado del sticker al servidor
+       
         fetch(`/api/validar-qr/${idEscaneado}`)
             .then(res => {
                 if (!res.ok) throw new Error("ID no reconocido");
                 return res.json();
             })
             .then(data => {
-                // CASO A: El sticker ya está activo (Ya fue pagado)
-                // Se envía a recuperar siempre, sin importar si hay sesión o no.
+
                 if (data.status === "activado") {
                     window.location.replace(`recuperar.html?id=${idEscaneado}`);
                 } 
                 
-                // CASO B: El sticker es nuevo (Stock del comerciante)
+  
                 else {
                     if (logueado === 'true') {
-                        // Usuario logueado: va directo a pagar la activación
+
                         localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
                         window.location.replace(`presentacion_pago.html?id=${idEscaneado}`);
                     } else {
-                        // Usuario no logueado: debe iniciar sesión o registrarse primero
+
                         alert("¡Sticker detectado! Para activarlo y proteger tu patente, primero debes Iniciar Sesión o Registrarte.");
                         localStorage.setItem("qr_escaneado_pendiente", idEscaneado);
                         window.location.replace("login.html");
@@ -303,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             })
             .catch(err => {
-                // LÓGICA DE RESPALDO (Mantiene lo que ya tenías funcionando)
+
                 console.warn("Redirigiendo por lógica de respaldo:", err);
                 let misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
                 const yaEsMio = misStickers.find(s => s.id === idEscaneado);
@@ -315,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         
-        return; // Evita carga de la home mientras decide
+        return; 
     }
 });
 
@@ -335,20 +333,42 @@ async function cerrarSesionTotal() {
     try {
         const res = await fetch('/api/logout');
         if (res.ok) {
-            // LIMPIEZA ABSOLUTA
-            localStorage.clear(); // <--- Esto borra 'estaLogueado' y cualquier otra cosa de una
+           
+            localStorage.clear(); 
             
-            // Redirigir al inicio con una señal de limpieza
+            
             window.location.replace('index.html?logout=success');
         }
     } catch (err) {
         console.error("Error al salir:", err);
-        // Si el servidor falla, igual limpiamos localmente para que el usuario pueda salir
+        
         localStorage.clear();
         window.location.replace('index.html');
     }
 }
 
+// --- FUNCIÓN PARA CARGAR LOS CONTADORES REALES ---
+async function actualizarContadores() {
+    try {
+        // Pedimos los datos al servidor (t= evita que el navegador use datos viejos)
+        const res = await fetch('/api/contadores?t=' + Date.now());
+        const data = await res.json();
+        
+        // Buscamos los números en el HTML
+        const domHallazgos = document.getElementById('count-hallazgos');
+        const domBusquedas = document.getElementById('count-busquedas');
+        
+        // Si el servidor respondió bien, ponemos los números. Si no, dejamos 0.
+        if (domHallazgos) domHallazgos.innerText = data.totalHallazgos || 0;
+        if (domBusquedas) domBusquedas.innerText = data.totalBusquedas || 0;
+        
+    } catch (err) {
+        console.warn("Error al conectar con la base de datos de contadores.");
+    }
+}
+
+// Ejecutar la función apenas cargue la página
+document.addEventListener("DOMContentLoaded", actualizarContadores);
 </script>
 
 </div>
