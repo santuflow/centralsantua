@@ -201,11 +201,30 @@
         alert("¡Link copiado! Ya podés compartirlo.");
     }
 
+    // Función para manejar qué botones se ven y cuáles no
+    function actualizarBotonesInterfaz() {
+        const estaLogueado = localStorage.getItem('estaLogueado') === 'true';
+        const authButtons = document.getElementById('auth-buttons');
+        const botonMenu = document.getElementById('boton-menu-privado');
+
+        if (estaLogueado) {
+            // Si está logueado: Ocultamos Ingresar/Registro y mostramos el menú de las tres rayitas
+            if (authButtons) authButtons.style.display = 'none';
+            if (botonMenu) botonMenu.style.display = 'block';
+        } else {
+            // Si NO está logueado: Mostramos Ingresar/Registro y ocultamos el menú
+            if (authButtons) authButtons.style.display = 'flex';
+            if (botonMenu) botonMenu.style.display = 'none';
+        }
+    }
+
     // Inicializar
     document.addEventListener('DOMContentLoaded', () => {
         cargarRankingReal();
         mostrarLinkPersonal();
-        // Llamar a la función del menú que ya tenés en script.js
+        actualizarBotonesInterfaz(); // <-- AGREGAMOS ESTO
+        
+        // Si tenés esta función en script.js, la llamamos también por seguridad
         if(typeof gestionarInterfaz === 'function') gestionarInterfaz();
     });
 </script>
