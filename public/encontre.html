@@ -218,6 +218,40 @@
         function cerrarModalTerminos() {
             document.getElementById('modal-terminos').style.display = 'none';
         }
+
+        async function gestionarInterfaz() {
+    const authContainer = document.getElementById('auth-buttons');
+    const botonMenuPrivado = document.getElementById('boton-menu-privado');
+    if (!authContainer || !botonMenuPrivado) return;
+
+    // 1. Verificamos si hay sesión activa en el navegador
+    const logueadoLocal = localStorage.getItem('estaLogueado') === 'true';
+
+    if (logueadoLocal) {
+        authContainer.style.setProperty('display', 'none', 'important');
+        botonMenuPrivado.style.setProperty('display', 'flex', 'important');
+    } else {
+        authContainer.style.setProperty('display', 'flex', 'important');
+        botonMenuPrivado.style.setProperty('display', 'none', 'important');
+    }
+
+    // 2. Verificación de respaldo con el servidor para estar seguros
+    try {
+        const res = await fetch('/api/usuario_actual?t=' + Date.now());
+        const data = await res.json();
+        
+        if (!data.logueado) {
+            localStorage.removeItem('estaLogueado');
+            authContainer.style.setProperty('display', 'flex', 'important');
+            botonMenuPrivado.style.setProperty('display', 'none', 'important');
+        }
+    } catch (e) {
+        console.warn("Modo offline o error de servidor.");
+    }
+}
+
+// Ejecutar cuando cargue la página
+document.addEventListener("DOMContentLoaded", gestionarInterfaz);
     </script>
 
     <div id="modal-terminos" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
