@@ -196,11 +196,16 @@ function asegurarAdmin(req, res, next) {
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
 app.post('/api/reportar', async (req, res) => {
-    const { nro, categoria, telefono, whatsapp } = req.body;
+    const { nro, categoria, telefono, whatsapp, tel, celular } = req.body;
     
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
-    const telefonoFinal = telefono || whatsapp || "S/D";
+    const telefonoFinal = 
+    (telefono && telefono.trim()) || 
+    (whatsapp && whatsapp.trim()) || 
+    "S/D";
+
+console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
 
     const yaExisteBusquedaEnAdmin = hallazgos.some(
         h => h.nro === nroLimpio && h.categoria === catFija
@@ -260,12 +265,17 @@ app.post('/api/reportar', async (req, res) => {
 app.post('/api/buscar', async (req, res) => { 
     try {
         // 1. Extraemos capturando ambas posibilidades para el contacto
-        const { nro, categoria, telefono, whatsapp } = req.body;
+        const { nro, categoria, telefono, whatsapp, tel, celular } = req.body;
         const nroLimpio = normalizar(nro);
         const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
         // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
-        const telefonoFinal = telefono || whatsapp || "S/D";
+        const telefonoFinal = 
+    (telefono && telefono.trim()) || 
+    (whatsapp && whatsapp.trim()) || 
+    "S/D";
+
+console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
 
         // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
         const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
