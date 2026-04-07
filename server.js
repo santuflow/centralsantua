@@ -23,7 +23,7 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("------------------------------------------");
     });
 
-// Definimos el "Molde" de los Stickers para MongoDB
+// 1. Molde de los Stickers
 const stickerSchema = new mongoose.Schema({
     id_qr: { type: String, unique: true },
     activado: { type: Boolean, default: false },
@@ -36,37 +36,36 @@ const stickerSchema = new mongoose.Schema({
     lote_id: String,
     fecha_creacion: { type: Date, default: Date.now }
 });
+const Sticker = mongoose.models.Sticker || mongoose.model('Sticker', stickerSchema);
 
-const Sticker = mongoose.model('Sticker', stickerSchema);
-
-// =========================================
-// MOLDES DE BASE DE DATOS (SCHEMAS)
-// =========================================
-
-// Molde para Hallazgos (Encontré algo)
+// 2. Molde para Hallazgos (Encontré algo)
 const hallazgoSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String, // <--- Esto ahora sí guardará el número
+    telefono: String,
     detalles: Object,
     idInterno: { type: Number, unique: true }
 });
-
-// Esta línea evita el error de "Busqueda is not defined" y el de "OverwriteModelError"
 const Hallazgo = mongoose.models.Hallazgo || mongoose.model('Hallazgo', hallazgoSchema);
 
-// Molde para Búsquedas (Perdí algo)
+// 3. Molde para Búsquedas (Perdí algo)
 const busquedaSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String, // <--- Esto ahora sí guardará el número
+    telefono: String,
     detalles: Object
 });
-
-// Esta línea define 'Busqueda' correctamente para que Render no tire error
 const Busqueda = mongoose.models.Busqueda || mongoose.model('Busqueda', busquedaSchema);
+
+// =========================================
+// FUNCIÓN DE APOYO (Indispensable para nroLimpio)
+// =========================================
+function normalizar(texto) {
+    if (!texto) return "";
+    return texto.toString().trim().replace(/[\s\.\-]/g, "").toUpperCase();
+}
 
 // Molde para Usuarios (Email y Contraseña)
 const usuarioSchema = new mongoose.Schema({
