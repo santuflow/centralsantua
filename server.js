@@ -205,6 +205,7 @@ app.post('/api/reportar', async (req, res) => {
     // Tu lógica para determinar el telefonoFinal
     const telefonoFinal = 
         (telefono && telefono.trim() !== '') ? telefono.trim() : 
+        (contacto && contacto.trim() !== '') ? contacto.trim() :
         (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
         (celular && celular.trim() !== '') ? celular.trim() : 
         (tel && tel.trim() !== '') ? tel.trim() : 
