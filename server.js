@@ -39,26 +39,34 @@ const stickerSchema = new mongoose.Schema({
 
 const Sticker = mongoose.model('Sticker', stickerSchema);
 
+// =========================================
+// MOLDES DE BASE DE DATOS (SCHEMAS)
+// =========================================
+
 // Molde para Hallazgos (Encontré algo)
 const hallazgoSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
-    detalles: Object, // Guarda el resto de los datos del formulario
+    telefono: String, // <--- Esto ahora sí guardará el número
+    detalles: Object,
     idInterno: { type: Number, unique: true }
 });
-const Hallazgo = mongoose.model('Hallazgo', hallazgoSchema);
+
+// Esta línea evita el error de "Busqueda is not defined" y el de "OverwriteModelError"
+const Hallazgo = mongoose.models.Hallazgo || mongoose.model('Hallazgo', hallazgoSchema);
 
 // Molde para Búsquedas (Perdí algo)
 const busquedaSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
+    telefono: String, // <--- Esto ahora sí guardará el número
     detalles: Object
 });
-const Busqueda = mongoose.model('Busqueda', busquedaSchema);
+
+// Esta línea define 'Busqueda' correctamente para que Render no tire error
+const Busqueda = mongoose.models.Busqueda || mongoose.model('Busqueda', busquedaSchema);
 
 // Molde para Usuarios (Email y Contraseña)
 const usuarioSchema = new mongoose.Schema({
