@@ -134,8 +134,9 @@ if (formReporte) {
             tipo: 'hallazgo',
             categoria: categoriaSeleccionada,
             nro: nroLimpio,
-            whatsapp: document.getElementById('whatsapp').value,
-            contacto: document.getElementById('whatsapp').value // Usamos el valor directo para que no falle
+            // ¡CAMBIO CLAVE AQUÍ!
+            telefono: document.getElementById('whatsapp').value // Ahora enviamos el campo como 'telefono'
+            // Ya no necesitamos 'whatsapp' ni 'contacto' aquí, ya que 'telefono' es el que procesa el backend.
         })
     });
             const data = await res.json();
@@ -184,13 +185,14 @@ if (formBusqueda) {
         const nroBuscado = limpiarDato(inputNro.value);
         const wapSearch = document.getElementById('whatsapp-search')?.value || "";
 
-        try {
+                try {
     const res = await fetch(`${serverURL}/api/buscar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             nro: nroBuscado, 
-            whatsapp: wapSearch, // <-- CAMBIAMOS 'contacto' POR 'whatsapp'
+            // ¡CAMBIO CLAVE AQUÍ!
+            telefono: document.getElementById('whatsapp').value, // Usamos el valor del input con ID 'whatsapp' y lo enviamos como campo 'telefono'
             categoria: categoriaSeleccionada 
         })
     });

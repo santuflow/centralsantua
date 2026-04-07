@@ -43,7 +43,7 @@ const hallazgoSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
+    telefono: { type: String, required: true, default: "S/D" },
     detalles: Object,
     idInterno: { type: Number, unique: true }
 });
@@ -54,7 +54,7 @@ const busquedaSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
+    telefono: { type: String, required: true, default: "S/D" },
     detalles: Object
 });
 const Busqueda = mongoose.models.Busqueda || mongoose.model('Busqueda', busquedaSchema);
@@ -196,16 +196,21 @@ function asegurarAdmin(req, res, next) {
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
 app.post('/api/reportar', async (req, res) => {
-    const { nro, categoria, telefono, whatsapp, tel, celular } = req.body;
+    // Desestructuramos los campos del body que vamos a usar directamente
+    const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
     
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+    
+    // Tu lógica para determinar el telefonoFinal
     const telefonoFinal = 
-    (telefono && telefono.trim()) || 
-    (whatsapp && whatsapp.trim()) || 
-    "S/D";
+        (telefono && telefono.trim() !== '') ? telefono.trim() : 
+        (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+        (celular && celular.trim() !== '') ? celular.trim() : 
+        (tel && tel.trim() !== '') ? tel.trim() : 
+        "S/D";
 
-console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
+    console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
     const yaExisteBusquedaEnAdmin = hallazgos.some(
         h => h.nro === nroLimpio && h.categoria === catFija
@@ -225,22 +230,36 @@ console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
     }
 
     // ✅ SI NO EXISTE → guardamos
-    const nuevo = { 
-        ...req.body, 
+    // Creamos el objeto para guardar en la memoria local (hallazgos[])
+    const nuevoParaMemoria = { 
+        ...req.body, // Mantenemos el spread para la memoria local si dependes de todo el body
         nro: nroLimpio, 
         categoria: catFija,
-        telefono: telefonoFinal,
-        fecha: new Date().toLocaleString(),
+        telefono: telefonoFinal, // Usamos el telefonoFinal procesado
+        fecha: new Date().toLocaleString(), // Generamos la fecha como string
         idInterno: Date.now() 
     };
 
-    hallazgos.push(nuevo);
+    hallazgos.push(nuevoParaMemoria);
+
+    // Creamos un objeto específico para MongoDB, asegurando que los campos sean correctos
+    const nuevoParaMongoDB = {
+        nro: nroLimpio,
+        categoria: catFija,
+        telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+        fecha: nuevoParaMemoria.fecha, // Usamos la fecha ya generada como string
+        detalles: detalles || {}, // Aseguramos que 'detalles' se incluya
+        idInterno: nuevoParaMemoria.idInterno // Reutilizamos el idInterno
+    };
 
     try {
-        await new Hallazgo(nuevo).save(); 
+        await new Hallazgo(nuevoParaMongoDB).save(); 
         console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
     } catch (error) {
-        console.error("❌ Error guardando hallazgo:", error.message);
+        console.error("❌ Error guardando hallazgo en NUBE:", error.message);
+        // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+        // hallazgos = hallazgos.filter(h => h.idInterno !== nuevoParaMemoria.idInterno);
+        // Y devolver un error al cliente. Por ahora, solo logueamos.
     }
 
     // 🔍 SI HAY MATCH
@@ -265,17 +284,19 @@ console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
 app.post('/api/buscar', async (req, res) => { 
     try {
         // 1. Extraemos capturando ambas posibilidades para el contacto
-        const { nro, categoria, telefono, whatsapp, tel, celular } = req.body;
+        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; // <-- Incluimos 'detalles'
         const nroLimpio = normalizar(nro);
         const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
         // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
         const telefonoFinal = 
-    (telefono && telefono.trim()) || 
-    (whatsapp && whatsapp.trim()) || 
-    "S/D";
+            (telefono && telefono.trim() !== '') ? telefono.trim() : 
+            (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+            (celular && celular.trim() !== '') ? celular.trim() : 
+            (tel && tel.trim() !== '') ? tel.trim() : 
+            "S/D";
 
-console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
+        console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
         // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
         const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
@@ -285,24 +306,36 @@ console.log("📩 TELEFONO RECIBIDO:", telefonoFinal);
 
         // --- LÓGICA DE REGISTRO EN ADMIN ---
         if (!yaExisteBusquedaEnAdmin) {
-            const busqueda = { 
-                ...req.body, 
+            // Objeto para guardar en la memoria local (busquedas[])
+            const busquedaParaMemoria = { 
+                ...req.body, // Mantenemos el spread para la memoria local
                 nro: nroLimpio, 
                 categoria: catFija,
-                telefono: telefonoFinal, // <--- Guardamos el contacto verificado
+                telefono: telefonoFinal, // Usamos el telefonoFinal procesado
                 fecha: new Date().toLocaleString() 
             };
             
             // Guardamos en la memoria local (Panel Admin actual)
-            busquedas.push(busqueda);
+            busquedas.push(busquedaParaMemoria);
+
+            // Objeto específico para MongoDB, asegurando que los campos sean correctos
+            const busquedaParaMongoDB = {
+                nro: nroLimpio,
+                categoria: catFija,
+                telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+                fecha: busquedaParaMemoria.fecha, // Usamos la fecha ya generada como string
+                detalles: detalles || {} // Aseguramos que 'detalles' se incluya
+            };
 
             // --- GUARDADO EN LA NUBE (MONGODB) ---
             try {
-                const nuevaBusquedaNube = new Busqueda(busqueda);
+                const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
                 await nuevaBusquedaNube.save(); 
                 console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
             } catch (error) {
-                console.error("❌ Error al guardar en MongoDB:", error.message);
+                console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
+                // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+                // busquedas = busquedas.filter(b => b.nro !== nroLimpio || b.categoria !== catFija);
             }
         }
 
