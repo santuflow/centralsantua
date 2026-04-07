@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking de Protectores | Central Santua</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para que el Ranking luzca épico */
+        .ranking-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .ranking-list {
+            margin-top: 20px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+
+        .ranking-item:hover {
+            border-color: #4facfe;
+            background: rgba(79, 172, 254, 0.05);
+        }
+
+        .rank-pos {
+            font-size: 1.5rem;
+            font-weight: 900;
+            width: 50px;
+            color: #888;
+        }
+
+        .rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+
+        .rank-info { flex: 1; }
+        .rank-name { font-weight: bold; font-size: 1.1rem; display: block; }
+        .rank-pts { color: #4facfe; font-size: 0.9rem; font-weight: bold; }
+
+        /* Sección de compartir */
+        .share-box {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .link-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .link-container input {
+            flex: 1;
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: monospace;
+        }
+
+        .btn-copy {
+            background: #4facfe;
+            color: #000;
+            border: none;
+            padding: 0 20px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header class="navbar"> 
+    <nav class="container-nav-ajustado">
+        <a href="index.html" class="logo-link">
+            <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
+        </a>
+        <div class="nav-acciones">
+            <div id="auth-buttons">
+                <a href="login.html" class="btn-auth login">Ingresar</a>
+                <a href="registro.html" class="btn-auth registro">Registrarse</a>
+            </div>
+            <button id="boton-menu-privado" class="boton-menu" onclick="toggleMenu()" style="display: none;">
+                <span class="barrita"></span>
+                <span class="barrita"></span>
+                <span class="barrita"></span>
+            </button>
+        </div>
+    </nav>
+</header>
+
+<div id="side-menu" class="menu-lateral">
+    <a href="javascript:void(0)" class="cerrar-btn" onclick="toggleMenu()">&times;</a>
+    <a href="index.html">Inicio</a>
+    <a href="encontre.html">Encontré algo</a>
+    <a href="perdi.html">Perdí algo</a>
+    <a href="ranking.html" style="color: #4facfe;">Ranking</a>
+    <a href="javascript:void(0)" onclick="cerrarSesionTotal()" style="color: #ff4d4d;">Cerrar Sesión</a>
+</div>
+
+<main class="container">
+    <section class="hero-section">
+        <h2>Ranking de Protectores 🏆</h2>
+        <p>Los líderes que ayudan a expandir la Red Santua en todo el país.</p>
+    </section>
+
+    <div class="ranking-card">
+        <div id="lista-ranking" class="ranking-list">
+            <p style="text-align: center; color: #888;">Cargando tabla de posiciones...</p>
+        </div>
+
+        <div class="share-box">
+            <h4>¡Subí en el ranking!</h4>
+            <p>Invitá amigos con tu link y sumá puntos por cada registro.</p>
+            <div class="link-container">
+                <input type="text" id="mi-link-input" readonly placeholder="Iniciá sesión para ver tu link">
+                <button class="btn-copy" onclick="copiarLink()">COPIAR</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2026 Central Santua - Gestión de Hallazgos con Responsabilidad Social</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+    // 1. Cargar el Ranking desde el servidor
+    async function cargarRankingReal() {
+        const contenedor = document.getElementById('lista-ranking');
+        try {
+            const res = await fetch('/api/ranking-invitados');
+            const data = await res.json();
+
+            if (data.success && data.ranking.length > 0) {
+                contenedor.innerHTML = "";
+                data.ranking.forEach((user, index) => {
+                    const posClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+                    const medalla = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                    
+                    contenedor.innerHTML += `
+                        <div class="ranking-item">
+                            <div class="rank-pos ${posClass}">#${index + 1}</div>
+                            <div class="rank-info">
+                                <span class="rank-name">${user.username} ${medalla}</span>
+                                <span class="rank-pts">${user.invitacionesExitosas} invitados registrados</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                contenedor.innerHTML = "<p style='text-align:center;'>¡Todavía no hay registros! Sé el primero.</p>";
+            }
+        } catch (err) {
+            contenedor.innerHTML = "<p style='text-align:center;'>Error al conectar con la Central.</p>";
+        }
+    }
+
+    // 2. Mostrar el link personalizado del usuario
+    function mostrarLinkPersonal() {
+        const input = document.getElementById('mi-link-input');
+        // Usamos el email guardado en el localStorage (deberías guardarlo al hacer login)
+        const email = localStorage.getItem('userEmail'); 
+        
+        if (email) {
+            input.value = `${window.location.origin}/registro.html?ref=${email.toLowerCase().trim()}`;
+        } else {
+            input.value = "Ingresá para ver tu link";
+        }
+    }
+
+    function copiarLink() {
+        const input = document.getElementById('mi-link-input');
+        if (localStorage.getItem('estaLogueado') !== 'true') {
+            alert("Primero tenés que iniciar sesión.");
+            window.location.href = "login.html";
+            return;
+        }
+        input.select();
+        document.execCommand("copy");
+        alert("¡Link copiado! Ya podés compartirlo.");
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarRankingReal();
+        mostrarLinkPersonal();
+        // Llamar a la función del menú que ya tenés en script.js
+        if(typeof gestionarInterfaz === 'function') gestionarInterfaz();
+    });
+</script>
+
+</body>
+</html>

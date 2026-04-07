@@ -2,6 +2,16 @@
 const serverURL = window.location.origin; 
 const MI_WHATSAPP = "5491151436396";
 
+// --- LÓGICA DE REFERIDOS (PERSISTENCIA TOTAL) ---
+const urlParams = new URLSearchParams(window.location.search);
+const referidoEnURL = urlParams.get('ref');
+
+if (referidoEnURL) {
+    // Guardamos con un nombre único para no confundir con otras apps
+    localStorage.setItem('santua_referido_pendiente', referidoEnURL.toLowerCase().trim());
+    console.log("🚀 Referido detectado y guardado en memoria:", referidoEnURL);
+}
+
 // Variable global para capturar la categoría seleccionada en la UI
 let categoriaSeleccionada = "";
 
@@ -325,3 +335,40 @@ function verificarAccesoActivacion() {
         window.location.href = '/login.html';
     }
 }
+
+/**
+ * Genera el link de invitación del usuario actual.
+ * Úsalo para mostrarlo en el perfil o ranking.
+ */
+function generarMiLinkInvitacion() {
+    const miEmail = localStorage.getItem('userEmail'); // Asegúrate de guardar el email al hacer login
+    if (!miEmail) return "Iniciá sesión para obtener tu link";
+    
+    return `${window.location.origin}/registro.html?ref=${miEmail}`;
+}
+
+// Opcional: Función para copiar el link al portapapeles
+function copiarLinkInvitacion() {
+    const link = generarMiLinkInvitacion();
+    navigator.clipboard.writeText(link).then(() => {
+        alert("¡Link de invitación copiado! 🚀");
+    });
+}
+
+// --- SINCRONIZACIÓN DE SESIÓN PARA RANKING ---
+async function sincronizarEmailSesion() {
+    try {
+        const res = await fetch('/api/usuario_actual');
+        const data = await res.json();
+        
+        if (data.logueado && data.usuario.email) {
+            // Guardamos el email para que 'generarMiLinkInvitacion' funcione
+            localStorage.setItem('userEmail', data.usuario.email);
+        }
+    } catch (e) {
+        console.warn("No se pudo sincronizar el email para el link de referidos.");
+    }
+}
+
+// Ejecutar al cargar cualquier página
+document.addEventListener("DOMContentLoaded", sincronizarEmailSesion);

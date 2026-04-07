@@ -73,7 +73,10 @@ const usuarioSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     password: String, 
     google_id: String,
-    foto: String
+    foto: String, // <--- Agregué la coma necesaria aquí
+    referidoPor: { type: String, default: null }, 
+    invitacionesExitosas: { type: Number, default: 0 },
+    fechaRegistro: { type: Date, default: Date.now }
 });
 const Usuario = mongoose.model('Usuario', usuarioSchema);
 Usuario.createIndexes();
@@ -522,7 +525,17 @@ app.post('/api/registro', async (req, res) => {
 
         // 4. Guardamos en la nube (Persistencia total)
         await nuevoUsuario.save();
-        
+
+        // --- AGREGAR ESTO AQUÍ (Lógica de Referidos) ---
+        if (req.body.referido) {
+            await Usuario.findOneAndUpdate(
+                { email: req.body.referido }, 
+                { $inc: { invitacionesExitosas: 1 } }
+            );
+            console.log(`Punto otorgado a: ${req.body.referido}`);
+        }
+        // ----------------------------------------------
+    
         console.log("------------------------------------------");
         console.log(`✅ REGISTRO EXITOSO: ${username} (${email})`);
         console.log("------------------------------------------");
@@ -955,6 +968,24 @@ app.get('/api/puntos-venta', async (req, res) => {
         res.json(locales);
     } catch (error) {
         res.status(500).json({ error: "Error al obtener locales" });
+    }
+});
+
+// Ruta para obtener los 10 usuarios que más gente trajeron
+app.get('/api/ranking-invitados', async (req, res) => {
+    try {
+        const topReferidos = await Usuario.find({ invitacionesExitosas: { $gt: 0 } })
+            .sort({ invitacionesExitosas: -1 }) // Ordenar de mayor a menor
+            .limit(25) // Solo los 10 mejores
+            .select('username foto invitacionesExitosas'); // Solo enviamos datos públicos
+
+        res.json({
+            success: true,
+            ranking: topReferidos
+        });
+    } catch (error) {
+        console.error("Error al obtener ranking:", error);
+        res.status(500).json({ success: false, message: "Error al cargar el ranking" });
     }
 });
 
