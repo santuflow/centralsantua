@@ -127,16 +127,17 @@ if (formReporte) {
         btnSubmit.innerText = "PROCESANDO...";
 
         try {
-            const res = await fetch(`${serverURL}/api/reportar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tipo: 'hallazgo',
-                    categoria: categoriaSeleccionada,
-                    nro: nroLimpio,
-                    contacto: whatsapp
-                })
-            });
+    const res = await fetch(`${serverURL}/api/reportar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            tipo: 'hallazgo',
+            categoria: categoriaSeleccionada,
+            nro: nroLimpio,
+            whatsapp: document.getElementById('whatsapp').value,
+            contacto: document.getElementById('whatsapp').value // Usamos el valor directo para que no falle
+        })
+    });
             const data = await res.json();
 
             if (data.error === "repetido" || data.success === false && data.message && data.message.includes("registrado")) {
@@ -184,15 +185,15 @@ if (formBusqueda) {
         const wapSearch = document.getElementById('whatsapp-search')?.value || "";
 
         try {
-            const res = await fetch(`${serverURL}/api/buscar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    nro: nroBuscado, 
-                    contacto: wapSearch,
-                    categoria: categoriaSeleccionada 
-                })
-            });
+    const res = await fetch(`${serverURL}/api/buscar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            nro: nroBuscado, 
+            whatsapp: wapSearch, // <-- CAMBIAMOS 'contacto' POR 'whatsapp'
+            categoria: categoriaSeleccionada 
+        })
+    });
             const data = await res.json();
 
             if (data.error === "repetido" || data.success === false) {
