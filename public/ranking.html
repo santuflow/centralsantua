@@ -99,7 +99,7 @@
                 <a href="login.html" class="btn-auth login">Ingresar</a>
                 <a href="registro.html" class="btn-auth registro">Registrarse</a>
             </div>
-            <button id="boton-menu-privado" class="boton-menu" onclick="toggleMenu()" style="display: none;">
+            <button id="boton-menu-privado" class="boton-menu" onclick="toggleMenu()" style="display: none;" aria-label="Abrir menú">
                 <span class="barrita"></span>
                 <span class="barrita"></span>
                 <span class="barrita"></span>
@@ -177,17 +177,30 @@
     }
 
     // 2. Mostrar el link personalizado del usuario
-    function mostrarLinkPersonal() {
-        const input = document.getElementById('mi-link-input');
-        // Usamos el email guardado en el localStorage (deberías guardarlo al hacer login)
-        const email = localStorage.getItem('userEmail'); 
-        
-        if (email) {
-            input.value = `${window.location.origin}/registro.html?ref=${email.toLowerCase().trim()}`;
-        } else {
-            input.value = "Ingresá para ver tu link";
-        }
+    async function mostrarLinkPersonal() {
+    const input = document.getElementById('mi-link-input');
+    let email = localStorage.getItem('userEmail'); 
+    
+    // Si no hay email en el navegador pero el servidor dice que estamos logueados
+    if (!email) {
+        try {
+            const res = await fetch('/api/usuario_actual');
+            const data = await res.json();
+            
+            if (data.logueado && data.user && data.user.email) {
+                email = data.user.email;
+                // Guardamos para que la próxima vez sea instantáneo
+                localStorage.setItem('userEmail', email.toLowerCase().trim());
+            }
+        } catch (e) { console.error("Error sincronizando email"); }
     }
+
+    if (email) {
+        input.value = `${window.location.origin}/registro.html?ref=${email.toLowerCase().trim()}`;
+    } else {
+        input.value = "Ingresá para ver tu link";
+    }
+}
 
     function copiarLink() {
         const input = document.getElementById('mi-link-input');
