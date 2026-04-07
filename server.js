@@ -177,13 +177,6 @@ passport.deserializeUser((obj, done) => {
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
-/**
- * NORMALIZAR: Limpia puntos, espacios, guiones y pasa a Mayúsculas
- * SE AGREGA AQUÍ PARA EVITAR EL ERROR DE "NOT DEFINED"
- */
-const normalizar = (t) => t ? t.toUpperCase().replace(/[\s\.\-]/g, '').trim() : "";
-
-
 // --- FUNCIÓN DE SEGURIDAD PARA ADMIN ---
 function asegurarAdmin(req, res, next) {
     // 1. ¿Está logueado con Google?
