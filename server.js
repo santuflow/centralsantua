@@ -205,10 +205,10 @@ app.post('/api/reportar', async (req, res) => {
     // 2. Definimos el teléfono final: usa 'telefono', si no 'whatsapp', y si no hay nada 'S/D'
     const telefonoFinal = telefono || whatsapp || "S/D";
 
-    const yaExisteEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
+    const yaExisteBusquedaEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
     const alguienLoBusca = busquedas.find(b => b.nro === nroLimpio && b.categoria === catFija);
 
-    if (!yaExisteEnAdmin) {
+    if (!yaExisteBusquedaEnAdmin) {
         const nuevo = { 
             ...req.body, 
             nro: nroLimpio, 
@@ -231,7 +231,7 @@ app.post('/api/reportar', async (req, res) => {
 });
 
     // SI NO HAY MATCH Y YA EXISTÍA: Entonces avisamos que es repetido
-    if (yaExisteEnAdmin) {
+    if (yaExisteBusquedaEnAdmin) {
         return res.json({ 
             success: false, 
             error: "repetido",
