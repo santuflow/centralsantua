@@ -907,15 +907,14 @@ footer {
     }
 }
 
-/* Contenedor de botones Ranking-Apoyo web */
+/* --- SECCIÓN BOTONES DE NAVEGACIÓN (RANKING Y APOYO) --- */
 .buttons-container-flex {
     display: flex !important;
     gap: 12px !important;
     width: 95% !important;
-    max-width: 400px !important;
+    max-width: 450px !important;
     margin: 20px auto !important;
     justify-content: center !important;
-    box-sizing: border-box !important;
 }
 
 .btn-sec-half {
@@ -930,31 +929,29 @@ footer {
     font-weight: 700 !important;
     font-size: 0.9rem !important;
     backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important; /* Para Safari en iPhone */
+    -webkit-backdrop-filter: blur(10px) !important;
     display: block !important;
     transition: all 0.3s ease !important;
-    cursor: pointer !important;
 }
 
 .btn-sec-half:hover {
     background: rgba(79, 172, 254, 0.2) !important;
     border-color: #4facfe !important;
-    transform: translateY(-2px) !important;
 }
 
-/* Botones dentro del modal de Donación */
+/* --- MODAL DE DONACIÓN Y SUS BOTONES --- */
 .opciones-donacion {
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
     margin: 25px 0 !important;
-    padding: 0 5px !important;
 }
 
 .btn-donar {
+    /* Gradiente eléctrico Central Santua */
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
     border: none !important;
-    color: #000000 !important; /* Texto oscuro para que resalte en el celeste brillante */
+    color: #000000 !important; /* Texto negro para máximo contraste */
     padding: 18px !important;
     border-radius: 15px !important;
     font-size: 1.2rem !important;
@@ -963,22 +960,17 @@ footer {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4) !important;
     text-transform: uppercase !important;
-    line-height: 1.2 !important;
 }
 
 .btn-donar small {
-    display: block !important;
     font-size: 0.75rem !important;
     font-weight: 600 !important;
     margin-top: 4px !important;
-    color: rgba(0, 0, 0, 0.7) !important; /* Subtítulo sutil en negro */
-    text-transform: none !important;
+    opacity: 0.8 !important;
 }
 
 .btn-donar:active {
     transform: scale(0.96) !important;
-    filter: brightness(0.9) !important;
 }
