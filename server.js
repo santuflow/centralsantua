@@ -1052,7 +1052,7 @@ app.get('/api/ranking-invitados', async (req, res) => {
 });
 
 app.get('/api/stats-privadas', (req, res) => {
-    // Render y otros proxies suelen mandar la IP real en 'x-forwarded-for'
+    // Render y otros proxies suelen mandar la IP real en 'x-forwarded-f5or'
     const ipCliente = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (ipCliente.includes(MI_IP_PRIVADA)) {
