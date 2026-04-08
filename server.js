@@ -96,7 +96,22 @@ const historialAntiSpam = new Map(); // NUEVO: Para límite de 2 registros/10min
 
 app.use(cors());
 app.use(express.json());
+// --- EL CONTADOR DEBE IR AQUÍ (ANTES DEL STATIC) ---
+app.use((req, res, next) => {
+    // Registra la visita si es la página principal
+    if (req.path === '/' || req.path === '/index.html' || req.path === '') {
+        visitasTotales++;
+        console.log(`📈 Nueva visita registrada. Total: ${visitasTotales}`);
+    }
+    next();
+});
+
+// Ruta para que el HTML consulte el número
+app.get('/api/visitas-publicas', (req, res) => {
+    res.json({ total: visitasTotales });
+});
 app.use(express.static('public'));
+
 
 // 1. IMPORTANTE: Agregá esto justo antes de la sesión para que Render (el proxy) pase las cookies correctamente
 app.set('trust proxy', 1); 
@@ -195,19 +210,6 @@ function asegurarAdmin(req, res, next) {
     console.log(`⚠️ INTENTO DE INTRUSIÓN de: ${req.user ? req.user.email : 'Anónimo'}`);
     res.status(403).send("<h1>Acceso Denegado</h1><p>No tenés permisos para estar acá.</p><a href='/login.html'>Volver</a>");
 }
-
-// 1. Contador de visitas en memoria
-app.use((req, res, next) => {
-    if (req.path === '/' || req.path === '/index.html') {
-        visitasTotales++; 
-    }
-    next();
-});
-
-// 2. Ruta para que el HTML obtenga el número
-app.get('/api/visitas-publicas', (req, res) => {
-    res.json({ total: visitasTotales });
-});
 
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
