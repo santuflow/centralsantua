@@ -907,60 +907,78 @@ footer {
     }
 }
 
-/* Contenedor de botones Ranking-Apoyo web*/
+/* Contenedor de botones Ranking-Apoyo web */
 .buttons-container-flex {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-    max-width: 400px;
-    margin: 15px auto;
+    display: flex !important;
+    gap: 12px !important;
+    width: 95% !important;
+    max-width: 400px !important;
+    margin: 20px auto !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
 }
 
 .btn-sec-half {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(79, 172, 254, 0.3);
-    color: white;
-    padding: 15px;
-    border-radius: 12px;
-    text-decoration: none;
-    text-align: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    transition: 0.3s;
-    backdrop-filter: blur(5px);
-    cursor: pointer;
+    flex: 1 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(79, 172, 254, 0.4) !important;
+    color: #ffffff !important;
+    padding: 16px 5px !important;
+    border-radius: 14px !important;
+    text-decoration: none !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important; /* Para Safari en iPhone */
+    display: block !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
 }
 
 .btn-sec-half:hover {
-    background: rgba(79, 172, 254, 0.1);
-    border-color: #4facfe;
+    background: rgba(79, 172, 254, 0.2) !important;
+    border-color: #4facfe !important;
+    transform: translateY(-2px) !important;
 }
 
-/* Botones dentro del modal */
+/* Botones dentro del modal de Donación */
 .opciones-donacion {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 20px 0;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    margin: 25px 0 !important;
+    padding: 0 5px !important;
 }
 
 .btn-donar {
-    background: linear-gradient(135deg, #00b1ea, #0089d7);
-    border: none;
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 1.1rem;
-    font-weight: 800;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+    border: none !important;
+    color: #000000 !important; /* Texto oscuro para que resalte en el celeste brillante */
+    padding: 18px !important;
+    border-radius: 15px !important;
+    font-size: 1.2rem !important;
+    font-weight: 900 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
+    text-transform: uppercase !important;
+    line-height: 1.2 !important;
 }
 
 .btn-donar small {
-    font-size: 0.7rem;
-    font-weight: 400;
-    opacity: 0.9;
+    display: block !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    margin-top: 4px !important;
+    color: rgba(0, 0, 0, 0.7) !important; /* Subtítulo sutil en negro */
+    text-transform: none !important;
+}
+
+.btn-donar:active {
+    transform: scale(0.96) !important;
+    filter: brightness(0.9) !important;
 }
