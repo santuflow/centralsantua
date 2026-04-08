@@ -727,51 +727,48 @@ app.get("/api/validar-qr/:id", (req, res) => {
 
 // Ruta para crear preferencias de donación/apoyo al proyecto
 app.post('/api/crear-preferencia-donacion', async (req, res) => {
-    const { monto } = req.body;
-
-    // Validación básica del monto
-    if (!monto || isNaN(monto)) {
-        return res.status(400).json({ message: "Monto no válido" });
-    }
-
     try {
-        const preference = {
-            items: [
-                {
-                    title: "Apoyo al Proyecto - Central Santua",
-                    unit_price: Number(monto),
-                    quantity: 1,
-                    currency_id: "ARS"
-                }
-            ],
-            back_urls: {
-                success: "https://tu-web.com/index.html?pago=exitoso", // Cambiá esto por tu URL real
-                failure: "https://tu-web.com/index.html?pago=error",
-                pending: "https://tu-web.com/index.html?pago=pendiente"
-            },
-            auto_return: "approved",
-        };
+        const { monto } = req.body;
 
-        const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`, // Asegurate de tener tu Token en el .env
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(preference)
+        // Validación básica
+        if (!monto || isNaN(monto)) {
+            return res.status(400).json({ message: "Monto no válido" });
+        }
+
+        // Usamos el "client" y la "Preference" que ya configuraste en la línea 455
+        const preference = new Preference(client);
+        
+        const result = await preference.create({
+            body: {
+                items: [{
+                    title: "Apoyo al Proyecto - Central Santua",
+                    quantity: 1,
+                    unit_price: Number(monto),
+                    currency_id: "ARS"
+                }],
+                back_urls: {
+                    success: "https://centralsantua.com.ar/index.html?pago=exitoso", 
+                    failure: "https://centralsantua.com.ar/index.html?pago=error",
+                    pending: "https://centralsantua.com.ar/index.html?pago=pendiente"
+                },
+                auto_return: "approved",
+            }
         });
 
-        const data = await response.json();
-        
-        if (data.init_point) {
-            res.json({ init_point: data.init_point });
+        // Mercado Pago devuelve el link en result.init_point
+        if (result.init_point) {
+            console.log(`✅ Donación generada: $${monto}`);
+            res.json({ init_point: result.init_point });
         } else {
-            throw new Error("No se pudo obtener el init_point de Mercado Pago");
+            throw new Error("No se obtuvo init_point");
         }
 
     } catch (error) {
-        console.error("Error al crear preferencia de donación:", error);
-        res.status(500).json({ message: "Error interno del servidor" });
+        console.error("❌ Error en Donación MP:", error);
+        res.status(500).json({ 
+            message: "Error interno al conectar con Mercado Pago",
+            detalle: error.message 
+        });
     }
 });
 
