@@ -267,6 +267,10 @@
     </div>
 </div>
 
+<div style="text-align: center; margin: 20px 0; color: #888; font-size: 0.8rem;">
+    Visitas totales: <span id="contador-visitas" style="color: #4facfe; font-weight: bold;">0</span>
+</div>
+
     <footer>
         <p>&copy; 2026 Central Santua - Gestión de Hallazgos con Responsabilidad Social</p>
     </footer>
@@ -484,6 +488,20 @@ async function pagarDonacion(monto) {
         alert("Error de conexión.");
     }
 }
+
+async function cargarVisitas() {
+    try {
+        const res = await fetch('/api/visitas-publicas');
+        const data = await res.json();
+        const domVisitas = document.getElementById('contador-visitas');
+        if (domVisitas) domVisitas.innerText = data.total;
+    } catch (err) {
+        console.warn("Error al cargar contador.");
+    }
+}
+
+// Ejecutamos la función
+document.addEventListener("DOMContentLoaded", cargarVisitas);
 </script>
 
 </body>

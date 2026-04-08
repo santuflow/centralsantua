@@ -6,6 +6,7 @@ const axios = require('axios');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const MI_IP_PRIVADA = "190.99.71.6";
 
 // --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
 const mongoose = require('mongoose');
@@ -194,6 +195,19 @@ function asegurarAdmin(req, res, next) {
     console.log(`⚠️ INTENTO DE INTRUSIÓN de: ${req.user ? req.user.email : 'Anónimo'}`);
     res.status(403).send("<h1>Acceso Denegado</h1><p>No tenés permisos para estar acá.</p><a href='/login.html'>Volver</a>");
 }
+
+// 1. Contador de visitas en memoria
+app.use((req, res, next) => {
+    if (req.path === '/' || req.path === '/index.html') {
+        visitasTotales++; 
+    }
+    next();
+});
+
+// 2. Ruta para que el HTML obtenga el número
+app.get('/api/visitas-publicas', (req, res) => {
+    res.json({ total: visitasTotales });
+});
 
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
@@ -1032,6 +1046,17 @@ app.get('/api/ranking-invitados', async (req, res) => {
     } catch (error) {
         console.error("Error al obtener ranking:", error);
         res.status(500).json({ success: false, message: "Error al cargar el ranking" });
+    }
+});
+
+app.get('/api/stats-privadas', (req, res) => {
+    // Render y otros proxies suelen mandar la IP real en 'x-forwarded-for'
+    const ipCliente = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    if (ipCliente.includes(MI_IP_PRIVADA)) {
+        res.json({ visitas: visitasTotales });
+    } else {
+        res.status(403).json({ error: "No autorizado" });
     }
 });
 
