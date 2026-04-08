@@ -272,6 +272,7 @@
 </a>
 
                 <form id="registro-form">
+                    <input type="hidden" id="referido-input" name="referido">
                     <div class="input-box">
                         <label>Usuario</label>
                         <input type="text" id="username" placeholder="Tu nombre de usuario" required>
@@ -301,6 +302,14 @@
     </div>
 
     <script>
+        // Capturar el referido de la URL al cargar
+const urlParams = new URLSearchParams(window.location.search);
+const referidoVieneDeLink = urlParams.get('ref');
+
+if (referidoVieneDeLink) {
+    document.getElementById('referido-input').value = referidoVieneDeLink.toLowerCase().trim();
+    console.log("Referido detectado:", referidoVieneDeLink);
+}
         // Lista temporal para evitar duplicados (Esto luego lo validará tu servidor)
         const usuariosExistentes = ["rodrigo", "santua", "admin"];
         
@@ -331,6 +340,7 @@
             const email = document.getElementById('email').value.toLowerCase().trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+            const referido = document.getElementById('referido-input').value;
 
             // Validación de contraseña
             if(password !== confirmPassword) {
@@ -342,7 +352,7 @@
                 const response = await fetch('/api/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    body: JSON.stringify({ username, email, password, referido })
                 });
 
                 const data = await response.json();
