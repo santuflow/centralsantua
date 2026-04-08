@@ -5,6 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Santua | Red Oficial de Hallazgos</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+    /* BOTONES Y MODAL */
+    .buttons-container-flex {
+        display: flex !important;
+        gap: 12px !important;
+        width: 90% !important;
+        max-width: 450px !important;
+        margin: 20px auto !important;
+        justify-content: center !important;
+    }
+
+    .btn-sec-half {
+        flex: 1 !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid #4facfe !important;
+        color: white !important;
+        padding: 16px 5px !important;
+        border-radius: 12px !important;
+        text-decoration: none !important;
+        text-align: center !important;
+        font-weight: bold !important;
+        font-size: 0.9rem !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        display: block !important;
+    }
+
+    .opciones-donacion {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+        margin: 25px 0 !important;
+    }
+
+    .btn-donar {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        border: none !important;
+        color: #000 !important; /* Texto negro para que se lea perfecto */
+        padding: 20px !important;
+        border-radius: 15px !important;
+        font-size: 1.2rem !important;
+        font-weight: 900 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4) !important;
+    }
+
+    .btn-donar small {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        margin-top: 4px !important;
+        color: #333 !important;
+    }
+</style>
+
 
 </head>
 <body>
@@ -429,6 +486,5 @@ async function pagarDonacion(monto) {
 }
 </script>
 
-</div>
 </body>
 </html>
