@@ -679,7 +679,7 @@ app.get('/api/stats', (req, res) => {
     const generados = baseDeDatosSimulada.length;
     const activados = baseDeDatosSimulada.filter(qr => qr.activado === true).length;
     
-    console.log(`Enviando stats: Generados ${generados}`);
+    //console.log(`Enviando stats: Generados ${generados}`);
     res.json({ generados, activados });
 });
 
