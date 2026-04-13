@@ -244,14 +244,12 @@ app.post('/api/reportar', async (req, res) => {
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
     
     // Tu lógica para determinar el telefonoFinal
-    // BUSCÁ ESTA PARTE Y REEMPLAZALA:
-const telefonoFinal = 
+    const telefonoFinal = 
     (telefono && telefono.trim() !== '') ? telefono.trim() : 
     (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
     (celular && celular.trim() !== '') ? celular.trim() : 
     (tel && tel.trim() !== '') ? tel.trim() : 
-    "S/D"; 
-// Borramos la línea que decía "(contacto && contacto.trim() !== '')" porque 'contacto' no existe.
+    "S/D";
 
     console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
@@ -326,10 +324,12 @@ const telefonoFinal =
 // =========================================
 app.post('/api/buscar', async (req, res) => { 
     try {
-        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; 
+        // 1. Extraemos capturando ambas posibilidades para el contacto
+        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
         const nroLimpio = normalizar(nro);
         const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
+        // 2. Aseguramos el dato de contacto
         const telefonoFinal = 
             (telefono && telefono.trim() !== '') ? telefono.trim() : 
             (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
@@ -339,10 +339,10 @@ app.post('/api/buscar', async (req, res) => {
 
         console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-        // 1. PRIMERO: BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
-        // Esto es lo más importante, si ya está en hallazgos, respondemos match de una.
-        const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
+        // --- VERIFICACIONES PREVIAS (Para no guardar basura o repetidos) ---
 
+        // A. BUSCAMOS SI YA FUE ENCONTRADO (MATCH) - ¡PRIORIDAD ALTA!
+        const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
         if (yaEncontrado) {
             return res.json({ 
                 success: true, 
@@ -352,9 +352,8 @@ app.post('/api/buscar', async (req, res) => {
             });
         }
 
-        // 2. SEGUNDO: VERIFICAMOS SI YA EXISTE ESTA BÚSQUEDA (EVITAR REPETIDOS)
+        // B. BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA (REPETIDO)
         const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
-
         if (yaExisteBusquedaEnAdmin) {
             return res.json({ 
                 success: false, 
@@ -363,17 +362,20 @@ app.post('/api/buscar', async (req, res) => {
             });
         }
 
-        // 3. TERCERO: SI NO ES MATCH Y NO ES REPETIDO, RECIÉN AHÍ GUARDAMOS
+        // --- SI PASÓ LAS VERIFICACIONES, RECIÉN AHÍ REGISTRAMOS ---
+        
+        // Objeto para memoria local
         const busquedaParaMemoria = { 
             ...req.body, 
             nro: nroLimpio, 
             categoria: catFija,
-            telefono: telefonoFinal, 
+            telefono: telefonoFinal,
             fecha: new Date().toLocaleString() 
         };
         
         busquedas.push(busquedaParaMemoria);
 
+        // Objeto para MongoDB
         const busquedaParaMongoDB = {
             nro: nroLimpio,
             categoria: catFija,
@@ -382,6 +384,7 @@ app.post('/api/buscar', async (req, res) => {
             detalles: detalles || {}
         };
 
+        // Guardado en la nube
         try {
             const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
             await nuevaBusquedaNube.save(); 
@@ -390,7 +393,7 @@ app.post('/api/buscar', async (req, res) => {
             console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
         }
 
-        // Respuesta final exitosa (sin match y guardado ok)
+        // Respuesta final si todo salió bien y es nuevo
         res.json({ 
             success: true, 
             encontrado: false 
