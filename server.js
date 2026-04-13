@@ -244,13 +244,14 @@ app.post('/api/reportar', async (req, res) => {
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
     
     // Tu lógica para determinar el telefonoFinal
-    const telefonoFinal = 
-        (telefono && telefono.trim() !== '') ? telefono.trim() : 
-        (contacto && contacto.trim() !== '') ? contacto.trim() :
-        (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
-        (celular && celular.trim() !== '') ? celular.trim() : 
-        (tel && tel.trim() !== '') ? tel.trim() : 
-        "S/D";
+    // BUSCÁ ESTA PARTE Y REEMPLAZALA:
+const telefonoFinal = 
+    (telefono && telefono.trim() !== '') ? telefono.trim() : 
+    (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+    (celular && celular.trim() !== '') ? celular.trim() : 
+    (tel && tel.trim() !== '') ? tel.trim() : 
+    "S/D"; 
+// Borramos la línea que decía "(contacto && contacto.trim() !== '')" porque 'contacto' no existe.
 
     console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
@@ -325,12 +326,10 @@ app.post('/api/reportar', async (req, res) => {
 // =========================================
 app.post('/api/buscar', async (req, res) => { 
     try {
-        // 1. Extraemos capturando ambas posibilidades para el contacto
-        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; // <-- Incluimos 'detalles'
+        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; 
         const nroLimpio = normalizar(nro);
         const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-        // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
         const telefonoFinal = 
             (telefono && telefono.trim() !== '') ? telefono.trim() : 
             (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
@@ -340,60 +339,22 @@ app.post('/api/buscar', async (req, res) => {
 
         console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-        // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
-        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
-
-        // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+        // 1. PRIMERO: BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+        // Esto es lo más importante, si ya está en hallazgos, respondemos match de una.
         const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
-        // --- LÓGICA DE REGISTRO EN ADMIN ---
-        if (!yaExisteBusquedaEnAdmin) {
-            // Objeto para guardar en la memoria local (busquedas[])
-            const busquedaParaMemoria = { 
-                ...req.body, // Mantenemos el spread para la memoria local
-                nro: nroLimpio, 
-                categoria: catFija,
-                telefono: telefonoFinal, // Usamos el telefonoFinal procesado
-                fecha: new Date().toLocaleString() 
-            };
-            
-            // Guardamos en la memoria local (Panel Admin actual)
-            busquedas.push(busquedaParaMemoria);
-
-            // Objeto específico para MongoDB, asegurando que los campos sean correctos
-            const busquedaParaMongoDB = {
-                nro: nroLimpio,
-                categoria: catFija,
-                telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
-                fecha: busquedaParaMemoria.fecha, // Usamos la fecha ya generada como string
-                detalles: detalles || {} // Aseguramos que 'detalles' se incluya
-            };
-
-            // --- GUARDADO EN LA NUBE (MONGODB) ---
-            try {
-                const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
-                await nuevaBusquedaNube.save(); 
-                console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
-            } catch (error) {
-                console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
-                // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
-                // busquedas = busquedas.filter(b => b.nro !== nroLimpio || b.categoria !== catFija);
-            }
-        }
-
-        // --- LÓGICA DE RESPUESTA AL USUARIO ---
-
-        // SI YA APARECIÓ (MATCH)
         if (yaEncontrado) {
             return res.json({ 
                 success: true, 
-                found: true, // Mantengo compatibilidad si usas 'found' o 'encontrado'
+                found: true, 
                 encontrado: true, 
                 datos: yaEncontrado 
             });
         }
 
-        // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO
+        // 2. SEGUNDO: VERIFICAMOS SI YA EXISTE ESTA BÚSQUEDA (EVITAR REPETIDOS)
+        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
+
         if (yaExisteBusquedaEnAdmin) {
             return res.json({ 
                 success: false, 
@@ -402,7 +363,34 @@ app.post('/api/buscar', async (req, res) => {
             });
         }
 
-        // SI ES TODO NUEVO Y NO HAY MATCH
+        // 3. TERCERO: SI NO ES MATCH Y NO ES REPETIDO, RECIÉN AHÍ GUARDAMOS
+        const busquedaParaMemoria = { 
+            ...req.body, 
+            nro: nroLimpio, 
+            categoria: catFija,
+            telefono: telefonoFinal, 
+            fecha: new Date().toLocaleString() 
+        };
+        
+        busquedas.push(busquedaParaMemoria);
+
+        const busquedaParaMongoDB = {
+            nro: nroLimpio,
+            categoria: catFija,
+            telefono: telefonoFinal,
+            fecha: busquedaParaMemoria.fecha,
+            detalles: detalles || {}
+        };
+
+        try {
+            const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
+            await nuevaBusquedaNube.save(); 
+            console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio}`);
+        } catch (error) {
+            console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
+        }
+
+        // Respuesta final exitosa (sin match y guardado ok)
         res.json({ 
             success: true, 
             encontrado: false 
