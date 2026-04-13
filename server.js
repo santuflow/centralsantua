@@ -24,6 +24,13 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("------------------------------------------");
     });
 
+// 1. Visitas html
+    const statsSchema = new mongoose.Schema({
+    nombre: { type: String, default: "global" },
+    visitasTotales: { type: Number, default: 0 }
+});
+const Stats = mongoose.model('Stats', statsSchema);
+
 // 1. Molde de los Stickers
 const stickerSchema = new mongoose.Schema({
     id_qr: { type: String, unique: true },
@@ -94,14 +101,29 @@ let visitasTotales = 0;
 let usuariosActivos = new Map(); 
 const historialAntiSpam = new Map(); // NUEVO: Para límite de 2 registros/10min
 
-app.use(cors());
-app.use(express.json());
-// --- EL CONTADOR DEBE IR AQUÍ (ANTES DEL STATIC) ---
-app.use((req, res, next) => {
-    // Registra la visita si es la página principal
+// --- EL CONTADOR AHORA ES EN LA NUBE ---
+app.use(async (req, res, next) => {
+    // 1. Obtenemos la IP de quien entra
+    const ipCliente = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    // 2. Si la IP es la tuya, pasamos de largo sin sumar nada
+    if (ipCliente.includes(MI_IP_PRIVADA)) {
+        return next(); 
+    }
+
+    // 3. Si es un usuario común y entra a la Home, sumamos
     if (req.path === '/' || req.path === '/index.html' || req.path === '') {
-        visitasTotales++;
-        console.log(`📈 Nueva visita registrada. Total: ${visitasTotales}`);
+        try {
+            const stats = await Stats.findOneAndUpdate(
+                { nombre: "global" },
+                { $inc: { visitasTotales: 1 } },
+                { new: true, upsert: true }
+            );
+            visitasTotales = stats.visitasTotales;
+            console.log(`📈 Nueva visita (pública): ${visitasTotales}`);
+        } catch (err) {
+            console.error("Error al actualizar visitas:", err.message);
+        }
     }
     next();
 });
@@ -957,11 +979,12 @@ app.get('/api/logout', (req, res) => {
 // FUNCIÓN PARA BAJAR TODO DE LA NUBE AL EMPEZAR EL SERVIDOR
 async function cargarDatosDeNube() {
     try {
-        // Bajamos los 3 tipos de datos al mismo tiempo
-        const [stickersEnNube, hallazgosEnNube, busquedasEnNube] = await Promise.all([
+        // Bajamos los 4 tipos de datos al mismo tiempo (agregamos Stats)
+        const [stickersEnNube, hallazgosEnNube, busquedasEnNube, statsEnNube] = await Promise.all([
             Sticker.find({}),
             Hallazgo.find({}),
-            Busqueda.find({})
+            Busqueda.find({}),
+            Stats.findOne({ nombre: "global" }) // <--- Nueva línea para las visitas
         ]);
 
         // Llenamos las listas de memoria con lo que habia en la nube
@@ -969,11 +992,17 @@ async function cargarDatosDeNube() {
         hallazgos = hallazgosEnNube;
         busquedas = busquedasEnNube;
 
+        // Si existen estadísticas en la nube, actualizamos la variable local
+        if (statsEnNube) {
+            visitasTotales = statsEnNube.visitasTotales;
+        }
+         
         console.log("------------------------------------------");
         console.log(`☁️  SANTUA CLOUD SYNC COMPLETA:`);
         console.log(`   ✅ Stickers: ${baseDeDatosSimulada.length}`);
         console.log(`   ✅ Hallazgos: ${hallazgos.length}`);
         console.log(`   ✅ Búsquedas: ${busquedas.length}`);
+        console.log(`   ✅ Visitas: ${visitasTotales}`); // Mostramos el contador recuperado
         console.log("------------------------------------------");
     } catch (err) {
         console.log("❌ Error en sincronización inicial:", err.message);
