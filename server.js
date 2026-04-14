@@ -11,9 +11,6 @@ const MI_IP_PRIVADA = "190.99.71.6";
 // --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
 const mongoose = require('mongoose');
 
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: true }));
-
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log("------------------------------------------");
@@ -93,6 +90,9 @@ const Usuario = mongoose.model('Usuario', usuarioSchema);
 Usuario.createIndexes();
 
 const app = express();
+
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 
 // --- BASES DE DATOS EN MEMORIA ---
 let hallazgos = []; 
