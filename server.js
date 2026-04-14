@@ -246,7 +246,6 @@ app.post('/api/reportar', async (req, res) => {
     // Tu lógica para determinar el telefonoFinal
     const telefonoFinal = 
         (telefono && telefono.trim() !== '') ? telefono.trim() : 
-        (contacto && contacto.trim() !== '') ? contacto.trim() :
         (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
         (celular && celular.trim() !== '') ? celular.trim() : 
         (tel && tel.trim() !== '') ? tel.trim() : 
@@ -340,8 +339,12 @@ app.post('/api/buscar', async (req, res) => {
 
         console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-        // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
-        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
+        // REEMPLAZA TU LÍNEA POR ESTA (Línea 258 aprox):
+const yaExisteBusquedaEnAdmin = busquedas.some(b => 
+    nroLimpio !== "" && // <--- PROTECCIÓN: Solo si el número no está vacío
+    b.nro === nroLimpio && 
+    b.categoria === catFija
+);
 
         // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
         const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
