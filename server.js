@@ -6,6 +6,7 @@ const axios = require('axios');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const MI_IP_PRIVADA = "190.99.71.6";
 
 // --- CONFIGURACIÓN DE BASE DE DATOS REAL (MONGODB) ---
 const mongoose = require('mongoose');
@@ -23,7 +24,14 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("------------------------------------------");
     });
 
-// Definimos el "Molde" de los Stickers para MongoDB
+// 1. Visitas html
+    const statsSchema = new mongoose.Schema({
+    nombre: { type: String, default: "global" },
+    visitasTotales: { type: Number, default: 0 }
+});
+const Stats = mongoose.model('Stats', statsSchema);
+
+// 1. Molde de los Stickers
 const stickerSchema = new mongoose.Schema({
     id_qr: { type: String, unique: true },
     activado: { type: Boolean, default: false },
@@ -36,29 +44,36 @@ const stickerSchema = new mongoose.Schema({
     lote_id: String,
     fecha_creacion: { type: Date, default: Date.now }
 });
+const Sticker = mongoose.models.Sticker || mongoose.model('Sticker', stickerSchema);
 
-const Sticker = mongoose.model('Sticker', stickerSchema);
-
-// Molde para Hallazgos (Encontré algo)
+// 2. Molde para Hallazgos (Encontré algo)
 const hallazgoSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
-    detalles: Object, // Guarda el resto de los datos del formulario
+    telefono: { type: String, required: true, default: "S/D" },
+    detalles: Object,
     idInterno: { type: Number, unique: true }
 });
-const Hallazgo = mongoose.model('Hallazgo', hallazgoSchema);
+const Hallazgo = mongoose.models.Hallazgo || mongoose.model('Hallazgo', hallazgoSchema);
 
-// Molde para Búsquedas (Perdí algo)
+// 3. Molde para Búsquedas (Perdí algo)
 const busquedaSchema = new mongoose.Schema({
     nro: String,
     categoria: String,
     fecha: String,
-    telefono: String,
+    telefono: { type: String, required: true, default: "S/D" },
     detalles: Object
 });
-const Busqueda = mongoose.model('Busqueda', busquedaSchema);
+const Busqueda = mongoose.models.Busqueda || mongoose.model('Busqueda', busquedaSchema);
+
+// =========================================
+// FUNCIÓN DE APOYO (Indispensable para nroLimpio)
+// =========================================
+function normalizar(texto) {
+    if (!texto) return "";
+    return texto.toString().trim().replace(/[\s\.\-]/g, "").toUpperCase();
+}
 
 // Molde para Usuarios (Email y Contraseña)
 const usuarioSchema = new mongoose.Schema({
@@ -66,45 +81,15 @@ const usuarioSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     password: String, 
     google_id: String,
-    foto: String
+    foto: String, // <--- Agregué la coma necesaria aquí
+    referidoPor: { type: String, default: null }, 
+    invitacionesExitosas: { type: Number, default: 0 },
+    fechaRegistro: { type: Date, default: Date.now }
 });
 const Usuario = mongoose.model('Usuario', usuarioSchema);
 Usuario.createIndexes();
 
 const app = express();
-
-// --- BLOQUEO DE SEGURIDAD POR IP (SOLO VOS ENTRÁS) ---
-const miIpWifi = '190.99.71.6'; 
-
-app.use((req, res, next) => {
-    // Render manda la IP real en 'x-forwarded-for'
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "";
-    
-    // Si la IP que entra NO contiene tu IP de casa, rebotalo
-    if (!clientIp.includes(miIpWifi)) {
-        return res.status(403).send(`
-            <div style="text-align: center; padding: 100px 20px; font-family: sans-serif; background-color: #ffffff; height: 100vh; margin: 0;">
-                <h1 style="font-size: 80px; margin-bottom: 20px;">🚀</h1>
-                <h2 style="color: #1a1a1a; font-size: 32px; letter-spacing: 2px;">¡PRÓXIMAMENTE!</h2>
-                <p style="color: #666; font-size: 20px; margin-bottom: 40px;">Estamos preparando algo increíble para vos.</p>
-                <div style="width: 100px; height: 4px; background-color: #d32f2f; margin: 0 auto 30px;"></div>
-                <p style="font-weight: bold; color: #333; font-size: 22px; text-transform: uppercase;">SANTUA</p>
-                <p style="margin-top: 50px; font-size: 14px; color: #bbb;">© 2026 - Todos los derechos reservados</p>
-            </div>
-        `);
-    }
-
-    // --- SI PASÓ EL BLOQUEO (SOS VOS), CONTAMOS LA VISITA ---
-    const ahora = Date.now();
-    if (req.url === '/index.html' || req.url === '/') {
-        if (!usuariosActivos.has(clientIp) || (ahora - usuariosActivos.get(clientIp)) > 1800000) {
-            visitasTotales++;
-        }
-    }
-    usuariosActivos.set(clientIp, ahora);
-    
-    next(); // Dale paso a la web
-});
 
 // --- BASES DE DATOS EN MEMORIA ---
 let hallazgos = []; 
@@ -116,9 +101,39 @@ let visitasTotales = 0;
 let usuariosActivos = new Map(); 
 const historialAntiSpam = new Map(); // NUEVO: Para límite de 2 registros/10min
 
-app.use(cors());
-app.use(express.json());
+// --- EL CONTADOR AHORA ES EN LA NUBE ---
+app.use(async (req, res, next) => {
+    // 1. Obtenemos la IP de quien entra
+    const ipCliente = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    // 2. Si la IP es la tuya, pasamos de largo sin sumar nada
+    if (ipCliente.includes(MI_IP_PRIVADA)) {
+        return next(); 
+    }
+
+    // 3. Si es un usuario común y entra a la Home, sumamos
+    if (req.path === '/' || req.path === '/index.html' || req.path === '') {
+        try {
+            const stats = await Stats.findOneAndUpdate(
+                { nombre: "global" },
+                { $inc: { visitasTotales: 1 } },
+                { new: true, upsert: true }
+            );
+            visitasTotales = stats.visitasTotales;
+            console.log(`📈 Nueva visita (pública): ${visitasTotales}`);
+        } catch (err) {
+            console.error("Error al actualizar visitas:", err.message);
+        }
+    }
+    next();
+});
+
+// Ruta para que el HTML consulte el número
+app.get('/api/visitas-publicas', (req, res) => {
+    res.json({ total: visitasTotales });
+});
 app.use(express.static('public'));
+
 
 // 1. IMPORTANTE: Agregá esto justo antes de la sesión para que Render (el proxy) pase las cookies correctamente
 app.set('trust proxy', 1); 
@@ -203,13 +218,6 @@ passport.deserializeUser((obj, done) => {
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
-/**
- * NORMALIZAR: Limpia puntos, espacios, guiones y pasa a Mayúsculas
- * SE AGREGA AQUÍ PARA EVITAR EL ERROR DE "NOT DEFINED"
- */
-const normalizar = (t) => t ? t.toUpperCase().replace(/[\s\.\-]/g, '').trim() : "";
-
-
 // --- FUNCIÓN DE SEGURIDAD PARA ADMIN ---
 function asegurarAdmin(req, res, next) {
     // 1. ¿Está logueado con Google?
@@ -228,31 +236,75 @@ function asegurarAdmin(req, res, next) {
 // =========================================
 // 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
 // =========================================
-app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el 'async'
-    const { nro, categoria, telefono } = req.body;
+app.post('/api/reportar', async (req, res) => {
+    // Desestructuramos los campos del body que vamos a usar directamente
+    const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
+    
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+    
+    // Tu lógica para determinar el telefonoFinal
+    const telefonoFinal = 
+        (telefono && telefono.trim() !== '') ? telefono.trim() : 
+        (contacto && contacto.trim() !== '') ? contacto.trim() :
+        (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+        (celular && celular.trim() !== '') ? celular.trim() : 
+        (tel && tel.trim() !== '') ? tel.trim() : 
+        "S/D";
 
-    const yaExisteEnAdmin = hallazgos.some(h => h.nro === nroLimpio && h.categoria === catFija);
-    const alguienLoBusca = busquedas.find(b => b.nro === nroLimpio && b.categoria === catFija);
+    console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-    if (!yaExisteEnAdmin) {
-        const nuevo = { 
-            ...req.body, 
-            nro: nroLimpio, 
-            categoria: catFija,
-            telefono: telefono, 
-            fecha: new Date().toLocaleString(),
-            idInterno: Date.now() 
-        };
-        hallazgos.push(nuevo);
+    const yaExisteBusquedaEnAdmin = hallazgos.some(
+        h => h.nro === nroLimpio && h.categoria === catFija
+    );
 
-        // --- SOLO AGREGAMOS ESTO ---
-        await new Hallazgo(nuevo).save(); 
-        console.log(`✅ NUBE: Hallazgo guardado en base de datos: ${nroLimpio}`);
-        // ---------------------------
+    const alguienLoBusca = busquedas.find(
+        b => b.nro === nroLimpio && b.categoria === catFija
+    );
+
+    // ❌ SI YA EXISTE → cortar acá
+    if (yaExisteBusquedaEnAdmin) {
+        return res.json({ 
+            success: false, 
+            error: "repetido",
+            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
+        });
     }
 
+    // ✅ SI NO EXISTE → guardamos
+    // Creamos el objeto para guardar en la memoria local (hallazgos[])
+    const nuevoParaMemoria = { 
+        ...req.body, // Mantenemos el spread para la memoria local si dependes de todo el body
+        nro: nroLimpio, 
+        categoria: catFija,
+        telefono: telefonoFinal, // Usamos el telefonoFinal procesado
+        fecha: new Date().toLocaleString(), // Generamos la fecha como string
+        idInterno: Date.now() 
+    };
+
+    hallazgos.push(nuevoParaMemoria);
+
+    // Creamos un objeto específico para MongoDB, asegurando que los campos sean correctos
+    const nuevoParaMongoDB = {
+        nro: nroLimpio,
+        categoria: catFija,
+        telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+        fecha: nuevoParaMemoria.fecha, // Usamos la fecha ya generada como string
+        detalles: detalles || {}, // Aseguramos que 'detalles' se incluya
+        idInterno: nuevoParaMemoria.idInterno // Reutilizamos el idInterno
+    };
+
+    try {
+        await new Hallazgo(nuevoParaMongoDB).save(); 
+        console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
+    } catch (error) {
+        console.error("❌ Error guardando hallazgo en NUBE:", error.message);
+        // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+        // hallazgos = hallazgos.filter(h => h.idInterno !== nuevoParaMemoria.idInterno);
+        // Y devolver un error al cliente. Por ahora, solo logueamos.
+    }
+
+    // 🔍 SI HAY MATCH
     if (alguienLoBusca) {
         return res.json({ 
             success: true, 
@@ -261,95 +313,107 @@ app.post('/api/reportar', async (req, res) => { // <--- Verificá que tenga el '
         });
     }
 
-    if (yaExisteEnAdmin) {
-        return res.json({ 
-            success: false, 
-            error: "repetido",
-            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
-        });
-    }
-
-    res.json({ 
-        success: true, 
-        matchInmediato: false, 
-        datosDuenio: null 
-    });
-
-    // SI NO HAY MATCH Y YA EXISTÍA: Entonces avisamos que es repetido
-    if (yaExisteEnAdmin) {
-        return res.json({ 
-            success: false, 
-            error: "repetido",
-            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
-        });
-    }
-
-    // SI ES TODO NUEVO Y NO HUBO MATCH: Registro normal exitoso
+    // ✅ TODO OK
     res.json({ 
         success: true, 
         matchInmediato: false, 
         datosDuenio: null 
     });
 });
-
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
-app.post('/api/buscar', async (req, res) => { // <--- Agregamos 'async'
-    const { nro, categoria, telefono } = req.body;
-    const nroLimpio = normalizar(nro);
-    const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+app.post('/api/buscar', async (req, res) => { 
+    try {
+        // 1. Extraemos capturando ambas posibilidades para el contacto
+        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; // <-- Incluimos 'detalles'
+        const nroLimpio = normalizar(nro);
+        const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-    // 1. BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
-    const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
+        // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
+        const telefonoFinal = 
+            (telefono && telefono.trim() !== '') ? telefono.trim() : 
+            (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+            (celular && celular.trim() !== '') ? celular.trim() : 
+            (tel && tel.trim() !== '') ? tel.trim() : 
+            "S/D";
 
-    // 2. BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
-    const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
+        console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-    // --- LÓGICA DE REGISTRO EN ADMIN ---
-    // Si la búsqueda es nueva, la guardamos para que aparezca en el panel admin
-    if (!yaExisteBusquedaEnAdmin) {
-        const busqueda = { 
-            ...req.body, 
-            nro: nroLimpio, 
-            categoria: catFija,
-            telefono: telefono,
-            fecha: new Date().toLocaleString() 
-        };
-        busquedas.push(busqueda);
+        // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
+        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
 
-        // --- SOLO AGREGAMOS ESTO PARA LA NUBE ---
-        await new Busqueda(busqueda).save(); 
-        // ----------------------------------------
+        // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+        const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
-        console.log(`🔍 BÚSQUEDA REGISTRADA EN ADMIN Y NUBE: [${catFija}] ${nroLimpio}`);
-    }
+        // --- LÓGICA DE REGISTRO EN ADMIN ---
+        if (!yaExisteBusquedaEnAdmin) {
+            // Objeto para guardar en la memoria local (busquedas[])
+            const busquedaParaMemoria = { 
+                ...req.body, // Mantenemos el spread para la memoria local
+                nro: nroLimpio, 
+                categoria: catFija,
+                telefono: telefonoFinal, // Usamos el telefonoFinal procesado
+                fecha: new Date().toLocaleString() 
+            };
+            
+            // Guardamos en la memoria local (Panel Admin actual)
+            busquedas.push(busquedaParaMemoria);
 
-    // --- LÓGICA DE RESPUESTA AL USUARIO ---
+            // Objeto específico para MongoDB, asegurando que los campos sean correctos
+            const busquedaParaMongoDB = {
+                nro: nroLimpio,
+                categoria: catFija,
+                telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+                fecha: busquedaParaMemoria.fecha, // Usamos la fecha ya generada como string
+                detalles: detalles || {} // Aseguramos que 'detalles' se incluya
+            };
 
-    // SI YA APARECIÓ (MATCH): No importa si es repetido, ¡BOMBAZO SIEMPRE!
-    if (yaEncontrado) {
-        return res.json({ 
+            // --- GUARDADO EN LA NUBE (MONGODB) ---
+            try {
+                const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
+                await nuevaBusquedaNube.save(); 
+                console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
+            } catch (error) {
+                console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
+                // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+                // busquedas = busquedas.filter(b => b.nro !== nroLimpio || b.categoria !== catFija);
+            }
+        }
+
+        // --- LÓGICA DE RESPUESTA AL USUARIO ---
+
+        // SI YA APARECIÓ (MATCH)
+        if (yaEncontrado) {
+            return res.json({ 
+                success: true, 
+                found: true, // Mantengo compatibilidad si usas 'found' o 'encontrado'
+                encontrado: true, 
+                datos: yaEncontrado 
+            });
+        }
+
+        // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO
+        if (yaExisteBusquedaEnAdmin) {
+            return res.json({ 
+                success: false, 
+                error: "repetido",
+                message: `Ya tienes una búsqueda activa para el número ${nroLimpio}.` 
+            });
+        }
+
+        // SI ES TODO NUEVO Y NO HAY MATCH
+        res.json({ 
             success: true, 
-            encontrado: true, 
-            datos: yaEncontrado 
+            encontrado: false 
         });
-    }
 
-    // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO: Avisamos que está repetido
-    if (yaExisteBusquedaEnAdmin) {
-        return res.json({ 
-            success: false, 
-            error: "repetido",
-            message: `Ya tienes una búsqueda activa para el número ${nroLimpio}.` 
-        });
+    } catch (err) {
+        console.error("Error crítico en /api/buscar:", err);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Error interno del servidor" });
+        }
     }
-
-    // SI ES TODO NUEVO Y NO HAY MATCH: Éxito sin encuentro todavía
-    res.json({ 
-        success: true, 
-        encontrado: false 
-    });
 });
 
 // =========================================
@@ -499,7 +563,17 @@ app.post('/api/registro', async (req, res) => {
 
         // 4. Guardamos en la nube (Persistencia total)
         await nuevoUsuario.save();
-        
+
+        // --- AGREGAR ESTO AQUÍ (Lógica de Referidos) ---
+        if (req.body.referido) {
+            await Usuario.findOneAndUpdate(
+                { email: req.body.referido }, 
+                { $inc: { invitacionesExitosas: 1 } }
+            );
+            console.log(`Punto otorgado a: ${req.body.referido}`);
+        }
+        // ----------------------------------------------
+    
         console.log("------------------------------------------");
         console.log(`✅ REGISTRO EXITOSO: ${username} (${email})`);
         console.log("------------------------------------------");
@@ -627,7 +701,7 @@ app.get('/api/stats', (req, res) => {
     const generados = baseDeDatosSimulada.length;
     const activados = baseDeDatosSimulada.filter(qr => qr.activado === true).length;
     
-    console.log(`Enviando stats: Generados ${generados}`);
+    //console.log(`Enviando stats: Generados ${generados}`);
     res.json({ generados, activados });
 });
 
@@ -689,6 +763,52 @@ app.get("/api/validar-qr/:id", (req, res) => {
     }
 });
 
+// Ruta para crear preferencias de donación/apoyo al proyecto
+app.post('/api/crear-preferencia-donacion', async (req, res) => {
+    try {
+        const { monto } = req.body;
+
+        // Validación básica
+        if (!monto || isNaN(monto)) {
+            return res.status(400).json({ message: "Monto no válido" });
+        }
+
+        // Usamos el "client" y la "Preference" que ya configuraste en la línea 455
+        const preference = new Preference(client);
+        
+        const result = await preference.create({
+            body: {
+                items: [{
+                    title: "Apoyo al Proyecto - Central Santua",
+                    quantity: 1,
+                    unit_price: Number(monto),
+                    currency_id: "ARS"
+                }],
+                back_urls: {
+                    success: "https://centralsantua.com.ar/index.html?pago=exitoso", 
+                    failure: "https://centralsantua.com.ar/index.html?pago=error",
+                    pending: "https://centralsantua.com.ar/index.html?pago=pendiente"
+                },
+                auto_return: "approved",
+            }
+        });
+
+        // Mercado Pago devuelve el link en result.init_point
+        if (result.init_point) {
+            console.log(`✅ Donación generada: $${monto}`);
+            res.json({ init_point: result.init_point });
+        } else {
+            throw new Error("No se obtuvo init_point");
+        }
+
+    } catch (error) {
+        console.error("❌ Error en Donación MP:", error);
+        res.status(500).json({ 
+            message: "Error interno al conectar con Mercado Pago",
+            detalle: error.message 
+        });
+    }
+});
 
 
 // REEMPLAZA TU RUTA /api/sticker/configurar POR ESTA:
@@ -859,11 +979,12 @@ app.get('/api/logout', (req, res) => {
 // FUNCIÓN PARA BAJAR TODO DE LA NUBE AL EMPEZAR EL SERVIDOR
 async function cargarDatosDeNube() {
     try {
-        // Bajamos los 3 tipos de datos al mismo tiempo
-        const [stickersEnNube, hallazgosEnNube, busquedasEnNube] = await Promise.all([
+        // Bajamos los 4 tipos de datos al mismo tiempo (agregamos Stats)
+        const [stickersEnNube, hallazgosEnNube, busquedasEnNube, statsEnNube] = await Promise.all([
             Sticker.find({}),
             Hallazgo.find({}),
-            Busqueda.find({})
+            Busqueda.find({}),
+            Stats.findOne({ nombre: "global" }) // <--- Nueva línea para las visitas
         ]);
 
         // Llenamos las listas de memoria con lo que habia en la nube
@@ -871,11 +992,17 @@ async function cargarDatosDeNube() {
         hallazgos = hallazgosEnNube;
         busquedas = busquedasEnNube;
 
+        // Si existen estadísticas en la nube, actualizamos la variable local
+        if (statsEnNube) {
+            visitasTotales = statsEnNube.visitasTotales;
+        }
+         
         console.log("------------------------------------------");
         console.log(`☁️  SANTUA CLOUD SYNC COMPLETA:`);
         console.log(`   ✅ Stickers: ${baseDeDatosSimulada.length}`);
         console.log(`   ✅ Hallazgos: ${hallazgos.length}`);
         console.log(`   ✅ Búsquedas: ${busquedas.length}`);
+        console.log(`   ✅ Visitas: ${visitasTotales}`); // Mostramos el contador recuperado
         console.log("------------------------------------------");
     } catch (err) {
         console.log("❌ Error en sincronización inicial:", err.message);
@@ -910,28 +1037,6 @@ app.get('/api/mis-stickers', async (req, res) => {
     }
 });
 
-const ipsAutorizadas = ['190.99.71.6']; // Tu IP
-
-app.use((req, res, next) => {
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const esAutorizado = ipsAutorizadas.some(ip => clientIp.includes(ip));
-
-    if (esAutorizado) {
-        next();
-    } else {
-        res.status(403).send(`
-            <div style="text-align: center; padding: 100px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff; height: 100vh; margin: 0;">
-                <h1 style="font-size: 80px; margin-bottom: 20px;">🚀</h1>
-                <h2 style="color: #1a1a1a; font-size: 32px; letter-spacing: 2px;">¡PRÓXIMAMENTE!</h2>
-                <p style="color: #666; font-size: 20px; margin-bottom: 40px;">Estamos preparando algo increíble para vos.</p>
-                <div style="width: 100px; height: 4px; background-color: #d32f2f; margin: 0 auto 30px;"></div>
-                <p style="font-weight: bold; color: #333; font-size: 22px; text-transform: uppercase;">SANTUA</p>
-                <p style="margin-top: 50px; font-size: 14px; color: #bbb;">© 2026 - Todos los derechos reservados</p>
-            </div>
-        `);
-    }
-});
-
 // Ruta para que el Admin guarde un nuevo Punto de Venta
 app.post('/api/admin/guardar-pdv', async (req, res) => {
     try {
@@ -957,16 +1062,34 @@ app.get('/api/puntos-venta', async (req, res) => {
     }
 });
 
-const PdvSchema = new mongoose.Schema({
-    nombre: String,
-    direccion: String,
-    whatsapp: String,
-    foto: String,
-    lat: Number,
-    lng: Number,
-    fecha_registro: { type: Date, default: Date.now }
+// Ruta para obtener los 10 usuarios que más gente trajeron
+app.get('/api/ranking-invitados', async (req, res) => {
+    try {
+        const topReferidos = await Usuario.find({ invitacionesExitosas: { $gt: 0 } })
+            .sort({ invitacionesExitosas: -1 }) // Ordenar de mayor a menor
+            .limit(25) // Solo los 10 mejores
+            .select('username foto invitacionesExitosas'); // Solo enviamos datos públicos
+
+        res.json({
+            success: true,
+            ranking: topReferidos
+        });
+    } catch (error) {
+        console.error("Error al obtener ranking:", error);
+        res.status(500).json({ success: false, message: "Error al cargar el ranking" });
+    }
 });
-const PDV = mongoose.model('PuntosDeVenta', PdvSchema);
+
+app.get('/api/stats-privadas', (req, res) => {
+    // Render y otros proxies suelen mandar la IP real en 'x-forwarded-f5or'
+    const ipCliente = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    if (ipCliente.includes(MI_IP_PRIVADA)) {
+        res.json({ visitas: visitasTotales });
+    } else {
+        res.status(403).json({ error: "No autorizado" });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
