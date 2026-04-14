@@ -233,83 +233,104 @@ function asegurarAdmin(req, res, next) {
     res.status(403).send("<h1>Acceso Denegado</h1><p>No tenés permisos para estar acá.</p><a href='/login.html'>Volver</a>");
 }
 
+// =========================================
+// 1. RUTA PARA REPORTAR (ENCONTRÉ ALGO)
+// =========================================
 app.post('/api/reportar', async (req, res) => {
-    try {
-        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
-        
-        // 1. Normalización segura
-        const nroLimpio = normalizar(nro);
-        const catFija = categoria ? categoria.toUpperCase() : "OTRO";
-        
-        const telefonoFinal = 
-            (telefono && telefono.trim() !== '') ? telefono.trim() : 
-            (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
-            (celular && celular.trim() !== '') ? celular.trim() : 
-            (tel && tel.trim() !== '') ? tel.trim() : 
-            "S/D";
+    // Desestructuramos los campos del body que vamos a usar directamente
+    const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
+    
+    const nroLimpio = normalizar(nro);
+    const catFija = categoria ? categoria.toUpperCase() : "OTRO";
+    
+    // Tu lógica para determinar el telefonoFinal
+    const telefonoFinal = 
+        (telefono && telefono.trim() !== '') ? telefono.trim() : 
+        (contacto && contacto.trim() !== '') ? contacto.trim() :
+        (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
+        (celular && celular.trim() !== '') ? celular.trim() : 
+        (tel && tel.trim() !== '') ? tel.trim() : 
+        "S/D";
 
-        // 2. Validación de duplicados protegida (Agregué h && h.nro)
-        const yaExisteBusquedaEnAdmin = hallazgos.some(
-            h => h && h.nro && normalizar(h.nro) === nroLimpio && h.categoria === catFija
-        );
+    console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-        if (yaExisteBusquedaEnAdmin && nroLimpio !== "") {
-            return res.json({ 
-                success: false, 
-                error: "repetido",
-                message: `El número ${nroLimpio} ya está registrado.` 
-            });
-        }
+    const yaExisteBusquedaEnAdmin = hallazgos.some(
+        h => h.nro === nroLimpio && h.categoria === catFija
+    );
 
-        const alguienLoBusca = busquedas.find(
-            b => b && b.nro && b.nro === nroLimpio && b.categoria === catFija
-        );
+    const alguienLoBusca = busquedas.find(
+        b => b.nro === nroLimpio && b.categoria === catFija
+    );
 
-        const fechaActual = new Date().toLocaleString();
-        const idUnico = Date.now();
-
-        // 3. Guardado en Memoria y MongoDB
-        const nuevoHallazgo = { 
-            ...req.body, nro: nroLimpio, categoria: catFija, 
-            telefono: telefonoFinal, fecha: fechaActual, idInterno: idUnico 
-        };
-        hallazgos.push(nuevoHallazgo);
-
-        try {
-            await new Hallazgo({
-                nro: nroLimpio, categoria: catFija, telefono: telefonoFinal,
-                fecha: fechaActual, detalles: detalles || {}, idInterno: idUnico
-            }).save();
-        } catch (mongoErr) {
-            console.error("❌ Error MongoDB:", mongoErr.message);
-        }
-
-        // 4. Respuesta exitosa
-        res.json({ 
-            success: true, 
-            matchInmediato: !!alguienLoBusca, 
-            datosDuenio: alguienLoBusca || null 
+    // ❌ SI YA EXISTE → cortar acá
+    if (yaExisteBusquedaEnAdmin) {
+        return res.json({ 
+            success: false, 
+            error: "repetido",
+            message: `El número ${nroLimpio} ya está registrado como hallazgo en la categoría ${catFija}.` 
         });
-
-    } catch (err) {
-        console.error("🔥 Error crítico en /api/reportar:", err);
-        if (!res.headersSent) {
-            res.status(500).json({ success: false, message: "Error interno del servidor" });
-        }
     }
+
+    // ✅ SI NO EXISTE → guardamos
+    // Creamos el objeto para guardar en la memoria local (hallazgos[])
+    const nuevoParaMemoria = { 
+        ...req.body, // Mantenemos el spread para la memoria local si dependes de todo el body
+        nro: nroLimpio, 
+        categoria: catFija,
+        telefono: telefonoFinal, // Usamos el telefonoFinal procesado
+        fecha: new Date().toLocaleString(), // Generamos la fecha como string
+        idInterno: Date.now() 
+    };
+
+    hallazgos.push(nuevoParaMemoria);
+
+    // Creamos un objeto específico para MongoDB, asegurando que los campos sean correctos
+    const nuevoParaMongoDB = {
+        nro: nroLimpio,
+        categoria: catFija,
+        telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+        fecha: nuevoParaMemoria.fecha, // Usamos la fecha ya generada como string
+        detalles: detalles || {}, // Aseguramos que 'detalles' se incluya
+        idInterno: nuevoParaMemoria.idInterno // Reutilizamos el idInterno
+    };
+
+    try {
+        await new Hallazgo(nuevoParaMongoDB).save(); 
+        console.log(`✅ NUBE: Hallazgo guardado con Tel: ${telefonoFinal}`);
+    } catch (error) {
+        console.error("❌ Error guardando hallazgo en NUBE:", error.message);
+        // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+        // hallazgos = hallazgos.filter(h => h.idInterno !== nuevoParaMemoria.idInterno);
+        // Y devolver un error al cliente. Por ahora, solo logueamos.
+    }
+
+    // 🔍 SI HAY MATCH
+    if (alguienLoBusca) {
+        return res.json({ 
+            success: true, 
+            matchInmediato: true, 
+            datosDuenio: alguienLoBusca 
+        });
+    }
+
+    // ✅ TODO OK
+    res.json({ 
+        success: true, 
+        matchInmediato: false, 
+        datosDuenio: null 
+    });
 });
 // =========================================
 // 2. RUTA PARA BUSCAR (PERDÍ ALGO) 
 // =========================================
 app.post('/api/buscar', async (req, res) => { 
     try {
-        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
-        
-        // 1. Normalización segura (solo letras y números)
+        // 1. Extraemos capturando ambas posibilidades para el contacto
+        const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body; // <-- Incluimos 'detalles'
         const nroLimpio = normalizar(nro);
         const catFija = categoria ? categoria.toUpperCase() : "OTRO";
 
-        // 2. Procesamiento de contacto seguro
+        // 2. Aseguramos el dato de contacto: prioridad a telefono, luego whatsapp, o S/D
         const telefonoFinal = 
             (telefono && telefono.trim() !== '') ? telefono.trim() : 
             (whatsapp && whatsapp.trim() !== '') ? whatsapp.trim() : 
@@ -317,77 +338,80 @@ app.post('/api/buscar', async (req, res) => {
             (tel && tel.trim() !== '') ? tel.trim() : 
             "S/D";
 
-        console.log("🔍 BÚSQUEDA - Nro:", nroLimpio, "| Tel:", telefonoFinal);
+        console.log("📩 TELEFONO RECIBIDO y FINAL:", telefonoFinal);
 
-        // 3. Verificación de duplicados con PROTECCIÓN (Evita el Error 500)
-        // Agregamos 'b && b.nro' para que si un dato está corrupto, no rompa el servidor
-        const yaExisteBusquedaEnAdmin = busquedas.some(
-            b => b && b.nro && normalizar(b.nro) === nroLimpio && b.categoria === catFija
-        );
+        // BUSCAMOS SI YA EXISTE ESTA BÚSQUEDA EN EL ADMIN
+        const yaExisteBusquedaEnAdmin = busquedas.some(b => b.nro === nroLimpio && b.categoria === catFija);
 
-        // 4. Verificación de MATCH (Alguien ya lo encontró)
-        const yaEncontrado = hallazgos.find(
-            h => h && h.nro && normalizar(h.nro) === nroLimpio && h.categoria === catFija
-        );
+        // BUSCAMOS SI YA FUE ENCONTRADO (MATCH)
+        const yaEncontrado = hallazgos.find(h => h.nro === nroLimpio && h.categoria === catFija);
 
-        // --- LÓGICA DE REGISTRO ---
-        if (!yaExisteBusquedaEnAdmin && nroLimpio !== "") {
-            const fechaActual = new Date().toLocaleString();
-            
+        // --- LÓGICA DE REGISTRO EN ADMIN ---
+        if (!yaExisteBusquedaEnAdmin) {
+            // Objeto para guardar en la memoria local (busquedas[])
             const busquedaParaMemoria = { 
-                ...req.body,
+                ...req.body, // Mantenemos el spread para la memoria local
                 nro: nroLimpio, 
                 categoria: catFija,
-                telefono: telefonoFinal,
-                fecha: fechaActual 
+                telefono: telefonoFinal, // Usamos el telefonoFinal procesado
+                fecha: new Date().toLocaleString() 
             };
             
+            // Guardamos en la memoria local (Panel Admin actual)
             busquedas.push(busquedaParaMemoria);
 
+            // Objeto específico para MongoDB, asegurando que los campos sean correctos
+            const busquedaParaMongoDB = {
+                nro: nroLimpio,
+                categoria: catFija,
+                telefono: telefonoFinal, // ¡Este es el campo que nos importa para MongoDB!
+                fecha: busquedaParaMemoria.fecha, // Usamos la fecha ya generada como string
+                detalles: detalles || {} // Aseguramos que 'detalles' se incluya
+            };
+
+            // --- GUARDADO EN LA NUBE (MONGODB) ---
             try {
-                await new Busqueda({
-                    nro: nroLimpio,
-                    categoria: catFija,
-                    telefono: telefonoFinal,
-                    fecha: fechaActual,
-                    detalles: detalles || {}
-                }).save(); 
-                console.log(`🔍 NUBE: Búsqueda guardada.`);
+                const nuevaBusquedaNube = new Busqueda(busquedaParaMongoDB);
+                await nuevaBusquedaNube.save(); 
+                console.log(`🔍 NUBE: Búsqueda guardada - [${catFija}] ${nroLimpio} - Tel: ${telefonoFinal}`);
             } catch (error) {
-                console.error("❌ Error MongoDB en búsqueda:", error.message);
+                console.error("❌ Error al guardar búsqueda en MongoDB:", error.message);
+                // Opcional: Si falla la base de datos, podrías querer quitarlo de la memoria local
+                // busquedas = busquedas.filter(b => b.nro !== nroLimpio || b.categoria !== catFija);
             }
         }
 
-        // --- RESPUESTAS AL FRONTEND ---
+        // --- LÓGICA DE RESPUESTA AL USUARIO ---
 
         // SI YA APARECIÓ (MATCH)
         if (yaEncontrado) {
             return res.json({ 
                 success: true, 
+                found: true, // Mantengo compatibilidad si usas 'found' o 'encontrado'
                 encontrado: true, 
                 datos: yaEncontrado 
             });
         }
 
-        // SI YA ESTABA SIENDO BUSCADO (EVITA DUPLICADOS)
-        if (yaExisteBusquedaEnAdmin && nroLimpio !== "") {
+        // SI NO APARECIÓ Y YA LO ESTABA BUSCANDO
+        if (yaExisteBusquedaEnAdmin) {
             return res.json({ 
                 success: false, 
                 error: "repetido",
-                message: `Ya tenemos una búsqueda registrada con este número. Te avisaremos apenas tengamos novedades.` 
+                message: `Ya tienes una búsqueda activa para el número ${nroLimpio}.` 
             });
         }
 
-        // REGISTRO NUEVO EXITOSO SIN MATCH
+        // SI ES TODO NUEVO Y NO HAY MATCH
         res.json({ 
             success: true, 
             encontrado: false 
         });
 
     } catch (err) {
-        console.error("🔥 Error crítico en /api/buscar:", err);
+        console.error("Error crítico en /api/buscar:", err);
         if (!res.headersSent) {
-            res.status(500).json({ success: false, message: "Error interno" });
+            res.status(500).json({ success: false, message: "Error interno del servidor" });
         }
     }
 });
@@ -837,6 +861,7 @@ app.get('/api/sticker/consultar/:id', (req, res) => {
     }
 });
 
+// nada
 // --- NUEVO: WEBHOOK DE ACTIVACIÓN BLINDADA ---
 app.post('/api/webhook-pagos', async (req, res) => {
     const { query } = req;
