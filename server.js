@@ -1094,8 +1094,8 @@ app.get('/api/stats-privadas', (req, res) => {
     }
 });
 
-// 🔐 PROTECCIÓN ADMIN
-app.use('/admin.html', (req, res, next) => {
+// 🔐 PROTEGER ADMIN
+app.get('/admin.html', (req, res) => {
     const auth = req.headers.authorization;
 
     if (!auth) {
@@ -1107,12 +1107,13 @@ app.use('/admin.html', (req, res, next) => {
     const decoded = Buffer.from(base64, 'base64').toString();
     const [user, pass] = decoded.split(':');
 
-    if (user === 'santua4224' && pass === 'benja42783833') {
-        return next();
+    if (user !== 'santua4224' || pass !== 'benja42783833') {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+        return res.status(401).send('Credenciales incorrectas');
     }
 
-    res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
-    return res.status(401).send('Credenciales incorrectas');
+    // 👇 SERVIR EL ARCHIVO MANUALMENTE
+    return res.sendFile(__dirname + '/public/admin.html');
 });
 
 // 📁 ESTO SIEMPRE DESPUÉS
