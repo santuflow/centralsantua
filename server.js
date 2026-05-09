@@ -135,6 +135,28 @@ app.use(async (req, res, next) => {
 app.get('/api/visitas-publicas', (req, res) => {
     res.json({ total: visitasTotales });
 });
+
+
+// 🔐 PROTEGER ADMIN (VA PRIMERO)
+app.get('/admin.html', (req, res) => {
+    const auth = req.headers.authorization;
+
+    if (!auth) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+        return res.status(401).send('Login requerido');
+    }
+
+    const base64 = auth.split(' ')[1];
+    const decoded = Buffer.from(base64, 'base64').toString();
+    const [user, pass] = decoded.split(':');
+
+    if (user !== 'admin' || pass !== '1234') {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+        return res.status(401).send('Credenciales incorrectas');
+    }
+
+    return res.sendFile(__dirname + '/public/admin.html');
+});
 app.use(express.static('public'));
 
 
@@ -1094,30 +1116,6 @@ app.get('/api/stats-privadas', (req, res) => {
     }
 });
 
-// 🔐 PROTEGER ADMIN
-app.get('/admin.html', (req, res) => {
-    const auth = req.headers.authorization;
-
-    if (!auth) {
-        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
-        return res.status(401).send('Acceso requerido');
-    }
-
-    const base64 = auth.split(' ')[1];
-    const decoded = Buffer.from(base64, 'base64').toString();
-    const [user, pass] = decoded.split(':');
-
-    if (user !== 'santua4224' || pass !== 'benja42783833') {
-        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
-        return res.status(401).send('Credenciales incorrectas');
-    }
-
-    // 👇 SERVIR EL ARCHIVO MANUALMENTE
-    return res.sendFile(__dirname + '/public/admin.html');
-});
-
-// 📁 ESTO SIEMPRE DESPUÉS
-app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
