@@ -1094,6 +1094,30 @@ app.get('/api/stats-privadas', (req, res) => {
     }
 });
 
+// 🔐 PROTECCIÓN ADMIN
+app.use('/admin.html', (req, res, next) => {
+    const auth = req.headers.authorization;
+
+    if (!auth) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+        return res.status(401).send('Acceso requerido');
+    }
+
+    const base64 = auth.split(' ')[1];
+    const decoded = Buffer.from(base64, 'base64').toString();
+    const [user, pass] = decoded.split(':');
+
+    if (user === 'santua4224' && pass === 'benja42783833') {
+        return next();
+    }
+
+    res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+    return res.status(401).send('Credenciales incorrectas');
+});
+
+// 📁 ESTO SIEMPRE DESPUÉS
+app.use(express.static('public'));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);
