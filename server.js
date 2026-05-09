@@ -137,10 +137,25 @@ app.get('/api/visitas-publicas', (req, res) => {
 });
 
 
-// 🔐 PROTEGER ADMIN (VA PRIMERO)
+// 🔐 SISTEMA ANTI FUERZA BRUTA + BLOQUEO PERMANENTE
+
+const intentos = {};
+const bloqueados = {};
+
 app.get('/admin.html', (req, res) => {
+
+    // 📡 obtener IP real (importante en Render)
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0] || req.socket.remoteAddress;
+
+    // 🚫 bloquear IP permanente
+    if (bloqueados[ip]) {
+        console.log("🚫 Intento de IP bloqueada:", ip);
+        return res.status(403).send('IP bloqueada permanentemente');
+    }
+
     const auth = req.headers.authorization;
 
+    // 🔐 pedir login
     if (!auth) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
         return res.status(401).send('Login requerido');
@@ -150,10 +165,28 @@ app.get('/admin.html', (req, res) => {
     const decoded = Buffer.from(base64, 'base64').toString();
     const [user, pass] = decoded.split(':');
 
-    if (user !== 'admin' || pass !== '1234') {
+    // ❌ credenciales incorrectas
+    if (user !== 'santua4224' || pass !== 'benja42783833') {
+
+        intentos[ip] = (intentos[ip] || 0) + 1;
+
+        console.log(`❌ Intento fallido ${intentos[ip]} desde IP: ${ip}`);
+
+        // 🔥 BLOQUEO PERMANENTE después de 5 intentos
+        if (intentos[ip] >= 3) {
+            bloqueados[ip] = true;
+            console.log("🚫 IP bloqueada permanentemente:", ip);
+            return res.status(403).send('Demasiados intentos. IP bloqueada permanentemente');
+        }
+
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
         return res.status(401).send('Credenciales incorrectas');
     }
+
+    // ✅ login correcto → reset intentos
+    intentos[ip] = 0;
+
+    console.log("✅ Login correcto desde IP:", ip);
 
     return res.sendFile(__dirname + '/public/admin.html');
 });
