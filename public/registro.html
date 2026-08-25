@@ -207,36 +207,6 @@
                 box-shadow: none;
             }
         }
-
-        .btn-google {
-    width: 100%;
-    padding: 15px;
-    background: white;
-    border: none;
-    border-radius: 12px;
-    color: #3c4043;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    cursor: pointer;
-    text-decoration: none;
-    margin-bottom: 20px;
-    transition: 0.3s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.btn-google:hover {
-    background: #f1f3f4;
-    transform: translateY(-1px);
-}
-
-/* El estilo de la imagen (la G de Google) */
-.btn-google img {
-    width: 20px;
-}
     </style>
 </head>
 <body>
@@ -266,13 +236,7 @@
                 <h3>Crear Cuenta</h3>
                 <p class="subtitle">Registrate para empezar a proteger tus cosas.</p>
 
-                <a href="/auth/google?prompt=select_account" class="btn-google">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
-    Continuar con Google
-</a>
-
                 <form id="registro-form">
-                    <input type="hidden" id="referido-input" name="referido">
                     <div class="input-box">
                         <label>Usuario</label>
                         <input type="text" id="username" placeholder="Tu nombre de usuario" required>
@@ -302,14 +266,6 @@
     </div>
 
     <script>
-        // Capturar el referido de la URL al cargar
-const urlParams = new URLSearchParams(window.location.search);
-const referidoVieneDeLink = urlParams.get('ref');
-
-if (referidoVieneDeLink) {
-    document.getElementById('referido-input').value = referidoVieneDeLink.toLowerCase().trim();
-    console.log("Referido detectado:", referidoVieneDeLink);
-}
         // Lista temporal para evitar duplicados (Esto luego lo validará tu servidor)
         const usuariosExistentes = ["rodrigo", "santua", "admin"];
         
@@ -340,7 +296,6 @@ if (referidoVieneDeLink) {
             const email = document.getElementById('email').value.toLowerCase().trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const referido = document.getElementById('referido-input').value;
 
             // Validación de contraseña
             if(password !== confirmPassword) {
@@ -352,7 +307,7 @@ if (referidoVieneDeLink) {
                 const response = await fetch('/api/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password, referido })
+                    body: JSON.stringify({ username, email, password })
                 });
 
                 const data = await response.json();

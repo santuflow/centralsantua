@@ -9,7 +9,7 @@
 
 body {
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    background: url('fondo.jpg') no-repeat center center fixed;
+    background: url('bandera.jpg') no-repeat center center fixed;
     background-size: cover;
     color: #ffffff;
     display: flex;
@@ -905,72 +905,4 @@ footer {
         padding: 0 10px;
         margin-top: 0px !important;
     }
-}
-
-/* --- SECCIÓN BOTONES DE NAVEGACIÓN (RANKING Y APOYO) --- */
-.buttons-container-flex {
-    display: flex !important;
-    gap: 12px !important;
-    width: 95% !important;
-    max-width: 450px !important;
-    margin: 20px auto !important;
-    justify-content: center !important;
-}
-
-.btn-sec-half {
-    flex: 1 !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(79, 172, 254, 0.4) !important;
-    color: #ffffff !important;
-    padding: 16px 5px !important;
-    border-radius: 14px !important;
-    text-decoration: none !important;
-    text-align: center !important;
-    font-weight: 700 !important;
-    font-size: 0.9rem !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    display: block !important;
-    transition: all 0.3s ease !important;
-}
-
-.btn-sec-half:hover {
-    background: rgba(79, 172, 254, 0.2) !important;
-    border-color: #4facfe !important;
-}
-
-/* --- MODAL DE DONACIÓN Y SUS BOTONES --- */
-.opciones-donacion {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 15px !important;
-    margin: 25px 0 !important;
-}
-
-.btn-donar {
-    /* Gradiente eléctrico Central Santua */
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-    border: none !important;
-    color: #000000 !important; /* Texto negro para máximo contraste */
-    padding: 18px !important;
-    border-radius: 15px !important;
-    font-size: 1.2rem !important;
-    font-weight: 900 !important;
-    cursor: pointer !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4) !important;
-    text-transform: uppercase !important;
-}
-
-.btn-donar small {
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
-    margin-top: 4px !important;
-    opacity: 0.8 !important;
-}
-
-.btn-donar:active {
-    transform: scale(0.96) !important;
 }

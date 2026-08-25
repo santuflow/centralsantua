@@ -2,16 +2,6 @@
 const serverURL = window.location.origin; 
 const MI_WHATSAPP = "5491151436396";
 
-// --- LÓGICA DE REFERIDOS (PERSISTENCIA TOTAL) ---
-const urlParams = new URLSearchParams(window.location.search);
-const referidoEnURL = urlParams.get('ref');
-
-if (referidoEnURL) {
-    // Guardamos con un nombre único para no confundir con otras apps
-    localStorage.setItem('santua_referido_pendiente', referidoEnURL.toLowerCase().trim());
-    console.log("🚀 Referido detectado y guardado en memoria:", referidoEnURL);
-}
-
 // Variable global para capturar la categoría seleccionada en la UI
 let categoriaSeleccionada = "";
 
@@ -137,18 +127,16 @@ if (formReporte) {
         btnSubmit.innerText = "PROCESANDO...";
 
         try {
-    const res = await fetch(`${serverURL}/api/reportar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            tipo: 'hallazgo',
-            categoria: categoriaSeleccionada,
-            nro: nroLimpio,
-            // ¡CAMBIO CLAVE AQUÍ!
-            telefono: document.getElementById('whatsapp').value // Ahora enviamos el campo como 'telefono'
-            // Ya no necesitamos 'whatsapp' ni 'contacto' aquí, ya que 'telefono' es el que procesa el backend.
-        })
-    });
+            const res = await fetch(`${serverURL}/api/reportar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: 'hallazgo',
+                    categoria: categoriaSeleccionada,
+                    nro: nroLimpio,
+                    contacto: whatsapp
+                })
+            });
             const data = await res.json();
 
             if (data.error === "repetido" || data.success === false && data.message && data.message.includes("registrado")) {
@@ -195,17 +183,16 @@ if (formBusqueda) {
         const nroBuscado = limpiarDato(inputNro.value);
         const wapSearch = document.getElementById('whatsapp-search')?.value || "";
 
-                try {
-    const res = await fetch(`${serverURL}/api/buscar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            nro: nroBuscado, 
-            // ¡CAMBIO CLAVE AQUÍ!
-            telefono: document.getElementById('whatsapp').value, // Usamos el valor del input con ID 'whatsapp' y lo enviamos como campo 'telefono'
-            categoria: categoriaSeleccionada 
-        })
-    });
+        try {
+            const res = await fetch(`${serverURL}/api/buscar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    nro: nroBuscado, 
+                    contacto: wapSearch,
+                    categoria: categoriaSeleccionada 
+                })
+            });
             const data = await res.json();
 
             if (data.error === "repetido" || data.success === false) {
@@ -335,40 +322,3 @@ function verificarAccesoActivacion() {
         window.location.href = '/login.html';
     }
 }
-
-/**
- * Genera el link de invitación del usuario actual.
- * Úsalo para mostrarlo en el perfil o ranking.
- */
-function generarMiLinkInvitacion() {
-    const miEmail = localStorage.getItem('userEmail'); // Asegúrate de guardar el email al hacer login
-    if (!miEmail) return "Iniciá sesión para obtener tu link";
-    
-    return `${window.location.origin}/registro.html?ref=${miEmail}`;
-}
-
-// Opcional: Función para copiar el link al portapapeles
-function copiarLinkInvitacion() {
-    const link = generarMiLinkInvitacion();
-    navigator.clipboard.writeText(link).then(() => {
-        alert("¡Link de invitación copiado! 🚀");
-    });
-}
-
-// --- SINCRONIZACIÓN DE SESIÓN PARA RANKING ---
-async function sincronizarEmailSesion() {
-    try {
-        const res = await fetch('/api/usuario_actual');
-        const data = await res.json();
-        
-        if (data.logueado && data.usuario.email) {
-            // Guardamos el email para que 'generarMiLinkInvitacion' funcione
-            localStorage.setItem('userEmail', data.usuario.email);
-        }
-    } catch (e) {
-        console.warn("No se pudo sincronizar el email para el link de referidos.");
-    }
-}
-
-// Ejecutar al cargar cualquier página
-document.addEventListener("DOMContentLoaded", sincronizarEmailSesion);

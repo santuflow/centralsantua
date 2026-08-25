@@ -249,7 +249,7 @@
             </a>
             <h1>Conectados para<br>cuidar lo tuyo.</h1>
             <div class="main-msg">
-                "mantene activa tu red de recuperación."
+                "Tu cuenta es la herramienta para gestionar tus códigos QR. Entrá para verificar tus datos y mantener activa tu red de recuperación."
             </div>
         </section>
 
@@ -331,7 +331,6 @@
                 if (data.logueado && data.user) {
                     clearInterval(bucle);
                     localStorage.setItem('usuarioNombre', data.user.username || 'Usuario');
-                    localStorage.setItem('userEmail', data.user.email.toLowerCase().trim());
                     redirigirUsuario();
                 }
             } catch (e) {
@@ -371,8 +370,7 @@
                     // 2. Guardamos los datos de sesión
                     localStorage.setItem('usuarioNombre', data.username || 'Usuario');
                     localStorage.setItem('estaLogueado', 'true');
-                    localStorage.setItem('userEmail', email);
-                    
+
                     // 3. RETARDO CLAVE: Esperamos 400ms para que la Cookie se guarde bien 
                     // antes de saltar al index, evitando que el index te vea como "no logueado".
                     setTimeout(() => {
