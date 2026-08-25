@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+         
+         /* --- NUEVOS ESTILOS PARA MEJORAR EL PANEL --- */
+
+/* Contenedor de Switch */
+.switch-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 18px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+}
+
+.switch-info { display: flex; flex-direction: column; gap: 4px; }
+.switch-info label { margin-bottom: 0 !important; }
+.switch-info p { font-size: 0.75rem; color: var(--text-dim); }
+
+/* El Switch (Checkbox visual) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background-color: #333; transition: .4s; border-radius: 34px;
+}
+.slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* Estilo para el cuadro de deslinde de responsabilidad */
+.legal-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #222;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 20px;
+    line-height: 1.3;
+}
+
+/* Estilo para el checkbox de términos */
+.terms-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #eee;
+    margin-bottom: 20px;
+}
+
+.terms-check input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--success); /* El check será verde cuando se marque */
+}
+
+/* Contenedor del Switch (Asegurar que se vea igual que el resto) */
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+}
+
+/* Layout de dos columnas para el modal */
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-content { max-width: 95% !important; padding: 25px !important; }
+}
+       
+
+        :root {
+            --accent: #00f2fe;
+            --accent-dark: #4facfe;
+            --bg-dark: #070707;
+            --card-bg: #111111;
+            --success: #00ff88;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-dim: #888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Fondo Animado Sutil */
+        .page-overlay {
+            min-height: 100vh;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(0, 242, 254, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
+        }
+
+        header.barra-superior {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 18px 5%;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .logo-texto { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; }
+        .logo-texto span { color: var(--accent); }
+
+        .btn-header {
+            color: white; text-decoration: none; font-weight: 600; font-size: 0.8rem; 
+            background: rgba(255,255,255,0.05); padding: 10px 18px; border-radius: 12px; 
+            border: 1px solid var(--border); transition: 0.3s;
+        }
+        .btn-header:hover { background: var(--accent); color: #000; }
+
+        .perfil-wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+
+        .card {
+            background: var(--card-bg); border-radius: 32px; padding: 35px;
+            border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+        }
+
+        h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .sub-p { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 35px; }
+
+        /* QR Item con Diseño Premium */
+        .qr-item {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            padding: 22px; border-radius: 22px; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.3s;
+        }
+        .qr-item:hover { border-color: var(--accent); background: rgba(0, 242, 254, 0.02); }
+
+        .qr-info h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .qr-info span { font-family: 'Monaco', monospace; font-size: 0.75rem; color: var(--accent); opacity: 0.8; }
+
+        .btn-config {
+            background: white; color: black; border: none;
+            width: 48px; height: 48px; border-radius: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+        }
+        .btn-config:hover { transform: scale(1.05); background: var(--accent); }
+
+        /* Modal Ultra Moderno */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; 
+            padding: 20px; backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: #111; width: 100%; max-width: 450px; padding: 40px;
+            border-radius: 35px; border: 1px solid #222; position: relative;
+            animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .field { margin-bottom: 22px; }
+        .field label { display: block; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 10px; font-weight: 700; letter-spacing: 1px; }
+        
+        .field input, .field select {
+            width: 100%; background: #000; border: 1px solid #222; padding: 16px;
+            border-radius: 15px; color: white; font-size: 1rem; outline: none; transition: 0.3s;
+        }
+        .field input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+
+        .btn-save {
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
+            color: #000; font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 1rem;
+        }
+        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 242, 254, 0.4); }
+
+        /* Toast de notificación */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: white; color: black; padding: 14px 35px;
+            border-radius: 100px; font-size: 0.9rem; font-weight: 800; display: none; 
+            z-index: 5000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .tips-section { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 30px; }
+        .tip-card { display: flex; gap: 15px; margin-bottom: 25px; }
+        .tip-card i { color: var(--accent); font-size: 1.2rem; }
+        .tip-card p { font-size: 0.85rem; color: #777; }
+    </style>
+</head>
+<body>
+
+<div id="toast">✅ Cambios sincronizados</div>
+
+<div class="page-overlay">
+    <header class="barra-superior">
+        <div class="logo-texto">CENTRAL<span>SANTUA</span></div>
+        <a href="index.html" class="btn-header"><i class="fas fa-sign-out-alt"></i> SALIR</a>
+    </header>
+
+    <main class="perfil-wrapper">
+        <div class="card">
+            <h2>Panel de Objetos</h2>
+            <p class="sub-p">Gestiona la protección de tus pertenencias en tiempo real.</p>
+            
+            <div id="lista-vacia" style="text-align: center; padding: 50px 0; display: none;">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fas fa-qrcode" style="font-size: 2rem; color: #333;"></i>
+                </div>
+                <p style="color: #555; font-size: 0.9rem;">No tienes etiquetas activas todavía.</p>
+            </div>
+
+            <div id="contenedor-qrs"></div>
+
+            <section class="tips-section">
+                <div class="tip-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <p style="color: #eee; font-weight: 600; margin-bottom: 4px;">Protección Inteligente</p>
+                        <p>Los cambios realizados aquí se actualizan instantáneamente para cualquier persona que escanee tu código.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="modal" id="modal-gestion">
+    <div class="modal-content">
+        <h3 id="modal-titulo" style="color: #fff; margin-bottom: 25px; font-size: 1.4rem;">Configurar Objeto</h3>
+
+        <div class="field">
+            <label>Identificador del Objeto</label>
+            <input type="text" id="edit-alias" placeholder="Ej: Mi Mochila, Casco Moto...">
+        </div>
+
+        <div class="switch-container">
+            <div>
+                <label style="display:block; margin:0; font-size:0.85rem;">WhatsApp Directo</label>
+                <span id="label-modo" style="font-size:0.7rem; color:var(--accent);">Activado: El hallador te verá</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="edit-tipo-switch" onchange="toggleContacto()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="field" id="wrapper-tel">
+            <label>WhatsApp (con código de país)</label>
+            <input type="tel" id="edit-tel" placeholder="5491133334444">
+        </div>
+
+        <div class="field">
+            <label>Mensaje para el hallador</label>
+            <input type="text" id="edit-msg" placeholder="Ej: Por favor, llámame, serás gratificado.">
+        </div>
+
+        <div class="legal-box" id="legal-aviso">
+            Central Santua actúa únicamente como intermediario tecnológico. Al activar el contacto directo, usted asume la responsabilidad total sobre la visibilidad de su número telefónico frente a terceros.
+        </div>
+
+        <label class="terms-check">
+            <input type="checkbox" id="check-terminos" onchange="validarBotonGuardar()">
+            <span>Acepto los términos de servicio y la política de deslinde de responsabilidad.</span>
+        </label>
+
+        <button class="btn-save" id="btn-save-main" onclick="guardarCambiosGestion()" disabled style="opacity: 0.5; cursor: not-allowed;">
+            GUARDAR Y SINCRONIZAR
+        </button>
+        
+        <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:20px; cursor:pointer; font-size: 0.85rem; font-weight: 700;">CANCELAR</button>
+    </div>
+</div>
+
+<script>
+    // Variable global para el ID que se está editando en el modal
+let idEditando = null;
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const params = new URLSearchParams(window.location.search);
+    const idNuevo = params.get('id');
+    const status = params.get('status') || params.get('collection_status') || params.get('activacion');
+
+    // 1. Primero mostramos lo que haya en LocalStorage para que no tarde en cargar
+    renderLista();
+
+    if (idNuevo && (status === 'approved' || status === 'exitosa')) {
+        showToast("Verificando activación...");
+        try {
+            const verifyRes = await fetch(`/api/verificar-y-activar/${idNuevo}`, { credentials: 'include' });
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+                showToast("¡Etiqueta activada!");
+    const misStickers = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+    misStickers.push({ id: idNuevo, alias: "Nueva Etiqueta" });
+    localStorage.setItem('mis_stickers_santua', JSON.stringify(misStickers));
+    renderLista(misStickers); 
+    // ------------------------------------------------
+                await obtenerStickersDelServidor(); 
+            }
+        } catch (e) {
+            console.error("Error:", e);
+        }
+        window.history.replaceState({}, document.title, "perfil.html");
+    } else {
+        // 3. Si es un ingreso normal (sin compra), sincronizamos con la nube
+        await obtenerStickersDelServidor();
+    }
+});
+async function obtenerStickersDelServidor() {
+    try {
+        const response = await fetch('/api/mis-stickers', { credentials: 'include' });
+        const data = await response.json();
+
+        if (data.success) {
+            // "Traducimos" lo que viene de MongoDB para que tu HTML lo entienda
+            const listaFormateada = data.stickers.map(s => ({
+                id: s.id_qr || s.id, 
+                alias: s.alias || "Objeto sin nombre",
+                telefono: s.telefono || "",
+                mensaje: s.mensaje || "",
+                tipo: s.tipo || "intermediario"
+            }));
+
+            // Guardamos la verdad de la base de datos en el navegador
+            localStorage.setItem('mis_stickers_santua', JSON.stringify(listaFormateada));
+            
+            // Dibujamos la lista actualizada en pantalla
+            renderLista(listaFormateada);
+        }
+    } catch (error) {
+        console.error("Error sincronizando con MongoDB:", error);
+    }
+}
+
+function renderLista(datos = null) {
+    const listaAMostrar = datos || JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+    const contenedor = document.getElementById('contenedor-qrs');
+    const vacio = document.getElementById('lista-vacia');
+
+    if (listaAMostrar.length === 0) {
+        vacio.style.display = 'block';
+        contenedor.innerHTML = '';
+        return;
+    }
+
+    vacio.style.display = 'none';
+    contenedor.innerHTML = listaAMostrar.map(s => `
+        <div class="qr-item">
+            <div class="qr-info">
+                <h4>${s.alias || 'Objeto sin nombre'}</h4>
+                <span>ID: ${s.id || s.id_qr}</span>
+            </div>
+            <button class="btn-config" onclick="abrirGestion('${s.id || s.id_qr}')">
+                <i class="fas fa-pen"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// --- ESTA ES LA FUNCIÓN QUE FALLABA, AQUÍ ESTÁ CORREGIDA ---
+function abrirGestion(id) {
+    const listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+    const s = listaActual.find(st => st.id === id);
+    
+    if (!s) return;
+
+    idEditando = id;
+    
+    // 1. Llenar textos
+    document.getElementById('modal-titulo').innerText = "Editar " + (s.alias || "Objeto");
+    document.getElementById('edit-alias').value = s.alias || "";
+    document.getElementById('edit-tel').value = s.telefono || "";
+    document.getElementById('edit-msg').value = s.mensaje || "";
+    
+    // 2. Configurar el Switch (reemplaza al viejo select)
+    document.getElementById('edit-tipo-switch').checked = (s.tipo === 'directo');
+    
+    // 3. Resetear Checkbox de Términos (siempre empieza desmarcado)
+    document.getElementById('check-terminos').checked = false;
+    
+    // 4. Ejecutar validaciones visuales
+    toggleContacto();
+    validarBotonGuardar();
+    
+    document.getElementById('modal-gestion').style.display = 'flex';
+}
+
+// Maneja el Switch y el aviso legal
+function toggleContacto() {
+    const isDirecto = document.getElementById('edit-tipo-switch').checked;
+    const labelModo = document.getElementById('label-modo');
+    const legalAviso = document.getElementById('legal-aviso');
+    const inputTelLabel = document.querySelector('#wrapper-tel label');
+
+    if (isDirecto) {
+        labelModo.innerText = "PÚBLICO: El hallador verá tu WhatsApp";
+        labelModo.style.color = "var(--success)";
+        inputTelLabel.innerHTML = 'WhatsApp Público <i class="fab fa-whatsapp"></i>';
+        legalAviso.innerText = "AVISO: Tu número será visible para cualquier persona que escanee el QR para facilitarte el contacto rápido.";
+    } else {
+        labelModo.innerText = "PRIVADO: Vía Central Santua";
+        labelModo.style.color = "var(--accent)";
+        inputTelLabel.innerHTML = 'WhatsApp de Contacto (Privado)';
+        legalAviso.innerText = "MODO SEGURO: Tu número NO será visible al público. Central Santua lo usará internamente para avisarte si alguien encuentra tu objeto.";
+    }
+}
+
+// Bloquea/Desbloquea el botón de guardar
+function validarBotonGuardar() {
+    const check = document.getElementById('check-terminos');
+    const btn = document.getElementById('btn-save-main');
+    
+    if (check.checked) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.style.cursor = "not-allowed";
+    }
+}
+
+async function guardarCambiosGestion() {
+    const btn = document.getElementById('btn-save-main');
+    const originalText = btn.innerText;
+    const telValue = document.getElementById('edit-tel').value.trim();
+if (!telValue) {
+    showToast("⚠️ El teléfono es obligatorio");
+    return;
+}
+
+    let listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
+    const index = listaActual.findIndex(s => s.id === idEditando);
+    
+    if (index === -1) return;
+
+    const nuevosDatos = {
+        id: idEditando,
+        alias: document.getElementById('edit-alias').value.trim(),
+        // LEER DESDE EL SWITCH
+        tipo: document.getElementById('edit-tipo-switch').checked ? 'directo' : 'intermediario',
+        telefono: document.getElementById('edit-tel').value.trim(),
+        mensaje: document.getElementById('edit-msg').value.trim()
+    };
+
+    listaActual[index] = nuevosDatos;
+    localStorage.setItem('mis_stickers_santua', JSON.stringify(listaActual));
+
+    btn.innerText = "SINCRONIZANDO...";
+    btn.disabled = true;
+
+    try {
+        await fetch('/api/sticker/configurar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(nuevosDatos)
+        });
+        showToast("Sincronizado con éxito");
+    } catch (err) {
+        showToast("Guardado localmente");
+    } finally {
+        btn.innerText = originalText;
+        cerrarModal();
+        renderLista(listaActual);
+    }
+}
+
+function cerrarModal() { 
+    document.getElementById('modal-gestion').style.display = 'none'; 
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    const icono = msg.includes("⚠️") ? "" : "✅ ";
+    t.innerText = icono + msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+</script>
+
+</body>
+</html>
