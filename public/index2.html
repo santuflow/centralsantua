@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa Oficial Limpio sin Comercios</title>
+    <title>Mapa 100% Limpio</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,52 +20,61 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #f1f3f4;
+            background-color: #f8fafc;
         }
-        .map-container {
+        #map {
             width: 100%;
             height: 100vh;
-            position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            /* Mantiene el truco visual para ocultar cualquier resto superior de la interfaz */
-            margin-top: -45px;
-            height: calc(100% + 45px);
-        }
-        /* Botón flotante para tu ubicación exacta */
-        .gps-float-btn {
+        /* Botón flotante GPS profesional */
+        .gps-button {
             position: absolute;
             bottom: 30px;
             right: 20px;
-            z-index: 999;
+            z-index: 1000;
         }
     </style>
 </head>
-<body class="font-sans">
+<body class="font-sans relative">
 
-    <div class="map-container">
-        <!-- El mapa oficial limpio (cargando con filtro para reducir iconos de comercios al mínimo posible) -->
-        <iframe 
-            id="google-map"
-            src="https://www.google.com/maps?q=-34.6037,-58.3816&z=15&output=embed" 
-            allowfullscreen="" 
-            loading="lazy">
-        </iframe>
+    <!-- MAPA LIMPIO (Solo calles y nombres, sin rastro de comercios) -->
+    <div id="map"></div>
 
-        <!-- Botón flotante de alta precisión -->
-        <div class="gps-float-btn">
-            <button onclick="irAMiUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
-                <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
-            </button>
-        </div>
+    <!-- BOTÓN GPS FLOTANTE DE ALTA PRECISIÓN -->
+    <div class="gps-button">
+        <button onclick="centrarUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
+            <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
+        </button>
     </div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
-        function irAMiUbicacionReal() {
+        // Inicializar Mapa centrado provisionalmente en Buenos Aires
+        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
+
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // CAPA CARTODB NO LABELS / POSITRON LIMPIO: Esta capa muestra estrictamente las calles, autopistas y los nombres de las calles. Los negocios, tiendas y restaurantes no existen en este mapa.
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            subdomains: 'abcd',
+            attribution: '&copy; CARTO'
+        }).addTo(map);
+
+        // Agregamos una capa superior transparente solo para las etiquetas de los nombres de las calles bien nítidas
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            subdomains: 'abcd',
+            pane: 'markerPane' // Asegura que los nombres de las calles queden arriba
+        }).addTo(map);
+
+        let markerUsuario = null;
+        let precisionCirculo = null;
+
+        function centrarUbicacionReal() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
                 return;
@@ -78,11 +90,34 @@
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
 
-                    // Al actualizar por coordenadas, agregamos un pin limpio en tu posición exacta 
-                    // y limpiamos la vista de ruidos visuales innecesarios
-                    const iframe = document.getElementById('google-map');
-                    iframe.src = `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+                    // Centrar el mapa con zoom exacto de calle
+                    map.setView([lat, lng], 17, { animate: true });
+
+                    if (markerUsuario) map.removeLayer(markerUsuario);
+                    if (precisionCirculo) map.removeLayer(precisionCirculo);
+
+                    // Círculo de precisión del GPS
+                    precisionCirculo = L.circle([lat, lng], {
+                        radius: accuracy / 2,
+                        color: '#2563eb',
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.15,
+                        weight: 1
+                    }).addTo(map);
+
+                    // Marcador de tu ubicación exacta
+                    markerUsuario = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'custom-gps-pin',
+                            html: '<div style="background-color: #2563eb; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(37,99,235,0.9);"></div>',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map);
+
+                    markerUsuario.bindPopup("<div class='font-bold text-xs text-slate-800 p-1'>¡Estás aquí!</div>").openPopup();
                 },
                 (error) => {
                     console.error(error);
@@ -92,8 +127,9 @@
             );
         }
 
+        // Centrar automáticamente apenas carga la página
         window.addEventListener('load', () => {
-            irAMiUbicacionReal();
+            centrarUbicacionReal();
         });
     </script>
 </body>
