@@ -280,7 +280,8 @@
 
         // Validar Estado de Sesión (Local / Session Storage)
         function verificarSesion() {
-            const usuarioLogueado = localStorage.getItem('usuarioActivo') || sessionStorage.getItem('usuarioActivo');
+            // Acepta tanto usuarioActivo como usuarioNombre para que funcione con cualquier login
+            const usuarioLogueado = localStorage.getItem('usuarioActivo') || localStorage.getItem('usuarioNombre') || sessionStorage.getItem('usuarioActivo');
             
             if (usuarioLogueado) {
                 document.getElementById('auth-buttons-container').classList.add('hidden');
@@ -294,6 +295,7 @@
 
         function cerrarSesion() {
             localStorage.removeItem('usuarioActivo');
+            localStorage.removeItem('usuarioNombre');
             sessionStorage.removeItem('usuarioActivo');
             verificarSesion();
             alert("Sesión cerrada correctamente.");
