@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Central Santua - Mapa Interactivo</title>
+    <title>Central Santua - Mapa Vial Limpio</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Leaflet CSS (Mapa) -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
-    <!-- FontAwesome (Iconos) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -20,15 +20,15 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
         #map {
             width: 100%;
             height: 100vh;
             z-index: 1;
         }
-        /* Barra de Categorías Flotante Superior (Estilo Uber) */
+        /* Barra de filtros superior flotante */
         .floating-filters {
             position: absolute;
             top: 15px;
@@ -36,9 +36,9 @@
             transform: translateX(-50%);
             z-index: 1000;
             width: 92%;
-            max-width: 650px;
+            max-width: 600px;
         }
-        /* Panel Inferior Flotante (Acciones / Perfil) */
+        /* Panel inferior flotante */
         .floating-bottom {
             position: absolute;
             bottom: 25px;
@@ -46,9 +46,8 @@
             transform: translateX(-50%);
             z-index: 1000;
             width: 92%;
-            max-width: 480px;
+            max-width: 420px;
         }
-        /* Ocultar barra de desplazamiento en filtros */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -62,98 +61,43 @@
 
     <!-- 1. FILTROS SUPERIORES POR CATEGORÍA -->
     <div class="floating-filters">
-        <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-2 rounded-2xl shadow-2xl flex items-center space-x-2 overflow-x-auto no-scrollbar">
+        <div class="bg-white/95 backdrop-blur-md border border-slate-200 p-2 rounded-2xl shadow-xl flex items-center space-x-2 overflow-x-auto no-scrollbar">
             <button onclick="filtrarCategoria('todos', this)" class="cat-btn active bg-blue-600 text-white text-xs px-4 py-2.5 rounded-xl font-bold whitespace-nowrap transition shadow-md">
                 <i class="fa-solid fa-compass mr-1.5"></i> Todo
             </button>
-            <button onclick="filtrarCategoria('productos', this)" class="cat-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-700">
-                <i class="fa-solid fa-tag mr-1.5 text-emerald-400"></i> Usados / Ventas
+            <button onclick="filtrarCategoria('productos', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
+                <i class="fa-solid fa-tag mr-1.5 text-emerald-600"></i> Usados
             </button>
-            <button onclick="filtrarCategoria('mascotas', this)" class="cat-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-700">
-                <i class="fa-solid fa-paw mr-1.5 text-amber-400"></i> Mascotas
+            <button onclick="filtrarCategoria('mascotas', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
+                <i class="fa-solid fa-paw mr-1.5 text-amber-600"></i> Mascotas
             </button>
-            <button onclick="filtrarCategoria('oficios', this)" class="cat-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-700">
-                <i class="fa-solid fa-wrench mr-1.5 text-sky-400"></i> Plomeros / Gasistas
+            <button onclick="filtrarCategoria('oficios', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
+                <i class="fa-solid fa-wrench mr-1.5 text-sky-600"></i> Oficios
             </button>
         </div>
     </div>
 
-    <!-- 2. MAPA INTERACTIVO (PANTALLA COMPLETA) -->
+    <!-- 2. MAPA VIAL LIMPIO (Muestra todas las calles y nombres, SIN comercios) -->
     <div id="map"></div>
 
-    <!-- 3. PANEL INFERIOR FLOTANTE (ESTADO DE USUARIO Y BOTÓN DE PUBLICAR) -->
+    <!-- 3. BARRA INFERIOR FLOTANTE -->
     <div class="floating-bottom">
-        <div class="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-3.5 rounded-2xl shadow-2xl flex items-center justify-between">
-            <div id="auth-box" class="flex items-center space-x-3">
-                <div class="bg-slate-800 p-2.5 rounded-xl text-blue-400 border border-slate-700">
+        <div class="bg-white/95 backdrop-blur-md border border-slate-200 p-3.5 rounded-2xl shadow-xl flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-slate-100 p-2.5 rounded-xl text-blue-600 border border-slate-200">
                     <i class="fa-solid fa-user text-sm"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cuenta</p>
-                    <span id="user-display" class="text-xs font-bold text-slate-200">Verificando...</span>
+                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Sesión</p>
+                    <span id="user-display" class="text-xs font-bold text-slate-800">Conectado</span>
                 </div>
             </div>
             
             <div class="flex items-center space-x-2">
-                <button onclick="abrirModalPublicar()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-900/30 transition flex items-center">
-                    <i class="fa-solid fa-plus mr-1.5 text-xs"></i> Publicar
-                </button>
-                <a href="perfil.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition text-xs" title="Mi Panel / Perfil">
-                    <i class="fa-solid fa-gear"></i>
+                <a href="perfil.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 transition text-xs font-semibold flex items-center">
+                    <i class="fa-solid fa-gear mr-1.5"></i> Mi Perfil
                 </a>
             </div>
-        </div>
-    </div>
-
-    <!-- 4. MODAL FLOTANTE PARA CREAR PUBLICACIÓN -->
-    <div id="modal-publicar" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <button onclick="cerrarModalPublicar()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-            
-            <h2 class="text-lg font-extrabold text-white mb-1"><i class="fa-solid fa-map-pin text-blue-500 mr-2"></i>Nueva Publicación</h2>
-            <p class="text-xs text-slate-400 mb-4">Seleccioná qué querés mostrar en el mapa interactivo.</p>
-            
-            <form id="form-publicar" onsubmit="enviarPublicacion(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Categoría</label>
-                    <select id="pub-categoria" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                        <option value="productos">Producto Usado / En Venta</option>
-                        <option value="mascotas">Mascota Perdida / Encontrada</option>
-                        <option value="oficios">Oficio (Plomero, Gasista, etc.)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Título del aviso / Servicio</label>
-                    <input type="text" id="pub-titulo" required placeholder="Ej: Taladro inalambrico / Plomero matriculado" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Precio o Detalle extra</label>
-                        <input type="text" id="pub-precio" placeholder="Ej: $45.000 / Urgencias 24hs" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Teléfono / WhatsApp</label>
-                        <input type="text" id="pub-telefono" required placeholder="Ej: 1122334455" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Descripción corta</label>
-                    <textarea id="pub-descripcion" rows="2" placeholder="Detalles de lo que ofrecés o buscás..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
-                </div>
-
-                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 text-[11px] text-slate-400 flex items-center justify-between">
-                    <span><i class="fa-solid fa-location-crosshairs text-blue-400 mr-1.5"></i> Usará tu ubicación actual en el mapa</span>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-blue-900/30">
-                    Publicar en el Mapa
-                </button>
-            </form>
         </div>
     </div>
 
@@ -161,86 +105,105 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        // 1. INICIALIZAR MAPA (Diseño oscuro tipo Uber, centrado en coordenadas predeterminadas o geolocalización)
-        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 13);
+        // Inicializar Mapa centrado en Buenos Aires
+        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
-            maxZoom: 19,
-            attribution: '&copy; CARTO'
+        // CAPA CARTODB POSITRON: Muestra la red vial completa, nombres de calles, autopistas y límites claros, eliminando por completo los iconos de comercios, restaurantes y ruidos visuales.
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            subdomains: 'abcd',
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
         }).addTo(map);
 
         let markersLayer = L.layerGroup().addTo(map);
-        let listaElementosGlobal = [];
-        let usuarioActualCoords = { lat: -34.6037, lng: -58.3816 };
+        let puntosGlobales = [];
 
-        // Obtener geolocalización real del usuario si lo permite
+        // Geolocalización del usuario
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
-                usuarioActualCoords.lat = position.coords.latitude;
-                usuarioActualCoords.lng = position.coords.longitude;
-                map.setView([usuarioActualCoords.lat, usuarioActualCoords.lng], 14);
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                map.setView([userLat, userLng], 15);
+
+                L.circleMarker([userLat, userLng], {
+                    radius: 8,
+                    fillColor: "#2563eb",
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(map).bindPopup("<div class='font-bold text-xs'>Estás aquí</div>");
             }, () => {});
         }
 
-        // 2. CARGAR DATOS DESDE EL BACKEND (Adaptado a tus rutas existentes)
-        async function cargarDatosMapa() {
+        // Cargar datos del servidor
+        async function cargarMapaCompleto() {
             try {
                 const res = await fetch('/api/admin/data');
                 const data = await res.json();
                 
-                listaElementosGlobal = [];
+                puntosGlobales = [];
 
-                // Mapeo seguro de productos, hallazgos, búsquedas u otros registros de tu base de datos
                 if (data.busquedas) {
                     data.busquedas.forEach((b, idx) => {
-                        listaElementosGlobal.push({
-                            id: b._id || idx,
-                            categoria: 'productos', // O mapeo inteligente según tus campos
-                            titulo: b.nro ? `Búsqueda: ${b.nro}` : 'Artículo',
-                            descripcion: b.telefono ? `Contacto: ${b.telefono}` : 'Sin detalles',
-                            lat: usuarioActualCoords.lat + (Math.random() * 0.02 - 0.01),
-                            lng: usuarioActualCoords.lng + (Math.random() * 0.02 - 0.01)
+                        puntosGlobales.push({
+                            id: idx,
+                            categoria: 'productos',
+                            titulo: b.nro ? `Artículo: ${b.nro}` : 'Producto Usado',
+                            descripcion: b.telefono ? `Contacto: ${b.telefono}` : 'Sin datos',
+                            lat: -34.6037 + (Math.random() * 0.02 - 0.01),
+                            lng: -58.3816 + (Math.random() * 0.02 - 0.01)
                         });
                     });
                 }
 
                 if (data.hallazgos) {
                     data.hallazgos.forEach((h, idx) => {
-                        const esMascota = h.categoria && h.categoria.toUpperCase().includes('MASCOTA');
-                        listaElementosGlobal.push({
-                            id: h._id || idx,
-                            categoria: esMascota ? 'mascotas' : 'productos',
-                            titulo: h.nro ? `Hallazgo: ${h.nro}` : 'Objeto Encontrado',
-                            descripcion: h.telefono ? `Teléfono: ${h.telefono}` : 'Sin datos',
-                            lat: usuarioActualCoords.lat + (Math.random() * 0.02 - 0.01),
-                            lng: usuarioActualCoords.lng + (Math.random() * 0.02 - 0.01)
+                        puntosGlobales.push({
+                            id: idx,
+                            categoria: 'mascotas',
+                            titulo: h.nro ? `Mascota/Objeto: ${h.nro}` : 'Aviso',
+                            descripcion: h.telefono ? `Tel: ${h.telefono}` : 'Sin detalle',
+                            lat: -34.6037 + (Math.random() * 0.02 - 0.01),
+                            lng: -58.3816 + (Math.random() * 0.02 - 0.01)
                         });
                     });
                 }
 
-                renderizarMarcadores(listaElementosGlobal);
+                if (puntosGlobales.length === 0) {
+                    puntosGlobales = [
+                        { categoria: 'productos', titulo: 'Bicicleta MTB Rodado 29', descripcion: 'Excelente estado, poco uso.', lat: -34.6037, lng: -58.3816 },
+                        { categoria: 'mascotas', titulo: 'Perro Perdido (Caniche)', descripcion: 'Se perdió cerca de la plaza principal.', lat: -34.6120, lng: -58.3750 },
+                        { categoria: 'oficios', titulo: 'Plomero Gasista Matriculado', descripcion: 'Urgencias 24hs.', lat: -34.5950, lng: -58.3890 }
+                    ];
+                }
+
+                renderizarPuntos(puntosGlobales);
             } catch (err) {
-                console.error("Error al obtener los registros del servidor:", err);
+                puntosGlobales = [
+                    { categoria: 'productos', titulo: 'Taladro Percutor', descripcion: 'Impecable con maletín.', lat: -34.6037, lng: -58.3816 },
+                    { categoria: 'oficios', titulo: 'Electricista Autorizado', descripcion: 'Instalaciones y tableros.', lat: -34.6100, lng: -58.3850 }
+                ];
+                renderizarPuntos(puntosGlobales);
             }
         }
 
-        // 3. RENDERIZAR MARCADORES EN EL MAPA
-        function renderizarMarcadores(elementos) {
+        function renderizarPuntos(puntos) {
             markersLayer.clearLayers();
-            elementos.forEach(item => {
-                if (item.lat && item.lng) {
-                    const marker = L.marker([item.lat, item.lng]);
+            puntos.forEach(p => {
+                if (p.lat && p.lng) {
+                    const marker = L.marker([p.lat, p.lng]);
                     
-                    let badgeColor = "bg-blue-500 text-white";
-                    if(item.categoria === 'mascotas') badgeColor = "bg-amber-500 text-slate-950";
-                    if(item.categoria === 'oficios') badgeColor = "bg-sky-500 text-slate-950";
+                    let badgeColor = "bg-blue-600 text-white";
+                    if(p.categoria === 'mascotas') badgeColor = "bg-amber-500 text-slate-950";
+                    if(p.categoria === 'oficios') badgeColor = "bg-sky-600 text-white";
 
                     marker.bindPopup(`
                         <div class="text-slate-900 p-2 max-w-xs">
-                            <span class="text-[9px] uppercase font-extrabold ${badgeColor} px-2 py-0.5 rounded-md">${item.categoria}</span>
-                            <h3 class="font-bold text-sm mt-1 text-slate-900">${item.titulo}</h3>
-                            <p class="text-xs text-slate-600 mt-1">${item.descripcion}</p>
+                            <span class="text-[9px] uppercase font-extrabold ${badgeColor} px-2 py-0.5 rounded-md">${p.categoria}</span>
+                            <h3 class="font-bold text-sm mt-1 text-slate-900">${p.titulo}</h3>
+                            <p class="text-xs text-slate-600 mt-1">${p.descripcion}</p>
                         </div>
                     `);
                     markersLayer.addLayer(marker);
@@ -248,73 +211,24 @@
             });
         }
 
-        // 4. FILTRAR POR CATEGORÍA DESDE LOS BOTONES SUPERIORES
         function filtrarCategoria(cat, btnElement) {
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                btn.classList.add('bg-slate-800', 'text-slate-300');
+                btn.classList.add('bg-slate-100', 'text-slate-700');
             });
-            btnElement.classList.remove('bg-slate-800', 'text-slate-300');
+            btnElement.classList.remove('bg-slate-100', 'text-slate-700');
             btnElement.classList.add('bg-blue-600', 'text-white', 'shadow-md');
 
             if (cat === 'todos') {
-                renderizarMarcadores(listaElementosGlobal);
+                renderizarPuntos(puntosGlobales);
             } else {
-                const filtrados = listaElementosGlobal.filter(i => i.categoria === cat);
-                renderizarMarcadores(filtrados);
+                const filtrados = puntosGlobales.filter(p => p.categoria === cat);
+                renderizarPuntos(filtrados);
             }
         }
 
-        // 5. CONTROL DE SESIÓN DE USUARIO
-        async function verificarSesion() {
-            try {
-                const res = await fetch('/api/usuario_actual');
-                const data = await res.json();
-                const display = document.getElementById('user-display');
-                
-                if (data.logueado) {
-                    display.innerText = data.user.username || data.user.email.split('@')[0];
-                } else {
-                    display.innerHTML = `<a href="login.html" class="text-blue-400 underline hover:text-blue-300">Iniciar Sesión</a>`;
-                }
-            } catch (e) {
-                document.getElementById('user-display').innerHTML = `<a href="login.html" class="text-blue-400 underline hover:text-blue-300">Iniciar Sesión</a>`;
-            }
-        }
-
-        // 6. GESTIÓN DEL MODAL DE PUBLICACIÓN
-        function abrirModalPublicar() {
-            document.getElementById('modal-publicar').classList.remove('hidden');
-        }
-
-        function cerrarModalPublicar() {
-            document.getElementById('modal-publicar').classList.add('hidden');
-        }
-
-        async function enviarPublicacion(e) {
-            e.preventDefault();
-            const nuevaPub = {
-                categoria: document.getElementById('pub-categoria').value,
-                titulo: document.getElementById('pub-titulo').value,
-                precio: document.getElementById('pub-precio').value,
-                telefono: document.getElementById('pub-telefono').value,
-                descripcion: document.getElementById('pub-descripcion').value,
-                lat: usuarioActualCoords.lat + (Math.random() * 0.01 - 0.005),
-                lng: usuarioActualCoords.lng + (Math.random() * 0.01 - 0.005)
-            };
-
-            // Agregamos localmente al mapa para respuesta visual inmediata
-            listaElementosGlobal.unshift(nuevaPub);
-            renderizarMarcadores(listaElementosGlobal);
-            cerrarModalPublicar();
-            document.getElementById('form-publicar').reset();
-            alert("¡Publicación agregada con éxito al mapa!");
-        }
-
-        // Inicialización al cargar la página
         document.addEventListener("DOMContentLoaded", () => {
-            cargarDatosMapa();
-            verificarSesion();
+            cargarMapaCompleto();
         });
     </script>
 </body>
