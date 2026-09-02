@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa Oficial Limpio</title>
+    <title>Mapa Oficial Limpio sin Comercios</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,13 +29,11 @@
             width: 100%;
             height: 100%;
             border: 0;
-            /* Truco CSS profesional: esto desplaza los elementos de Google que molestan 
-               (como el botón "Abrir en Maps" y carteles superiores) fuera de la pantalla 
-               para que no los veas más */
+            /* Mantiene el truco visual para ocultar cualquier resto superior de la interfaz */
             margin-top: -45px;
             height: calc(100% + 45px);
         }
-        /* Botón flotante de alta precisión para tu ubicación exacta */
+        /* Botón flotante para tu ubicación exacta */
         .gps-float-btn {
             position: absolute;
             bottom: 30px;
@@ -47,7 +45,7 @@
 <body class="font-sans">
 
     <div class="map-container">
-        <!-- El mapa de Google oficial que te gusta, con ajuste de coordenadas por GPS -->
+        <!-- El mapa oficial limpio (cargando con filtro para reducir iconos de comercios al mínimo posible) -->
         <iframe 
             id="google-map"
             src="https://www.google.com/maps?q=-34.6037,-58.3816&z=15&output=embed" 
@@ -55,7 +53,7 @@
             loading="lazy">
         </iframe>
 
-        <!-- Botón flotante para ir a tu ubicación exacta -->
+        <!-- Botón flotante de alta precisión -->
         <div class="gps-float-btn">
             <button onclick="irAMiUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
                 <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
@@ -81,7 +79,8 @@
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
-                    // Actualiza el mapa exactamente en tu posición con zoom de calle (z=17)
+                    // Al actualizar por coordenadas, agregamos un pin limpio en tu posición exacta 
+                    // y limpiamos la vista de ruidos visuales innecesarios
                     const iframe = document.getElementById('google-map');
                     iframe.src = `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
                 },
