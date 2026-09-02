@@ -190,6 +190,15 @@ app.get('/admin.html', (req, res) => {
 
     return res.sendFile(__dirname + '/public/admin.html');
 });
+
+// =========================================
+// 👇 AGREGÁ ESTO ACÁ (ANTES de express.static)
+// =========================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index2.html'));
+});
+// =========================================
+
 app.use(express.static('public'));
 
 
