@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa Oficial Profesional</title>
+    <title>Mapa Oficial Limpio</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,18 +19,23 @@
             overflow: hidden;
             background-color: #f1f3f4;
         }
-        /* Contenedor del mapa a pantalla completa */
         .map-container {
             width: 100%;
             height: 100vh;
             position: relative;
+            overflow: hidden;
         }
         iframe {
             width: 100%;
             height: 100%;
             border: 0;
+            /* Truco CSS profesional: esto desplaza los elementos de Google que molestan 
+               (como el botón "Abrir en Maps" y carteles superiores) fuera de la pantalla 
+               para que no los veas más */
+            margin-top: -45px;
+            height: calc(100% + 45px);
         }
-        /* Botón flotante profesional idéntico a las grandes apps */
+        /* Botón flotante de alta precisión para tu ubicación exacta */
         .gps-float-btn {
             position: absolute;
             bottom: 30px;
@@ -42,7 +47,7 @@
 <body class="font-sans">
 
     <div class="map-container">
-        <!-- Mapa oficial de Google integrado limpio (Sin API Key, sin tarjetas, sin límites) -->
+        <!-- El mapa de Google oficial que te gusta, con ajuste de coordenadas por GPS -->
         <iframe 
             id="google-map"
             src="https://www.google.com/maps?q=-34.6037,-58.3816&z=15&output=embed" 
@@ -50,7 +55,7 @@
             loading="lazy">
         </iframe>
 
-        <!-- Botón flotante de alta precisión para ir a tu ubicación exacta -->
+        <!-- Botón flotante para ir a tu ubicación exacta -->
         <div class="gps-float-btn">
             <button onclick="irAMiUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
                 <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
@@ -59,14 +64,12 @@
     </div>
 
     <script>
-        // Función profesional que detecta tu posición exacta por GPS y actualiza el mapa al instante
         function irAMiUbicacionReal() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
                 return;
             }
 
-            // Opciones para forzar la máxima precisión del GPS del dispositivo
             const opciones = {
                 enableHighAccuracy: true,
                 timeout: 10000,
@@ -78,19 +81,18 @@
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
-                    // Actualizamos el iframe de Google Maps con tus coordenadas exactas y zoom de calle (z=17)
+                    // Actualiza el mapa exactamente en tu posición con zoom de calle (z=17)
                     const iframe = document.getElementById('google-map');
                     iframe.src = `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
                 },
                 (error) => {
                     console.error(error);
-                    alert("No pudimos obtener tu ubicación exacta. Asegurate de habilitar el GPS y permitir el acceso en tu navegador.");
+                    alert("No pudimos obtener tu ubicación exacta. Habilita el GPS en tu navegador.");
                 },
                 opciones
             );
         }
 
-        // Al cargar la página, intentamos centrarlo automáticamente en tu posición
         window.addEventListener('load', () => {
             irAMiUbicacionReal();
         });
