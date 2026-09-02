@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Google Maps Profesional</title>
+    <title>Mapa Profesional 100% Gratis</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS (Gratis y sin API Key) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- FontAwesome (Iconos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,7 +20,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #f1f3f4;
+            background-color: #0f172a;
         }
         #map {
             width: 100%;
@@ -32,53 +35,41 @@
             z-index: 1000;
         }
     </style>
-
-    <!-- Script Oficial de Google Maps (Reemplazá TU_API_KEY_DE_GOOGLE con tu clave de Google Cloud Console) -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_DE_GOOGLE&libraries=geometry" async defer></script>
 </head>
 <body class="font-sans relative">
 
-    <!-- CONTENEDOR DEL MAPA OFICIAL DE GOOGLE -->
+    <!-- MAPA LIMPIO, PROFESIONAL Y 100% GRATIS -->
     <div id="map"></div>
 
     <!-- BOTÓN FLOTANTE DE UBICACIÓN EXACTA (GPS) -->
     <div class="gps-button">
-        <button onclick="irAUbicacionActual()" class="bg-white hover:bg-slate-50 text-slate-700 w-12 h-12 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Centrar en mi ubicación">
+        <button onclick="centrarUbicacionActual()" class="bg-white hover:bg-slate-50 text-slate-700 w-12 h-12 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
             <i class="fa-solid fa-location-crosshairs text-blue-600 text-xl group-hover:scale-110 transition-transform"></i>
         </button>
     </div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
-        let map;
+        // Inicializar Mapa centrado por defecto en Buenos Aires
+        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
+
+        // Controles de zoom abajo a la izquierda discretos
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Capa cartográfica profesional de alta definición con nombres de calles y sin comercios molestos
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            subdomains: 'abcd',
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+        }).addTo(map);
+
         let markerUsuario = null;
-        let watchId = null;
+        let precisionCirculo = null;
 
-        // Función que ejecuta Google Maps al cargar el script correctamente
-        window.initMap = function() {
-            // Coordenadas iniciales por defecto (Buenos Aires)
-            const centroDefault = { lat: -34.6037, lng: -58.3816 };
-
-            // Instancia del mapa con diseño profesional, limpio y controles avanzados nativos
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: centroDefault,
-                zoom: 15,
-                disableDefaultUI: true, // Oculta controles por defecto para dejarlo súper limpio estilo app
-                zoomControl: false,     // Usaremos nuestros propios controles o gestos táctiles fluidos
-                styles: [               // Opcional: Estilo limpio optimizado (elimina saturación visual excesiva)
-                    {
-                        featureType: "poi",
-                        elementType: "labels",
-                        stylers: [{ visibility: "off" }] // Oculta carteles molestos de negocios menores si se desea
-                    }
-                ]
-            });
-
-            // Pedir ubicación automáticamente al iniciar la página
-            irAUbicacionActual();
-        };
-
-        // Función profesional para solicitar permiso de GPS y centrar el mapa exactamente
-        function irAUbicacionActual() {
+        // Función profesional para pedir permiso y centrar en la ubicación exacta del usuario
+        function centrarUbicacionActual() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
                 return;
@@ -86,37 +77,40 @@
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const pos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    };
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
 
-                    // Centrar el mapa de Google con animación fluida
-                    map.setCenter(pos);
-                    map.setZoom(17);
+                    // Centrar el mapa con animación fluida
+                    map.setView([lat, lng], 17, { animate: true });
 
-                    // Si ya existe el marcador del usuario, actualizar su posición
-                    if (markerUsuario) {
-                        markerUsuario.setPosition(pos);
-                    } else {
-                        // Crear un marcador profesional tipo punto azul de Google Maps
-                        markerUsuario = new google.maps.Marker({
-                            position: pos,
-                            map: map,
-                            title: "¡Estás aquí!",
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 9,
-                                fillcolor: "#1a73e8",
-                                fillOpacity: 1,
-                                strokeColor: "#ffffff",
-                                strokeWeight: 3,
-                            }
-                        });
-                    }
+                    // Limpiar marcadores previos si existen
+                    if (markerUsuario) map.removeLayer(markerUsuario);
+                    if (precisionCirculo) map.removeLayer(precisionCirculo);
+
+                    // Círculo de radio de precisión de la señal GPS
+                    precisionCirculo = L.circle([lat, lng], {
+                        radius: accuracy / 2,
+                        color: '#2563eb',
+                        fillColor: '#2563eb',
+                        fillOpacity: 0.15,
+                        weight: 1
+                    }).addTo(map);
+
+                    // Marcador exacto tipo punto azul de aplicación móvil
+                    markerUsuario = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'custom-gps-pin',
+                            html: '<div style="background-color: #2563eb; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 12px rgba(37,99,235,0.8);"></div>',
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
+                        })
+                    }).addTo(map);
+
+                    markerUsuario.bindPopup("<div class='font-bold text-xs text-slate-800 p-1'>¡Estás aquí!</div>").openPopup();
                 },
                 (error) => {
-                    console.error("Error de geolocalización:", error);
+                    console.error(error);
                     alert("Por favor, permití el acceso a tu ubicación en el navegador para usar el GPS.");
                 },
                 {
@@ -127,20 +121,10 @@
             );
         }
 
-        // Manejador por si el script de Google carga antes de que el DOM esté listo
-        window.onload = function() {
-            if (typeof google === 'object' && typeof google.maps === 'object') {
-                initMap();
-            } else {
-                // Intervalo de seguridad por si la red demora en cargar la API de Google
-                const checkGoogle = setInterval(() => {
-                    if (typeof google === 'object' && typeof google.maps === 'object') {
-                        clearInterval(checkGoogle);
-                        initMap();
-                    }
-                }, 100);
-            }
-        };
+        // Solicitar automáticamente el permiso apenas carga la página
+        window.addEventListener('load', () => {
+            centrarUbicacionActual();
+        });
     </script>
 </body>
 </html>
