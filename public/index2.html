@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa Limpio Profesional</title>
+    <title>Plataforma Interactiva - Mapa Profesional</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +11,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
-    <!-- FontAwesome -->
+    <!-- FontAwesome Pro/Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -21,28 +21,35 @@
             padding: 0;
             overflow: hidden;
             background-color: #0f172a;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         #map {
             width: 100%;
             height: 100vh;
             z-index: 1;
         }
-        .top-ui-container {
+        /* Capa superior estilo Uber flotante */
+        .uber-top-bar {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 16px;
+            left: 16px;
+            right: 16px;
             z-index: 1000;
             pointer-events: none;
         }
         .interactive-el {
             pointer-events: auto;
         }
-        .gps-button {
+        /* Botón GPS flotante abajo a la derecha */
+        .gps-float-btn {
             position: absolute;
-            bottom: 30px;
+            bottom: 32px;
             right: 20px;
             z-index: 1000;
+        }
+        /* Transiciones suaves para menús */
+        .menu-transition {
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -53,125 +60,178 @@
         }
     </style>
 </head>
-<body class="font-sans relative">
+<body class="relative">
 
+    <!-- MAPA INTERACTIVO -->
     <div id="map"></div>
 
-    <div class="top-ui-container flex flex-col gap-3">
-        <header class="interactive-el bg-white/95 backdrop-blur-md shadow-lg border border-slate-200/80 rounded-2xl p-3.5 flex items-center justify-between transition-all">
+    <!-- CONTENEDOR SUPERIOR (ESTILO UBER CORPORATIVO) -->
+    <div class="uber-top-bar flex flex-col gap-3 max-w-xl mx-auto">
+        
+        <header class="interactive-el bg-white/95 backdrop-blur-md shadow-2xl border border-slate-200/60 rounded-2xl p-3 flex items-center justify-between gap-3">
+            
+            <!-- Izquierda: Menú Hamburguesa + Título -->
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/30">
-                    <i class="fa-solid fa-compass text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-slate-800 text-sm leading-tight">Tu Plataforma</h1>
-                    <span id="user-status-text" class="text-xs text-slate-500 font-medium">Iniciá sesión para ver categorías</span>
+                <button onclick="toggleMenuCategorias()" class="w-11 h-11 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center transition active:scale-95 shadow-sm" title="Menú de Categorías">
+                    <i class="fa-solid fa-bars text-base"></i>
+                </button>
+                <div class="hidden sm:block">
+                    <h1 class="font-bold text-slate-900 text-xs tracking-wide uppercase">Geolocalizador</h1>
+                    <span id="user-status-text" class="text-[11px] text-slate-500 font-medium">Explorando zona</span>
                 </div>
             </div>
 
-            <div id="auth-buttons-container" class="flex items-center gap-2">
-                <button onclick="abrirModal('loginModal')" class="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition">
-                    Iniciar Sesión
-                </button>
-                <button onclick="abrirModal('registerModal')" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/25 transition active:scale-95">
-                    Registrarse
-                </button>
-            </div>
-
-            <div id="user-profile-container" class="hidden flex items-center gap-3">
-                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <div class="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <span id="nombre-usuario-display" class="text-xs font-bold text-slate-700">Usuario</span>
+            <!-- Centro / Derecha: Acciones de Usuario (Estado Dinámico) -->
+            <div class="flex items-center gap-2">
+                
+                <!-- ESTADO: NO LOGUEADO -->
+                <div id="auth-buttons-container" class="flex items-center gap-1.5">
+                    <a href="/public/login.html" class="px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition">
+                        Ingresar
+                    </a>
+                    <a href="/public/registro.html" class="px-3.5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition active:scale-95">
+                        Registrarse
+                    </a>
                 </div>
-                <button onclick="cerrarSesion()" class="text-slate-400 hover:text-red-500 p-2 rounded-xl transition" title="Cerrar Sesión">
-                    <i class="fa-solid fa-power-off text-sm"></i>
-                </button>
+
+                <!-- ESTADO: LOGUEADO (Botones Pro: Publicar + Perfil) -->
+                <div id="user-profile-container" class="hidden flex items-center gap-2">
+                    <!-- Botón Principal: Agregar Punto / Publicar -->
+                    <button onclick="abrirModalPublicar()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-95">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Publicar</span>
+                    </button>
+
+                    <!-- Botón Mi Perfil -->
+                    <button onclick="irAMiPerfil()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200/85 transition active:scale-95" title="Ir a Mi Perfil">
+                        <div class="w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <span id="nombre-usuario-display" class="text-xs font-bold text-slate-800 max-w-[80px] truncate hidden md:inline">Perfil</span>
+                    </button>
+
+                    <!-- Botón Cerrar Sesión -->
+                    <button onclick="cerrarSesion()" class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition flex items-center justify-center" title="Cerrar Sesión">
+                        <i class="fa-solid fa-power-off text-xs"></i>
+                    </button>
+                </div>
+
             </div>
         </header>
 
-        <div id="categories-panel" class="interactive-el hidden transition-all duration-300">
-            <div class="bg-white/95 backdrop-blur-md shadow-xl border border-slate-200/80 rounded-2xl p-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
-                <button onclick="filtrarCategoria('productos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🛍️</span> Productos</button>
-                <button onclick="filtrarCategoria('negocios')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🏪</span> Negocios</button>
-                <button onclick="filtrarCategoria('servicios')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🔧</span> Servicios</button>
-                <button onclick="filtrarCategoria('ferias')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🏕️</span> Ferias</button>
-                <button onclick="filtrarCategoria('empleos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>💼</span> Empleos</button>
-                <button onclick="filtrarCategoria('comida')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🍔</span> Comida</button>
-                <button onclick="filtrarCategoria('vehiculos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🚗</span> Vehículos</button>
-                <button onclick="filtrarCategoria('perdidos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🔎</span> Perdidos</button>
-                <button onclick="filtrarCategoria('mascotas')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm"><span>🐾</span> Mascotas</button>
+        <!-- MENÚ HAMBURGUESA DESPLEGABLE DE CATEGORÍAS (ESTILO MODERNO) -->
+        <div id="categories-dropdown" class="interactive-el hidden menu-transition opacity-0 transform -translate-y-2 bg-white/95 backdrop-blur-xl shadow-2xl border border-slate-200/80 rounded-2xl p-3">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Filtrar Categorías</span>
+                <button onclick="toggleMenuCategorias()" class="text-slate-400 hover:text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-md">Cerrar</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto no-scrollbar pr-1">
+                <button onclick="filtrarCategoria('productos')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🛍️</span> <span>Productos</span>
+                </button>
+                <button onclick="filtrarCategoria('negocios')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🏪</span> <span>Negocios</span>
+                </button>
+                <button onclick="filtrarCategoria('servicios')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🔧</span> <span>Servicios</span>
+                </button>
+                <button onclick="filtrarCategoria('ferias')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🏕️</span> <span>Ferias</span>
+                </button>
+                <button onclick="filtrarCategoria('empleos')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">💼</span> <span>Empleos</span>
+                </button>
+                <button onclick="filtrarCategoria('comida')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🍔</span> <span>Comida</span>
+                </button>
+                <button onclick="filtrarCategoria('vehiculos')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🚗</span> <span>Vehículos</span>
+                </button>
+                <button onclick="filtrarCategoria('perdidos')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🔎</span> <span>Perdidos</span>
+                </button>
+                <button onclick="filtrarCategoria('mascotas')" class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl text-xs font-semibold text-slate-700 transition group">
+                    <span class="text-base">🐾</span> <span>Mascotas</span>
+                </button>
             </div>
         </div>
+
     </div>
 
-    <div class="gps-button">
-        <button onclick="centrarUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
-            <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
+    <!-- BOTÓN GPS FLOTANTE (ESTILO UBER) -->
+    <div class="gps-float-btn">
+        <button onclick="centrarUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-800 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Centrar mi ubicación">
+            <i class="fa-solid fa-location-crosshairs text-slate-900 text-xl group-hover:scale-110 transition-transform"></i>
         </button>
     </div>
 
-    <div id="loginModal" class="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 relative">
-            <button onclick="cerrarModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="font-bold text-slate-800 text-lg mb-1">Iniciar Sesión</h3>
-            <p class="text-xs text-slate-500 mb-5">Ingresá para acceder a las categorías del mapa.</p>
-            <form onsubmit="simularLogin(event, 'loginModal')">
-                <div class="space-y-3 mb-5">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Correo electrónico</label>
-                        <input type="email" required placeholder="tu@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Contraseña</label>
-                        <input type="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
+    <!-- MODAL PROFESIONAL: AGREGAR PUNTO / PUBLICAR -->
+    <div id="modalPublicar" class="fixed inset-0 z-[2000] bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-100 relative animate-in fade-in zoom-in duration-200">
+            <button onclick="cerrarModalPublicar()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-map-pin"></i>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md transition">Entrar al Sistema</button>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Nueva Publicación en el Mapa</h3>
+                    <p class="text-xs text-slate-500">Agregá un producto, servicio o mascota en tu posición actual.</p>
+                </div>
+            </div>
+
+            <form onsubmit="guardarNuevoPunto(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">¿Qué deseas publicar?</label>
+                    <select id="pub-categoria" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-900 font-medium">
+                        <option value="productos">🛍️ Producto en Venta</option>
+                        <option value="negocios">🏪 Mi Negocio / Local</option>
+                        <option value="servicios">🔧 Servicio Profesional</option>
+                        <option value="ferias">🏕️ Feria o Evento</option>
+                        <option value="empleos">💼 Oferta de Empleo</option>
+                        <option value="comida">🍔 Comida / Gastronomía</option>
+                        <option value="vehiculos">🚗 Vehículo en Venta</option>
+                        <option value="perdidos">🔎 Objeto Perdido</option>
+                        <option value="mascotas">🐾 Mascota Encontrada / Perdida</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Título del anuncio</label>
+                    <input type="text" id="pub-titulo" required placeholder="Ej: Venta de bicicleta / Perro perdido..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-900">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Descripción breve</label>
+                    <textarea id="pub-desc" rows="3" required placeholder="Detalles de contacto, precio o referencias..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-900 resize-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl text-xs shadow-lg transition active:scale-95">
+                    Publicar en el Mapa GPS
+                </button>
             </form>
         </div>
     </div>
 
-    <div id="registerModal" class="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 relative">
-            <button onclick="cerrarModal('registerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="font-bold text-slate-800 text-lg mb-1">Crear Cuenta</h3>
-            <p class="text-xs text-slate-500 mb-5">Registrate gratis para empezar a explorar.</p>
-            <form onsubmit="simularLogin(event, 'registerModal')">
-                <div class="space-y-3 mb-5">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Nombre y Apellido</label>
-                        <input type="text" id="reg-name" required placeholder="Juan Pérez" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Correo electrónico</label>
-                        <input type="email" required placeholder="tu@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Contraseña</label>
-                        <input type="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md transition">Completar Registro</button>
-            </form>
-        </div>
-    </div>
-
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
+        // Inicialización del Mapa
         const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         let markerUsuario = null;
         let precisionCirculo = null;
+        let userLat = -34.6037;
+        let userLng = -58.3816;
 
+        // Geolocalización del Usuario
         function centrarUbicacionReal() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
@@ -180,81 +240,125 @@
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
 
-                    map.setView([lat, lng], 17, { animate: true });
+                    map.setView([userLat, userLng], 17, { animate: true });
 
                     if (markerUsuario) map.removeLayer(markerUsuario);
                     if (precisionCirculo) map.removeLayer(precisionCirculo);
 
-                    precisionCirculo = L.circle([lat, lng], {
+                    precisionCirculo = L.circle([userLat, userLng], {
                         radius: accuracy / 2,
-                        color: '#2563eb',
-                        fillColor: '#3b82f6',
-                        fillOpacity: 0.15,
+                        color: '#0f172a',
+                        fillColor: '#334155',
+                        fillOpacity: 0.1,
                         weight: 1
                     }).addTo(map);
 
-                    markerUsuario = L.marker([lat, lng], {
+                    markerUsuario = L.marker([userLat, userLng], {
                         icon: L.divIcon({
                             className: 'custom-gps-pin',
-                            html: '<div style="background-color: #2563eb; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(37,99,235,0.9);"></div>',
-                            iconSize: [20, 20],
-                            iconAnchor: [10, 10]
+                            html: '<div style="background-color: #0f172a; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(15,23,42,0.8);"></div>',
+                            iconSize: [22, 22],
+                            iconAnchor: [11, 11]
                         })
                     }).addTo(map);
 
-                    markerUsuario.bindPopup("<div class='font-bold text-xs text-slate-800 p-1'>¡Estás aquí!</div>").openPopup();
+                    markerUsuario.bindPopup("<div class='font-bold text-xs text-slate-900 p-1'>📍 ¡Estás aquí!</div>").openPopup();
                 },
                 (error) => {
-                    console.error(error);
+                    console.error("Error de GPS:", error);
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        function abrirModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function cerrarModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function simularLogin(event, modalId) {
-            event.preventDefault();
-            let nombre = "Usuario";
-            if(modalId === 'registerModal') {
-                const inputName = document.getElementById('reg-name').value;
-                if(inputName) nombre = inputName.split(' ')[0];
-            } else {
-                nombre = "Mi Cuenta";
-            }
-
-            cerrarModal(modalId);
+        // Control del Menú Hamburguesa de Categorías
+        function toggleMenuCategorias() {
+            const dropdown = document.getElementById('categories-dropdown');
+            const isHidden = dropdown.classList.contains('hidden');
             
-            document.getElementById('auth-buttons-container').classList.add('hidden');
-            document.getElementById('user-profile-container').classList.remove('hidden');
-            document.getElementById('nombre-usuario-display').innerText = nombre;
-            document.getElementById('user-status-text').innerText = "Sesión iniciada correctamente";
-            document.getElementById('categories-panel').classList.remove('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => {
+                    dropdown.classList.remove('opacity-0', '-translate-y-2');
+                }, 10);
+            } else {
+                dropdown.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => {
+                    dropdown.classList.add('hidden');
+                }, 250);
+            }
+        }
+
+        // Validar Estado de Sesión (Local / Session Storage)
+        function verificarSesion() {
+            const usuarioLogueado = localStorage.getItem('usuarioActivo') || sessionStorage.getItem('usuarioActivo');
+            
+            if (usuarioLogueado) {
+                document.getElementById('auth-buttons-container').classList.add('hidden');
+                document.getElementById('user-profile-container').classList.remove('hidden');
+                document.getElementById('nombre-usuario-display').innerText = usuarioLogueado;
+            } else {
+                document.getElementById('user-profile-container').classList.add('hidden');
+                document.getElementById('auth-buttons-container').classList.remove('hidden');
+            }
         }
 
         function cerrarSesion() {
-            document.getElementById('user-profile-container').classList.add('hidden');
-            document.getElementById('auth-buttons-container').classList.remove('hidden');
-            document.getElementById('categories-panel').classList.add('hidden');
-            document.getElementById('user-status-text').innerText = "Iniciá sesión para ver categorías";
+            localStorage.removeItem('usuarioActivo');
+            sessionStorage.removeItem('usuarioActivo');
+            verificarSesion();
+            alert("Sesión cerrada correctamente.");
         }
 
-        function filtrarCategoria(categoria) {
-            document.getElementById('user-status-text').innerText = `Filtrando por: ${categoria.toUpperCase()}`;
+        function irAMiPerfil() {
+            // Redirige a tu sección o página de perfil si la tienes configurada en public/
+            window.location.href = '/public/perfil.html'; 
         }
 
+        // Modales de Publicación
+        function abrirModalPublicar() {
+            document.getElementById('modalPublicar').classList.remove('hidden');
+        }
+
+        function cerrarModalPublicar() {
+            document.getElementById('modalPublicar').classList.add('hidden');
+        }
+
+        function guardarNuevoPunto(event) {
+            event.preventDefault();
+            const categoria = document.getElementById('pub-categoria').value;
+            const titulo = document.getElementById('pub-titulo').value;
+            const desc = document.getElementById('pub-desc').value;
+
+            // Crear marcador visual temporal en el mapa en la posición actual del usuario
+            L.marker([userLat, userLng], {
+                icon: L.divIcon({
+                    className: 'custom-pub-pin',
+                    html: '<div style="background-color: #10b981; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.4);"><i class="fa-solid fa-tag"></i></div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                })
+            }).addTo(map).bindPopup(`<div class='p-1'><b class='text-emerald-600 uppercase text-[10px]'>${categoria}</b><br><strong class='text-xs text-slate-900'>${titulo}</strong><p class='text-[11px] text-slate-600 mt-1'>${desc}</p></div>`);
+
+            cerrarModalPublicar();
+            document.getElementById('pub-titulo').value = '';
+            document.getElementById('pub-desc').value = '';
+            alert("¡Punto publicado con éxito en tu ubicación!");
+        }
+
+        function filtrarCategoria(cat) {
+            toggleMenuCategorias();
+            document.getElementById('user-status-text').innerText = `Filtro activo: ${cat.toUpperCase()}`;
+        }
+
+        // Inicialización al cargar la ventana
         window.addEventListener('load', () => {
             centrarUbicacionReal();
+            verificarSesion();
         });
     </script>
 </body>
