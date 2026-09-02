@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Central Santua - Mapa Vial Limpio</title>
+    <title>Mapa Limpio</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         html, body {
@@ -21,215 +18,39 @@
             padding: 0;
             overflow: hidden;
             background-color: #f8fafc;
-            color: #0f172a;
         }
         #map {
             width: 100%;
             height: 100vh;
             z-index: 1;
         }
-        /* Barra de filtros superior flotante */
-        .floating-filters {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            width: 92%;
-            max-width: 600px;
-        }
-        /* Panel inferior flotante */
-        .floating-bottom {
-            position: absolute;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            width: 92%;
-            max-width: 420px;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
     </style>
 </head>
 <body class="font-sans relative">
 
-    <!-- 1. FILTROS SUPERIORES POR CATEGORÍA -->
-    <div class="floating-filters">
-        <div class="bg-white/95 backdrop-blur-md border border-slate-200 p-2 rounded-2xl shadow-xl flex items-center space-x-2 overflow-x-auto no-scrollbar">
-            <button onclick="filtrarCategoria('todos', this)" class="cat-btn active bg-blue-600 text-white text-xs px-4 py-2.5 rounded-xl font-bold whitespace-nowrap transition shadow-md">
-                <i class="fa-solid fa-compass mr-1.5"></i> Todo
-            </button>
-            <button onclick="filtrarCategoria('productos', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
-                <i class="fa-solid fa-tag mr-1.5 text-emerald-600"></i> Usados
-            </button>
-            <button onclick="filtrarCategoria('mascotas', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
-                <i class="fa-solid fa-paw mr-1.5 text-amber-600"></i> Mascotas
-            </button>
-            <button onclick="filtrarCategoria('oficios', this)" class="cat-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-4 py-2.5 rounded-xl font-semibold whitespace-nowrap transition border border-slate-200">
-                <i class="fa-solid fa-wrench mr-1.5 text-sky-600"></i> Oficios
-            </button>
-        </div>
-    </div>
-
-    <!-- 2. MAPA VIAL LIMPIO (Muestra todas las calles y nombres, SIN comercios) -->
+    <!-- MAPA 100% LIMPIO (Sin bases de datos, sin fetches, sin puntos falsos, solo calles y nombres) -->
     <div id="map"></div>
-
-    <!-- 3. BARRA INFERIOR FLOTANTE -->
-    <div class="floating-bottom">
-        <div class="bg-white/95 backdrop-blur-md border border-slate-200 p-3.5 rounded-2xl shadow-xl flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-slate-100 p-2.5 rounded-xl text-blue-600 border border-slate-200">
-                    <i class="fa-solid fa-user text-sm"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Sesión</p>
-                    <span id="user-display" class="text-xs font-bold text-slate-800">Conectado</span>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-                <a href="perfil.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 transition text-xs font-semibold flex items-center">
-                    <i class="fa-solid fa-gear mr-1.5"></i> Mi Perfil
-                </a>
-            </div>
-        </div>
-    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
         // Inicializar Mapa centrado en Buenos Aires
-        const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        const map = L.map('map', { zoomControl: true }).setView([-34.6037, -58.3816], 14);
 
-        // CAPA CARTODB POSITRON: Muestra la red vial completa, nombres de calles, autopistas y límites claros, eliminando por completo los iconos de comercios, restaurantes y ruidos visuales.
+        // Capa de mapa limpia y detallada con nombres de calles y sin comercios molestos
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             maxZoom: 20,
             subdomains: 'abcd',
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
         }).addTo(map);
 
-        let markersLayer = L.layerGroup().addTo(map);
-        let puntosGlobales = [];
-
-        // Geolocalización del usuario
+        // Geolocalización opcional solo para centrarte en tu posición actual
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
-                map.setView([userLat, userLng], 15);
-
-                L.circleMarker([userLat, userLng], {
-                    radius: 8,
-                    fillColor: "#2563eb",
-                    color: "#ffffff",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.9
-                }).addTo(map).bindPopup("<div class='font-bold text-xs'>Estás aquí</div>");
+                map.setView([position.coords.latitude, position.coords.longitude], 15);
             }, () => {});
         }
-
-        // Cargar datos del servidor
-        async function cargarMapaCompleto() {
-            try {
-                const res = await fetch('/api/admin/data');
-                const data = await res.json();
-                
-                puntosGlobales = [];
-
-                if (data.busquedas) {
-                    data.busquedas.forEach((b, idx) => {
-                        puntosGlobales.push({
-                            id: idx,
-                            categoria: 'productos',
-                            titulo: b.nro ? `Artículo: ${b.nro}` : 'Producto Usado',
-                            descripcion: b.telefono ? `Contacto: ${b.telefono}` : 'Sin datos',
-                            lat: -34.6037 + (Math.random() * 0.02 - 0.01),
-                            lng: -58.3816 + (Math.random() * 0.02 - 0.01)
-                        });
-                    });
-                }
-
-                if (data.hallazgos) {
-                    data.hallazgos.forEach((h, idx) => {
-                        puntosGlobales.push({
-                            id: idx,
-                            categoria: 'mascotas',
-                            titulo: h.nro ? `Mascota/Objeto: ${h.nro}` : 'Aviso',
-                            descripcion: h.telefono ? `Tel: ${h.telefono}` : 'Sin detalle',
-                            lat: -34.6037 + (Math.random() * 0.02 - 0.01),
-                            lng: -58.3816 + (Math.random() * 0.02 - 0.01)
-                        });
-                    });
-                }
-
-                if (puntosGlobales.length === 0) {
-                    puntosGlobales = [
-                        { categoria: 'productos', titulo: 'Bicicleta MTB Rodado 29', descripcion: 'Excelente estado, poco uso.', lat: -34.6037, lng: -58.3816 },
-                        { categoria: 'mascotas', titulo: 'Perro Perdido (Caniche)', descripcion: 'Se perdió cerca de la plaza principal.', lat: -34.6120, lng: -58.3750 },
-                        { categoria: 'oficios', titulo: 'Plomero Gasista Matriculado', descripcion: 'Urgencias 24hs.', lat: -34.5950, lng: -58.3890 }
-                    ];
-                }
-
-                renderizarPuntos(puntosGlobales);
-            } catch (err) {
-                puntosGlobales = [
-                    { categoria: 'productos', titulo: 'Taladro Percutor', descripcion: 'Impecable con maletín.', lat: -34.6037, lng: -58.3816 },
-                    { categoria: 'oficios', titulo: 'Electricista Autorizado', descripcion: 'Instalaciones y tableros.', lat: -34.6100, lng: -58.3850 }
-                ];
-                renderizarPuntos(puntosGlobales);
-            }
-        }
-
-        function renderizarPuntos(puntos) {
-            markersLayer.clearLayers();
-            puntos.forEach(p => {
-                if (p.lat && p.lng) {
-                    const marker = L.marker([p.lat, p.lng]);
-                    
-                    let badgeColor = "bg-blue-600 text-white";
-                    if(p.categoria === 'mascotas') badgeColor = "bg-amber-500 text-slate-950";
-                    if(p.categoria === 'oficios') badgeColor = "bg-sky-600 text-white";
-
-                    marker.bindPopup(`
-                        <div class="text-slate-900 p-2 max-w-xs">
-                            <span class="text-[9px] uppercase font-extrabold ${badgeColor} px-2 py-0.5 rounded-md">${p.categoria}</span>
-                            <h3 class="font-bold text-sm mt-1 text-slate-900">${p.titulo}</h3>
-                            <p class="text-xs text-slate-600 mt-1">${p.descripcion}</p>
-                        </div>
-                    `);
-                    markersLayer.addLayer(marker);
-                }
-            });
-        }
-
-        function filtrarCategoria(cat, btnElement) {
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                btn.classList.add('bg-slate-100', 'text-slate-700');
-            });
-            btnElement.classList.remove('bg-slate-100', 'text-slate-700');
-            btnElement.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-
-            if (cat === 'todos') {
-                renderizarPuntos(puntosGlobales);
-            } else {
-                const filtrados = puntosGlobales.filter(p => p.categoria === cat);
-                renderizarPuntos(filtrados);
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            cargarMapaCompleto();
-        });
     </script>
 </body>
 </html>
