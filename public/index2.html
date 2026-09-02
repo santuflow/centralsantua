@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa Profesional 100% Gratis</title>
+    <title>Mapa Profesional Limpio</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Leaflet CSS (Gratis y sin API Key) -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
-    <!-- FontAwesome (Iconos) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -27,7 +27,7 @@
             height: 100vh;
             z-index: 1;
         }
-        /* Botón flotante GPS estilo app profesional */
+        /* Botón flotante GPS profesional */
         .gps-button {
             position: absolute;
             bottom: 40px;
@@ -38,10 +38,10 @@
 </head>
 <body class="font-sans relative">
 
-    <!-- MAPA LIMPIO, PROFESIONAL Y 100% GRATIS -->
+    <!-- MAPA -->
     <div id="map"></div>
 
-    <!-- BOTÓN FLOTANTE DE UBICACIÓN EXACTA (GPS) -->
+    <!-- BOTÓN GPS -->
     <div class="gps-button">
         <button onclick="centrarUbicacionActual()" class="bg-white hover:bg-slate-50 text-slate-700 w-12 h-12 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
             <i class="fa-solid fa-location-crosshairs text-blue-600 text-xl group-hover:scale-110 transition-transform"></i>
@@ -52,28 +52,32 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        // Inicializar Mapa centrado por defecto en Buenos Aires
+        // Inicializar Mapa
         const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
 
-        // Controles de zoom abajo a la izquierda discretos
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // Capa cartográfica profesional de alta definición con nombres de calles y sin comercios molestos
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            subdomains: 'abcd',
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+        // CAPA 100% GRATIS Y PURA DE OPENSTREETMAP (Sin API Keys, sin bloqueos, sin carteles)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         let markerUsuario = null;
         let precisionCirculo = null;
 
-        // Función profesional para pedir permiso y centrar en la ubicación exacta del usuario
         function centrarUbicacionActual() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
                 return;
             }
+
+            // Opciones de alta precisión para forzar al GPS real del celular o PC
+            const opcionesGPS = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            };
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -81,29 +85,28 @@
                     const lng = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
 
-                    // Centrar el mapa con animación fluida
+                    // Centrar el mapa con zoom cercano (17) para ver la calle exacta
                     map.setView([lat, lng], 17, { animate: true });
 
-                    // Limpiar marcadores previos si existen
                     if (markerUsuario) map.removeLayer(markerUsuario);
                     if (precisionCirculo) map.removeLayer(precisionCirculo);
 
-                    // Círculo de radio de precisión de la señal GPS
+                    // Círculo de radio de precisión del GPS
                     precisionCirculo = L.circle([lat, lng], {
                         radius: accuracy / 2,
                         color: '#2563eb',
-                        fillColor: '#2563eb',
-                        fillOpacity: 0.15,
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.2,
                         weight: 1
                     }).addTo(map);
 
-                    // Marcador exacto tipo punto azul de aplicación móvil
+                    // Marcador de tu posición exacta
                     markerUsuario = L.marker([lat, lng], {
                         icon: L.divIcon({
                             className: 'custom-gps-pin',
-                            html: '<div style="background-color: #2563eb; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 12px rgba(37,99,235,0.8);"></div>',
-                            iconSize: [18, 18],
-                            iconAnchor: [9, 9]
+                            html: '<div style="background-color: #2563eb; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(37,99,235,0.9);"></div>',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
                         })
                     }).addTo(map);
 
@@ -111,17 +114,13 @@
                 },
                 (error) => {
                     console.error(error);
-                    alert("Por favor, permití el acceso a tu ubicación en el navegador para usar el GPS.");
+                    alert("No se pudo obtener tu ubicación exacta. Verificá que el GPS esté activado y hayas dado permiso en el navegador.");
                 },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+                opcionesGPS
             );
         }
 
-        // Solicitar automáticamente el permiso apenas carga la página
+        // Pedir ubicación automáticamente al cargar
         window.addEventListener('load', () => {
             centrarUbicacionActual();
         });
