@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mapa 100% Limpio</title>
+    <title>Mapa Limpio Profesional</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,7 +20,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #f8fafc;
+            background-color: #0f172a;
         }
         #map {
             width: 100%;
@@ -38,7 +38,7 @@
 </head>
 <body class="font-sans relative">
 
-    <!-- MAPA LIMPIO (Solo calles y nombres, sin rastro de comercios) -->
+    <!-- MAPA 100% LIMPIO Y LIBRE (Sin API Keys, sin carteles, sin comercios invasivos) -->
     <div id="map"></div>
 
     <!-- BOTÓN GPS FLOTANTE DE ALTA PRECISIÓN -->
@@ -52,23 +52,15 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        // Inicializar Mapa centrado provisionalmente en Buenos Aires
+        // Inicializar Mapa
         const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 14);
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // CAPA CARTODB NO LABELS / POSITRON LIMPIO: Esta capa muestra estrictamente las calles, autopistas y los nombres de las calles. Los negocios, tiendas y restaurantes no existen en este mapa.
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            subdomains: 'abcd',
-            attribution: '&copy; CARTO'
-        }).addTo(map);
-
-        // Agregamos una capa superior transparente solo para las etiquetas de los nombres de las calles bien nítidas
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            subdomains: 'abcd',
-            pane: 'markerPane' // Asegura que los nombres de las calles queden arriba
+        // CAPA ESTÁNDAR LIBRE (OpenStreetMap Base): 100% gratuita, sin restricciones de API keys ni marcas de agua de pago.
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
         let markerUsuario = null;
@@ -92,7 +84,7 @@
                     const lng = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
 
-                    // Centrar el mapa con zoom exacto de calle
+                    // Centrar el mapa exactamente en tu posición con zoom de calle
                     map.setView([lat, lng], 17, { animate: true });
 
                     if (markerUsuario) map.removeLayer(markerUsuario);
