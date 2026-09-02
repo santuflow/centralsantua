@@ -27,12 +27,32 @@
             height: 100vh;
             z-index: 1;
         }
+        /* Controles flotantes superiores */
+        .top-ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .interactive-el {
+            pointer-events: auto;
+        }
         /* Botón flotante GPS profesional */
         .gps-button {
             position: absolute;
             bottom: 30px;
             right: 20px;
             z-index: 1000;
+        }
+        /* Scrollbar limpio para categorías en dispositivos móviles */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
@@ -41,11 +61,133 @@
     <!-- MAPA 100% LIMPIO Y LIBRE (Sin API Keys, sin carteles, sin comercios invasivos) -->
     <div id="map"></div>
 
+    <!-- ZONA SUPERIOR: GESTIÓN DE SESIÓN Y CATEGORÍAS -->
+    <div class="top-ui-container flex flex-col gap-3">
+        
+        <!-- BARRA DE NAVEGACIÓN / HEADER -->
+        <header class="interactive-el bg-white/95 backdrop-blur-md shadow-lg border border-slate-200/80 rounded-2xl p-3.5 flex items-center justify-between transition-all">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/30">
+                    <i class="fa-solid fa-compass text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-sm leading-tight">Tu Plataforma</h1>
+                    <span id="user-status-text" class="text-xs text-slate-500 font-medium">Iniciá sesión para ver categorías</span>
+                </div>
+            </div>
+
+            <!-- VISTA 1: SI NO HA INICIADO SESIÓN -->
+            <div id="auth-buttons-container" class="flex items-center gap-2">
+                <button onclick="abrirModal('loginModal')" class="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition">
+                    Iniciar Sesión
+                </button>
+                <button onclick="abrirModal('registerModal')" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/25 transition active:scale-95">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- VISTA 2: SI YA INICIÓ SESIÓN (Oculto por defecto) -->
+            <div id="user-profile-container" class="hidden flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <div class="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span id="nombre-usuario-display" class="text-xs font-bold text-slate-700">Usuario</span>
+                </div>
+                <button onclick="cerrarSesion()" class="text-slate-400 hover:text-red-500 p-2 rounded-xl transition" title="Cerrar Sesión">
+                    <i class="fa-solid fa-power-off text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- PANEL DE CATEGORÍAS (Se muestra automáticamente al iniciar sesión) -->
+        <div id="categories-panel" class="interactive-el hidden transition-all duration-300">
+            <div class="bg-white/95 backdrop-blur-md shadow-xl border border-slate-200/80 rounded-2xl p-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
+                <button onclick="filtrarCategoria('productos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🛍️</span> Productos
+                </button>
+                <button onclick="filtrarCategoria('negocios')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🏪</span> Negocios
+                </button>
+                <button onclick="filtrarCategoria('servicios')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🔧</span> Servicios
+                </button>
+                <button onclick="filtrarCategoria('ferias')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🏕️</span> Ferias
+                </button>
+                <button onclick="filtrarCategoria('empleos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>💼</span> Empleos
+                </button>
+                <button onclick="filtrarCategoria('comida')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🍔</span> Comida
+                </button>
+                <button onclick="filtrarCategoria('vehiculos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🚗</span> Vehículos
+                </button>
+                <button onclick="filtrarCategoria('perdidos')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🔎</span> Perdidos y encontrados
+                </button>
+                <button onclick="filtrarCategoria('mascotas')" class="flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 whitespace-nowrap transition active:scale-95 shadow-sm">
+                    <span>🐾</span> Mascotas perdidas
+                </button>
+            </div>
+        </div>
+
+    </div>
+
     <!-- BOTÓN GPS FLOTANTE DE ALTA PRECISIÓN -->
     <div class="gps-button">
         <button onclick="centrarUbicacionReal()" class="bg-white hover:bg-slate-50 text-slate-700 w-14 h-14 rounded-full shadow-2xl border border-slate-200 transition flex items-center justify-center group active:scale-95" title="Ir a mi ubicación exacta">
             <i class="fa-solid fa-location-crosshairs text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
         </button>
+    </div>
+
+    <!-- MODAL DE INICIO DE SESIÓN -->
+    <div id="loginModal" class="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 relative animate-in fade-in zoom-in duration-200">
+            <button onclick="cerrarModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-slate-800 text-lg mb-1">Iniciar Sesión</h3>
+            <p class="text-xs text-slate-500 mb-5">Ingresá para acceder a las categorías del mapa.</p>
+            <form onsubmit="simularLogin(event, 'loginModal')">
+                <div class="space-y-3 mb-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Correo electrónico</label>
+                        <input type="email" required placeholder="tu@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Contraseña</label>
+                        <input type="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/25 transition">Entrar al Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE REGISTRO -->
+    <div id="registerModal" class="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 relative animate-in fade-in zoom-in duration-200">
+            <button onclick="cerrarModal('registerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-slate-800 text-lg mb-1">Crear Cuenta</h3>
+            <p class="text-xs text-slate-500 mb-5">Registrate gratis para empezar a explorar.</p>
+            <form onsubmit="simularLogin(event, 'registerModal')">
+                <div class="space-y-3 mb-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Nombre y Apellido</label>
+                        <input type="text" id="reg-name" required placeholder="Juan Pérez" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Correo electrónico</label>
+                        <input type="email" required placeholder="tu@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Contraseña</label>
+                        <input type="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/25 transition">Completar Registro</button>
+            </form>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
@@ -57,7 +199,7 @@
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // CAPA ESTÁNDAR LIBRE (OpenStreetMap Base): 100% gratuita, sin restricciones de API keys ni marcas de agua de pago.
+        // CAPA ESTÁNDAR LIBRE (OpenStreetMap Base)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap'
@@ -117,6 +259,49 @@
                 },
                 opciones
             );
+        }
+
+        // Lógica de Modales y Sesión
+        function abrirModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function simularLogin(event, modalId) {
+            event.preventDefault();
+            
+            let nombre = "Usuario";
+            if(modalId === 'registerModal') {
+                const inputName = document.getElementById('reg-name').value;
+                if(inputName) nombre = inputName.split(' ')[0];
+            } else {
+                nombre = "Mi Cuenta";
+            }
+
+            cerrarModal(modalId);
+            
+            // Ocultar botones de acceso y mostrar perfil + barra de categorías
+            document.getElementById('auth-buttons-container').classList.add('hidden');
+            document.getElementById('user-profile-container').classList.remove('hidden');
+            document.getElementById('nombre-usuario-display').innerText = nombre;
+            document.getElementById('user-status-text').innerText = "Sesión iniciada correctamente";
+            
+            // Revelar el panel de categorías
+            document.getElementById('categories-panel').classList.remove('hidden');
+        }
+
+        function cerrarSesion() {
+            document.getElementById('user-profile-container').classList.add('hidden');
+            document.getElementById('auth-buttons-container').classList.remove('hidden');
+            document.getElementById('categories-panel').classList.add('hidden');
+            document.getElementById('user-status-text').innerText = "Iniciá sesión para ver categorías";
+        }
+
+        function filtrarCategoria(categoria) {
+            document.getElementById('user-status-text').innerText = `Filtrando por: ${categoria.toUpperCase()}`;
         }
 
         // Centrar automáticamente apenas carga la página
