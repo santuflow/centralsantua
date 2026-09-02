@@ -1149,6 +1149,13 @@ app.get('/api/stats-privadas', (req, res) => {
     }
 });
 
+// =========================================
+// RUTA PRINCIPAL (PÁGINA DE INICIO)
+// =========================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index2.html'));
+
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
