@@ -748,13 +748,14 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
         .final-footer { padding: 3mm 6mm; display: flex; justify-content: space-between; align-items: center; }
         .final-test-tag { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 14pt; color: #e60000; }
         .final-rights { font-family: 'Inter', sans-serif; font-size: 6pt; color: #aaa; }
-    </style><div id="render-area"></div>`;
+    </style><div id="render-area" style="display: flex; flex-direction: column; background: #fff;"></div>`;
     
     document.body.appendChild(tempDiv);
     const renderArea = document.getElementById('render-area');
 
+    // 1. Acumulamos todos los stickers en el DOM oculto de forma vertical
     for (let i = 0; i < listaIDs.length; i++) {
-        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> Generando ${i + 1} / ${listaIDs.length}`;
+        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> Preparando ${i + 1} / ${listaIDs.length}`;
 
         const idUnico = listaIDs[i];
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
@@ -771,35 +772,36 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
                 </div></div></div>
             </div>`;
 
-        // Generamos el HTML según tipo (mantiene exactamente tu lógica de auto/moto)
-        renderArea.innerHTML = (tipo === 'auto') 
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = (tipo === 'auto') 
             ? `<div class="final-page-auto">${estructura}${estructura}</div>` 
             : estructura;
 
-        await new Promise(resolve => {
-            const img = renderArea.querySelector('img');
-            if (img.complete) resolve(); else img.onload = resolve;
-        });
-
-        const elemento = renderArea.children[0];
-        const canvas = await html2canvas(elemento, { scale: 2, useCORS: true });
-        
-        // Convertimos a imagen y disparamos la descarga automática individual
-        const imageURL = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = imageURL;
-        link.download = `Sticker_${idUnico}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        renderArea.innerHTML = '';
-        canvas.remove();
-        
-        if (i % 5 === 0) await new Promise(r => setTimeout(r, 300));
+        renderArea.appendChild(wrapper);
     }
 
-    alert("✅ ¡Stickers generados y descargados como imágenes con éxito!");
+    // 2. Esperamos a que todas las imágenes QR de la tira terminen de cargar por completo
+    boton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Cargando QRs...`;
+    const todasLasImgs = renderArea.querySelectorAll('img');
+    await Promise.all(Array.from(todasLasImgs).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+    }));
+
+    boton.innerHTML = `<i class="fas fa-cog fa-spin"></i> Generando imagen gigante...`;
+
+    // 3. Capturamos toda la tira completa en una sola imagen de alta calidad (scale: 2)
+    const canvas = await html2canvas(renderArea, { scale: 2, useCORS: true });
+    
+    const imageURL = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = imageURL;
+    link.download = `SANTUA_PLANCHA_${tipo.toUpperCase()}_LOTE_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert("✅ ¡Plancha completa generada en una sola imagen de alta calidad!");
     boton.innerHTML = textoOriginal;
     boton.disabled = false;
     document.body.removeChild(tempDiv);
