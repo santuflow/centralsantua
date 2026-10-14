@@ -577,13 +577,20 @@ app.delete('/api/admin/borrar/busqueda/:nro', async (req, res) => { // <--- Agre
 });
 
 // RUTA PARA LOS CONTADORES DE LA HOME
-app.get('/api/contadores', (req, res) => {
-    res.json({
-        totalHallazgos: hallazgos.length,
-        totalBusquedas: busquedas.length
-    });
+app.get('/api/contadores', async (req, res) => {
+    try {
+        const totalHallazgos = await Hallazgo.countDocuments();
+        const totalBusquedas = await Busqueda.countDocuments();
+        
+        res.json({
+            totalHallazgos,
+            totalBusquedas
+        });
+    } catch (error) {
+        console.error("Error al obtener contadores:", error);
+        res.json({ totalHallazgos: 0, totalBusquedas: 0 });
+    }
 });
-
 // --- RUTA DE REGISTRO PROFESIONAL Y SEGURA ---
 app.post('/api/registro', async (req, res) => {
     try {
