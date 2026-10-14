@@ -296,7 +296,7 @@ function asegurarAdmin(req, res, next) {
 // =========================================
 app.post('/api/reportar', async (req, res) => {
     // Desestructuramos los campos del body que vamos a usar directamente
-    const { nro, categoria, telefono, whatsapp, tel, celular, detalles } = req.body;
+    const { nro, categoria, telefono, whatsapp, tel, celular, detalles, contacto } = req.body;
     
     const nroLimpio = normalizar(nro);
     const catFija = categoria ? categoria.toUpperCase() : "OTRO";
