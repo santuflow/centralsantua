@@ -191,13 +191,6 @@ app.get('/admin.html', (req, res) => {
     return res.sendFile(__dirname + '/public/admin.html');
 });
 
-// =========================================
-// 👇 AGREGÁ ESTO ACÁ (ANTES de express.static)
-// =========================================
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', '.index.html'));
-});
-// =========================================
 
 app.use(express.static('public'));
 
@@ -1158,13 +1151,7 @@ app.get('/api/stats-privadas', (req, res) => {
     }
 });
 
-// =========================================
-// RUTA PRINCIPAL (PÁGINA DE INICIO)
-// =========================================
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 
-});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
