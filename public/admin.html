@@ -703,7 +703,6 @@ async function reimprimirLote(loteId) {
 }
 
 async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
-    const { jsPDF } = window.jspdf;
     const textoOriginal = boton.innerHTML;
     boton.disabled = true;
 
@@ -754,12 +753,8 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
     document.body.appendChild(tempDiv);
     const renderArea = document.getElementById('render-area');
 
-    const anchoMm = (tipo === 'auto') ? 240 : 120;
-    const altoMm = 110;
-    const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [anchoMm, altoMm], compress: true });
-
     for (let i = 0; i < listaIDs.length; i++) {
-        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> ${i + 1} / ${listaIDs.length}`;
+        boton.innerHTML = `<i class="fas fa-sync fa-spin"></i> Generando ${i + 1} / ${listaIDs.length}`;
 
         const idUnico = listaIDs[i];
         const url = `https://centralsantua.com.ar/index.html?id=${idUnico}`;
@@ -776,7 +771,7 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
                 </div></div></div>
             </div>`;
 
-        // Generamos el HTML según tipo
+        // Generamos el HTML según tipo (mantiene exactamente tu lógica de auto/moto)
         renderArea.innerHTML = (tipo === 'auto') 
             ? `<div class="final-page-auto">${estructura}${estructura}</div>` 
             : estructura;
@@ -787,20 +782,24 @@ async function generarPdfFinalTodoJunto(listaIDs, tipo, boton) {
         });
 
         const elemento = renderArea.children[0];
-        const canvas = await html2canvas(elemento, { scale: 1.5, useCORS: true });
-        const imgData = canvas.toDataURL('image/jpeg', 0.8);
-
-        if (i > 0) doc.addPage([anchoMm, altoMm], 'l');
-        doc.addImage(imgData, 'JPEG', 0, 0, anchoMm, altoMm, undefined, 'FAST');
+        const canvas = await html2canvas(elemento, { scale: 2, useCORS: true });
+        
+        // Convertimos a imagen y disparamos la descarga automática individual
+        const imageURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = `Sticker_${idUnico}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
         renderArea.innerHTML = '';
         canvas.remove();
         
-        if (i % 10 === 0) await new Promise(r => setTimeout(r, 1000));
+        if (i % 5 === 0) await new Promise(r => setTimeout(r, 300));
     }
 
-    doc.save(`SANTUA_${tipo.toUpperCase()}_LOTE_${Date.now()}.pdf`);
-    
+    alert("✅ ¡Stickers generados y descargados como imágenes con éxito!");
     boton.innerHTML = textoOriginal;
     boton.disabled = false;
     document.body.removeChild(tempDiv);
