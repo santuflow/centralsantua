@@ -167,55 +167,50 @@
 
     <script src="script.js"></script>
     <script>
-    function selectType(tipo) {
-        // 1. Avisar al script.js
-        if (typeof seleccionarCategoria === "function") {
-            seleccionarCategoria(tipo);
-        }
-        
-        // 2. Manejo de Interfaz
-        document.getElementById('step-1').style.display = 'none';
-        document.getElementById('step-2').style.display = 'block';
-        document.getElementById('tipo-hallazgo').value = tipo;
-        
-        const inst = document.getElementById('instruccion-dinamica');
-        const ayuda = document.getElementById('ayuda-especifica');
-        const label = document.getElementById('label-nro');
-        const subtitulo = document.getElementById('subtitulo');
-        const inputPrincipal = document.getElementById('nro-id');
-
-        if (subtitulo) subtitulo.innerText = "Completá los datos para el registro de " + tipo;
-        if (label) label.innerText = "Ingresá los datos de la " + tipo;
-        
-        if (inputPrincipal) inputPrincipal.value = ""; 
-
-        if (tipo === 'DNI') {
-            if (inst) inst.innerHTML = "🆔 <strong>Documento:</strong> Ingresá el número de DNI completo.";
-            if (ayuda) ayuda.innerText = "* Sin puntos, solo los números.";
-            if (inputPrincipal) {
-                inputPrincipal.type = "number";
-                inputPrincipal.maxLength = 8;
-                inputPrincipal.placeholder = "Ej: 35123456";
-            }
-        } else if (tipo === 'PATENTE' || tipo === 'CEDULA') {
-            if (inst) inst.innerHTML = tipo === 'CEDULA' ? "🚗 <strong>Cédula:</strong> Ingresá la PATENTE del plástico." : "🚘 <strong>Patente:</strong> Ingresá el dominio del vehículo.";
-            if (ayuda) ayuda.innerText = "* Ejemplos: ABC123 o AB123CD";
-            if (inputPrincipal) {
-                inputPrincipal.type = "text";
-                inputPrincipal.maxLength = 7;
-                inputPrincipal.placeholder = "Ej: AB123CD";
-            }
-        } else {
-            if (inst) inst.innerHTML = "🪪 <strong>Licencia:</strong> Ingresá el número de control del carnet.";
-            if (ayuda) ayuda.innerText = "* Número de DNI que figura en el plástico.";
-            if (inputPrincipal) {
-                inputPrincipal.type = "text";
-                inputPrincipal.maxLength = 15;
-                inputPrincipal.placeholder = "Ingresá el número";
-            }
-        }
+        function selectType(tipo) {
+    // 1. AVISAR AL SCRIPT.JS
+    if (typeof seleccionarCategoria === "function") {
+        seleccionarCategoria(tipo);
     }
-</script> <script>
+    
+    // 2. Manejo de Interfaz
+    document.getElementById('step-1').style.display = 'none';
+    document.getElementById('step-2').style.display = 'block';
+    document.getElementById('tipo-hallazgo').value = tipo;
+    
+    const inst = document.getElementById('instruccion-dinamica');
+    const ayuda = document.getElementById('ayuda-especifica');
+    const label = document.getElementById('label-nro');
+    const subtitulo = document.getElementById('subtitulo');
+    const inputPrincipal = document.getElementById('nro-id'); // Referencia al input
+
+    subtitulo.innerText = "Completá los datos para el registro de " + tipo;
+    label.innerText = "Ingresá los datos de la " + tipo;
+    
+    // Limpiamos el input por si cambió de categoría
+    inputPrincipal.value = ""; 
+
+    if (tipo === 'DNI') {
+        inst.innerHTML = "🆔 <strong>Documento:</strong> Ingresá el número de DNI completo.";
+        ayuda.innerText = "* Sin puntos, solo los números.";
+        inputPrincipal.type = "number"; // Abre teclado numérico en celus
+        inputPrincipal.maxLength = 8;   // Límite DNI argentino
+        inputPrincipal.placeholder = "Ej: 35123456";
+    } else if (tipo === 'PATENTE' || tipo === 'CEDULA') {
+        inst.innerHTML = tipo === 'CEDULA' ? "🚗 <strong>Cédula:</strong> Ingresá la PATENTE del plástico." : "🚘 <strong>Patente:</strong> Ingresá el dominio del vehículo.";
+        ayuda.innerText = "* Ejemplos: ABC123 o AB123CD";
+        inputPrincipal.type = "text";
+        inputPrincipal.maxLength = 7;   // Límite patentes nuevas (AB123CD)
+        inputPrincipal.placeholder = "Ej: AB123CD";
+    } else {
+        inst.innerHTML = "🪪 <strong>Licencia:</strong> Ingresá el número de control del carnet.";
+        ayuda.innerText = "* Numero de DNI que figura en el plástico.";
+        inputPrincipal.type = "text";
+        inputPrincipal.maxLength = 15;  // Un estándar seguro para licencias
+        inputPrincipal.placeholder = "Ingresá el número";
+    }
+}
+   </script> <script>
         function abrirModalTerminos(e) {
             if(e) e.preventDefault();
             document.getElementById('modal-terminos').style.display = 'flex';
