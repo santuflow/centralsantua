@@ -190,8 +190,6 @@ app.get('/admin.html', (req, res) => {
 
     return res.sendFile(__dirname + '/public/admin.html');
 });
-
-
 app.use(express.static('public'));
 
 
@@ -1150,7 +1148,6 @@ app.get('/api/stats-privadas', (req, res) => {
         res.status(403).json({ error: "No autorizado" });
     }
 });
-
 
 
 const PORT = process.env.PORT || 3000;
