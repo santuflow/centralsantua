@@ -301,9 +301,15 @@
             border: 1px solid rgba(79, 172, 254, 0.3);
             color: var(--primary);
             font-size: 0.65rem;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-family: 'Space Mono', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .lote-pill button {
+            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.7rem;
         }
 
         .socio-balance-box {
@@ -338,6 +344,22 @@
         .btn-pay-action:hover {
             filter: brightness(1.2);
             transform: scale(1.03);
+        }
+
+        .btn-delete-socio {
+            background: rgba(255, 51, 51, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-delete-socio:hover {
+            background: var(--danger);
+            color: #fff;
         }
 
         .modal-overlay {
@@ -427,7 +449,7 @@
 
             <div class="panel-box">
                 <div class="panel-title" style="color:var(--primary)">
-                    <i class="fas fa-boxes"></i> Asignar Lote a Socio
+                    <i class="fas fa-boxes"></i> Asignar Lote o QRs a Socio
                 </div>
                 <div class="form-group">
                     <label>Socio Destino</label>
@@ -436,20 +458,37 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Lote de Stickers</label>
-                    <select id="select-lote">
-                        <option value="">Cargando lotes...</option>
+                    <label>Seleccionar Lote</label>
+                    <select id="select-lote" onchange="cargarStickersDeLoteParaAsignar()">
+                        <option value="">Seleccione un lote...</option>
                     </select>
                 </div>
-                <button class="btn-assign" onclick="asignarLote()">
-                    <i class="fas fa-link"></i> Vincular Lote al Socio
+                
+                <!-- NUEVO: Selector avanzado para elegir lote entero o stickers específicos -->
+                <div class="form-group">
+                    <label>Modo de Asignación</label>
+                    <select id="select-modo-asignacion" onchange="cambiarModoAsignacion()">
+                        <option value="lote">Asignar Lote Completo</option>
+                        <option value="stickers">Seleccionar Stickers Específicos</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="contenedor-stickers-lote" style="display:none;">
+                    <label>Marque los Stickers a Asignar:</label>
+                    <div id="lista-checks-stickers" style="max-height: 150px; overflow-y: auto; background: #000; border: 1px solid #222; padding: 8px; border-radius: 6px;">
+                        <span style="color:#555; font-size:0.75rem;">Primero seleccione un lote</span>
+                    </div>
+                </div>
+
+                <button class="btn-assign" onclick="asignarLoteOStickers()">
+                    <i class="fas fa-link"></i> Confirmar Asignación
                 </button>
             </div>
         </div>
 
         <div class="panel-box">
             <div class="panel-title" style="color:var(--success)">
-                <i class="fas fa-users-cog"></i> Red de Socios & Control de Pagos
+                <i class="fas fa-users-cog"></i> Red de Socios & Gestión de Cuentas
             </div>
 
             <div class="search-bar">
@@ -489,6 +528,7 @@
 
 <script>
     let sociosGlobal = [];
+    let stickersGeneralesGlobal = [];
     let socioSeleccionadoModal = null;
 
     async function cargarTodo() {
@@ -507,6 +547,7 @@
             }
 
             if (dataAdmin.stickers) {
+                stickersGeneralesGlobal = dataAdmin.stickers;
                 poblarSelectLotes(dataAdmin.stickers);
             }
         } catch (e) {
@@ -524,8 +565,8 @@
         container.innerHTML = lista.map(s => {
             const telLimpio = (s.whatsapp || '').replace(/\D/g, '');
             const lotesHtml = s.lotes && s.lotes.length > 0 
-                ? s.lotes.map(l => `<span class="lote-pill"><i class="fas fa-box"></i> ${l}</span>`).join('') 
-                : `<span style="font-size:0.7rem; color:#555;">Sin lotes</span>`;
+                ? s.lotes.map(l => `<span class="lote-pill"><i class="fas fa-box"></i> ${l} <button onclick="desvincularLote('${s.username}', '${l}')" title="Quitar lote"><i class="fas fa-times"></i></button></span>`).join('') 
+                : `<span style="font-size:0.7rem; color:#555;">Sin lotes asignados</span>`;
 
             return `
                 <div class="socio-card">
@@ -534,10 +575,13 @@
                             <div class="socio-name">${s.nombreCompleto || 'Sin Nombre'}</div>
                             <div class="socio-user">@${s.username}</div>
                         </div>
-                        ${telLimpio ? `<a href="https://wa.me/${telLimpio}" target="_blank" style="color:#25d366; font-size:1.2rem;"><i class="fab fa-whatsapp"></i></a>` : ''}
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            ${telLimpio ? `<a href="https://wa.me/${telLimpio}" target="_blank" style="color:#25d366; font-size:1.2rem;"><i class="fab fa-whatsapp"></i></a>` : ''}
+                            <button class="btn-delete-socio" onclick="eliminarSocio('${s.username}')" title="Eliminar socio"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
 
-                    <div style="font-size:0.75rem; color:#888; margin-bottom:5px;">Lotes asignados:</div>
+                    <div style="font-size:0.75rem; color:#888; margin-bottom:5px;">Lotes / QRs a su cargo:</div>
                     <div class="lotes-pills">${lotesHtml}</div>
 
                     <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; margin-top:10px;">
@@ -591,6 +635,35 @@
             lotesUnicos.map(l => `<option value="${l}">${l}</option>`).join('');
     }
 
+    function cambiarModoAsignacion() {
+        const modo = document.getElementById('select-modo-asignacion').value;
+        const contenedor = document.getElementById('contenedor-stickers-lote');
+        contenedor.style.display = (modo === 'stickers') ? 'flex' : 'none';
+    }
+
+    function cargarStickersDeLoteParaAsignar() {
+        const loteId = document.getElementById('select-lote').value;
+        const listaDiv = document.getElementById('lista-checks-stickers');
+
+        if (!loteId) {
+            listaDiv.innerHTML = `<span style="color:#555; font-size:0.75rem;">Primero seleccione un lote</span>`;
+            return;
+        }
+
+        const stickersDelLote = stickersGeneralesGlobal.filter(st => st.lote_id === loteId);
+        if (stickersDelLote.length === 0) {
+            listaDiv.innerHTML = `<span style="color:#555; font-size:0.75rem;">No hay stickers en este lote</span>`;
+            return;
+        }
+
+        listaDiv.innerHTML = stickersDelLote.map(st => `
+            <label style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:0.75rem; color:#ccc; cursor:pointer;">
+                <input type="checkbox" class="chk-asignar-st" value="${st.id_qr}">
+                <span style="font-family:monospace; color:var(--primary);">${st.id_qr}</span>
+            </label>
+        `).join('');
+    }
+
     function filtrarSocios() {
         const q = document.getElementById('bus-socio').value.toLowerCase();
         const filtrados = sociosGlobal.filter(s => 
@@ -628,21 +701,67 @@
         }
     }
 
-    async function asignarLote() {
-        const username = document.getElementById('select-socio').value;
-        const lote_id = document.getElementById('select-lote').value;
+    async function eliminarSocio(username) {
+        if (!confirm(`¿Estás seguro de eliminar al socio @${username}? Esta acción no se puede deshacer.`)) return;
 
-        if (!username || !lote_id) return alert("⚠️ Selecciona socio y lote.");
+        const res = await fetch('/api/admin/eliminar-vendedor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const r = await res.json();
+        if (r.success) {
+            alert("✅ Socio eliminado correctamente.");
+            cargarTodo();
+        } else {
+            alert("❌ Error al eliminar socio.");
+        }
+    }
 
-        const res = await fetch('/api/admin/asignar-lote', {
+    async function desvincularLote(username, lote_id) {
+        if (!confirm(`¿Quitar el lote/sticker "${lote_id}" al socio @${username}?`)) return;
+
+        const res = await fetch('/api/admin/desvincular-lote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, lote_id })
         });
         const r = await res.json();
         if (r.success) {
-            alert(`✅ Lote asignado correctamente.`);
+            alert("✅ Lote/Sticker desvinculado.");
             cargarTodo();
+        } else {
+            alert("❌ Error al desvincular.");
+        }
+    }
+
+    async function asignarLoteOStickers() {
+        const username = document.getElementById('select-socio').value;
+        const lote_id = document.getElementById('select-lote').value;
+        const modo = document.getElementById('select-modo-asignacion').value;
+
+        if (!username || !lote_id) return alert("⚠️ Selecciona un socio y un lote.");
+
+        let payload = { username, lote_id };
+
+        if (modo === 'stickers') {
+            const checks = document.querySelectorAll('.chk-asignar-st:checked');
+            const stickersIds = Array.from(checks).map(c => c.value);
+            if (stickersIds.length === 0) return alert("⚠️ Selecciona al menos un sticker individual.");
+            payload.stickersIds = stickersIds;
+        }
+
+        const res = await fetch('/api/admin/asignar-lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const r = await res.json();
+        if (r.success) {
+            alert(`✅ Asignación realizada correctamente.`);
+            cargarTodo();
+        } else {
+            alert("❌ Error al asignar.");
         }
     }
 
@@ -653,15 +772,14 @@
 
         document.getElementById('modal-titulo').innerText = `Pagos para: @${socio.username}`;
         
-        // Consultar los stickers activos de sus lotes para permitir marcar individuales
         const resData = await fetch('/api/admin/data');
         const dataAdmin = await resData.json();
         
-        const stickersDelSocio = dataAdmin.stickers.filter(st => socio.lotes.includes(st.lote_id) && st.activado);
+        const stickersDelSocio = dataAdmin.stickers.filter(st => (socio.lotes.includes(st.lote_id) || socio.lotes.includes(st.id_qr)) && st.activado);
         
         const listaDiv = document.getElementById('modal-lista-stickers');
         if (stickersDelSocio.length === 0) {
-            listaDiv.innerHTML = `<p style="color:#555; text-align:center; padding:10px;">No hay activaciones registradas.</p>`;
+            listaDiv.innerHTML = `<p style="color:#555; text-align:center; padding:10px;">No hay activaciones registradas en sus lotes/stickers.</p>`;
         } else {
             listaDiv.innerHTML = stickersDelSocio.map(st => `
                 <label style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #111; cursor:pointer; font-size:0.8rem;">
