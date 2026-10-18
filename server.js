@@ -210,6 +210,56 @@ app.use(session({
     }
 }));
 
+// 🔐 ACCESO INDEPENDIENTE A ADMIN2.HTML (Panel de Vendedores)
+app.get('/admin2.html', (req, res) => {
+
+    // 📡 Obtener IP real (Render)
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0] || req.socket.remoteAddress;
+
+    // 🚫 Bloquear si la IP está sancionada
+    if (bloqueados[ip]) {
+        console.log("🚫 Intento de IP bloqueada en Admin2:", ip);
+        return res.status(403).send('IP bloqueada permanentemente');
+    }
+
+    const auth = req.headers.authorization;
+
+    // 🔐 Pedir login
+    if (!auth) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin2"');
+        return res.status(401).send('Login requerido');
+    }
+
+    const base64 = auth.split(' ')[1];
+    const decoded = Buffer.from(base64, 'base64').toString();
+    const [user, pass] = decoded.split(':');
+
+    // ❌ Credenciales incorrectas
+    if (user !== 'santua4224' || pass !== 'benja42783833') {
+
+        intentos[ip] = (intentos[ip] || 0) + 1;
+
+        console.log(`❌ Intento fallido ${intentos[ip]} en Admin2 desde IP: ${ip}`);
+
+        // 🔥 BLOQUEO PERMANENTE después de 3 intentos
+        if (intentos[ip] >= 3) {
+            bloqueados[ip] = true;
+            console.log("🚫 IP bloqueada permanentemente:", ip);
+            return res.status(403).send('Demasiados intentos. IP bloqueada permanentemente');
+        }
+
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin2"');
+        return res.status(401).send('Credenciales incorrectas');
+    }
+
+    // ✅ Login correcto → reset intentos
+    intentos[ip] = 0;
+
+    console.log("✅ Login correcto en Admin2 desde IP:", ip);
+
+    return res.sendFile(__dirname + '/public/admin2.html');
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -1153,6 +1203,119 @@ app.get('/api/stats-privadas', (req, res) => {
         res.json({ visitas: visitasTotales });
     } else {
         res.status(403).json({ error: "No autorizado" });
+    }
+});
+
+
+// Molde para Vendedores / Distribuidores
+const vendedorSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    nombreCompleto: String,
+    whatsapp: String,
+    lotesAsignados: [String], // IDs de los lotes asignados (ej: ["LOTE-18/10 17:30:00"])
+    saldoCobrado: { type: Number, default: 0 }, // Dinero histórico ya pagado
+    fechaCreacion: { type: Date, default: Date.now }
+});
+const Vendedor = mongoose.models.Vendedor || mongoose.model('Vendedor', vendedorSchema);
+
+
+// =========================================
+// GESTIÓN DE VENDEDORES Y LOTES
+// =========================================
+
+// 1. Crear un nuevo vendedor (Desde el Admin)
+app.post('/api/admin/crear-vendedor', async (req, res) => {
+    try {
+        const { username, password, nombreCompleto, whatsapp } = req.body;
+        const nuevoVendedor = new Vendedor({ username, password, nombreCompleto, whatsapp });
+        await nuevoVendedor.save();
+        res.json({ success: true, message: "Vendedor creado con éxito" });
+    } catch (error) {
+        res.status(500).json({ success: false, error: "El usuario ya existe o hubo un error." });
+    }
+});
+
+// 2. Listar todos los vendedores y su balance actual (Calculado en base a activaciones)
+app.get('/api/admin/vendedores', async (req, res) => {
+    try {
+        const vendedores = await Vendedor.find({});
+        const resultado = [];
+
+        for (let v of vendedores) {
+            // Buscamos cuántos stickers de sus lotes asignados ya están activados
+            const stickersDelVendedor = await Sticker.find({ lote_id: { $in: v.lotesAsignados } });
+            const activados = stickersDelVendedor.filter(s => s.activado).length;
+            const totalGenerado = activados * 2500;
+            const saldoPendiente = totalGenerado - v.saldoCobrado;
+
+            resultado.push({
+                username: v.username,
+                nombreCompleto: v.nombreCompleto,
+                whatsapp: v.whatsapp,
+                lotes: v.lotesAsignados,
+                totalActivados: activados,
+                saldoPendiente: saldoPendiente > 0 ? saldoPendiente : 0,
+                saldoCobrado: v.saldoCobrado
+            });
+        }
+        res.json({ success: true, vendedores: resultado });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// 3. Asignar un Lote a un Vendedor
+app.post('/api/admin/asignar-lote', async (req, res) => {
+    try {
+        const { username, lote_id } = req.body;
+        await Vendedor.findOneAndUpdate({ username }, { $addToSet: { lotesAsignados: lote_id } });
+        res.json({ success: true, message: "Lote asignado correctamente" });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// 4. Marcar saldo como Pagado (Blanquear/Descontar saldo a 0 o restar lo cobrado)
+app.post('/api/admin/pagar-vendedor', async (req, res) => {
+    try {
+        const { username, montoAPagar } = req.body;
+        await Vendedor.findOneAndUpdate({ username }, { $inc: { saldoCobrado: montoAPagar } });
+        res.json({ success: true, message: "Pago registrado con éxito" });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// 5. Panel del Vendedor: Ver sus lotes y saldo
+app.post('/api/vendedor/dashboard', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const vendedor = await Vendedor.findOne({ username, password });
+        
+        if (!vendedor) {
+            return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
+        }
+
+        // Buscar todos los stickers de sus lotes
+        const stickers = await Sticker.find({ lote_id: { $in: vendedor.lotesAsignados } });
+        const activados = stickers.filter(s => s.activado).length;
+        const totalGenerado = activados * 2500;
+        const saldoDisponible = totalGenerado - vendedor.saldoCobrado;
+
+        res.json({
+            success: true,
+            nombreCompleto: vendedor.nombreCompleto,
+            lotes: vendedor.lotesAsignados,
+            stickers: stickers,
+            stats: {
+                totalStickers: stickers.length,
+                activados: activados,
+                saldoDisponible: saldoDisponible > 0 ? saldoDisponible : 0
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
     }
 });
 

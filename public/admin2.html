@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Socios & Lotes | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4facfe;
+            --accent: #00f2fe;
+            --bg: #050505;
+            --card: #0d0d0d;
+            --card-border: #1e1e1e;
+            --text: #ffffff;
+            --text-dim: #888888;
+            --success: #00ff88;
+            --danger: #ff3333;
+            --warning: #ffcc00;
+            --border: rgba(79, 172, 254, 0.3);
+            --gold: #f39c12;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #050505 url('bandera.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .overlay {
+            background: radial-gradient(circle, rgba(5,5,5,0.85) 0%, rgba(0,0,0,0.98) 100%);
+            min-height: 100vh;
+            padding: 25px;
+            backdrop-filter: blur(12px);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand h1 {
+            font-weight: 900;
+            letter-spacing: 2px;
+            font-size: 1.6rem;
+        }
+        .brand span.sub {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-nav {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            color: #ccc;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-nav:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.2);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+        }
+        .metric-card.success::before { background: var(--success); }
+        .metric-card.warning::before { background: var(--warning); }
+        .metric-card.gold::before { background: var(--gold); }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        .panel-box {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            color: var(--primary);
+            font-size: 0.95rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input, .form-group select {
+            background: #000;
+            border: 1px solid #2a2a2a;
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-action-primary {
+            background: var(--success);
+            color: #000;
+            font-weight: 900;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-action-primary:hover {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-assign {
+            background: var(--primary);
+            color: #000;
+            font-weight: 900;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        .btn-assign:hover {
+            filter: brightness(1.2);
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 12px 12px 12px 42px;
+            background: #000;
+            border: 1px solid #222;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .search-bar i {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            color: var(--text-dim);
+        }
+
+        .socios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .socio-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 18px;
+            transition: border-color 0.3s;
+            position: relative;
+        }
+        .socio-card:hover {
+            border-color: var(--border);
+        }
+
+        .socio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .socio-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .socio-user {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .lotes-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .lote-pill {
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            color: var(--primary);
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .socio-balance-box {
+            background: #000;
+            border: 1px solid #1a1a1a;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .balance-amount {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--success);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .btn-pay-action {
+            background: var(--gold);
+            color: #000;
+            font-weight: 900;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .btn-pay-action:hover {
+            filter: brightness(1.2);
+            transform: scale(1.03);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-box {
+            background: #0f0f0f;
+            border: 1px solid var(--gold);
+            width: 90%;
+            max-width: 480px;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay">
+    <header>
+        <div class="brand">
+            <h1>CENTRAL<span style="color:var(--primary)">SANTUA</span></h1>
+            <span class="sub"><i class="fas fa-shield-alt"></i> Panel de Administración - Socios & Lotes QR</span>
+        </div>
+        <div class="header-actions">
+            <a href="/admin.html" class="btn-nav">
+                <i class="fas fa-arrow-left"></i> Admin Principal
+            </a>
+            <button onclick="cargarTodo()" class="btn-nav" style="border-color:var(--success); color:var(--success);">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+    </header>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <span class="metric-label">Socios Registrados</span>
+            <div class="metric-value" id="m-socios" style="color:var(--primary)">0</div>
+        </div>
+        <div class="metric-card success">
+            <span class="metric-label">Total Activaciones Red</span>
+            <div class="metric-value" id="m-activaciones" style="color:var(--success)">0</div>
+        </div>
+        <div class="metric-card warning">
+            <span class="metric-label">Deuda Pendiente General</span>
+            <div class="metric-value" id="m-deuda" style="color:var(--warning)">$0</div>
+        </div>
+        <div class="metric-card gold">
+            <span class="metric-label">Comisiones Pagadas</span>
+            <div class="metric-value" id="m-pagado" style="color:var(--gold)">$0</div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div>
+            <div class="panel-box">
+                <div class="panel-title">
+                    <i class="fas fa-user-plus"></i> Crear Cuenta de Socio
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Socio / Local</label>
+                    <input type="text" id="s-nombre" placeholder="Ej: Kiosco El Rápido">
+                </div>
+                <div class="form-group">
+                    <label>Usuario (Para login en socios.html)</label>
+                    <input type="text" id="s-user" placeholder="Ej: kioscorapido">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="text" id="s-pass" placeholder="Clave de acceso">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp de Contacto</label>
+                    <input type="text" id="s-wa" placeholder="Ej: 5491122334455">
+                </div>
+                <button class="btn-action-primary" onclick="crearSocio()">
+                    <i class="fas fa-save"></i> Registrar Socio
+                </button>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title" style="color:var(--primary)">
+                    <i class="fas fa-boxes"></i> Asignar Lote a Socio
+                </div>
+                <div class="form-group">
+                    <label>Socio Destino</label>
+                    <select id="select-socio">
+                        <option value="">Cargando socios...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Lote de Stickers</label>
+                    <select id="select-lote">
+                        <option value="">Cargando lotes...</option>
+                    </select>
+                </div>
+                <button class="btn-assign" onclick="asignarLote()">
+                    <i class="fas fa-link"></i> Vincular Lote al Socio
+                </button>
+            </div>
+        </div>
+
+        <div class="panel-box">
+            <div class="panel-title" style="color:var(--success)">
+                <i class="fas fa-users-cog"></i> Red de Socios & Control de Pagos
+            </div>
+
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="bus-socio" placeholder="Buscar por nombre de socio o usuario..." onkeyup="filtrarSocios()">
+            </div>
+
+            <div class="socios-grid" id="socios-container">
+                <p style="color:#555;">Cargando socios...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL LIQUIDAR / MARCAR PAGOS -->
+<div class="modal-overlay" id="modal-pago">
+    <div class="modal-box">
+        <i class="fas fa-hand-holding-usd fa-2x" style="color:var(--gold); margin-bottom:10px;"></i>
+        <h3 style="color:#fff; margin-bottom:5px;" id="modal-titulo">Gestionar Pagos de Socio</h3>
+        <p style="font-size:0.8rem; color:#aaa; margin-bottom:15px;" id="modal-sub">Marca los stickers activados que ya le abonaste ($2.500 c/u):</p>
+        
+        <div id="modal-lista-stickers" style="max-height: 250px; overflow-y: auto; background: #000; border: 1px solid #222; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+            <!-- Carga dinámica -->
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <span style="font-size:0.8rem; color:#888;">Total seleccionado a pagar:</span>
+            <b id="modal-total-parcial" style="color:var(--success); font-family:monospace; font-size:1.1rem;">$0</b>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="cerrarModal()" style="flex:1; padding:10px; background:#222; border:1px solid #444; color:#fff; border-radius:6px; cursor:pointer;">Cancelar</button>
+            <button onclick="marcarStickersPagados()" style="flex:1; padding:10px; background:var(--gold); border:none; color:#000; font-weight:bold; border-radius:6px; cursor:pointer;">Confirmar Pago Parcial</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sociosGlobal = [];
+    let socioSeleccionadoModal = null;
+
+    async function cargarTodo() {
+        try {
+            const resV = await fetch('/api/admin/vendedores');
+            const dataV = await resV.json();
+
+            const resData = await fetch('/api/admin/data');
+            const dataAdmin = await resData.json();
+
+            if (dataV.success) {
+                sociosGlobal = dataV.vendedores;
+                renderSocios(sociosGlobal);
+                actualizarMetricas(sociosGlobal);
+                poblarSelectSocios(sociosGlobal);
+            }
+
+            if (dataAdmin.stickers) {
+                poblarSelectLotes(dataAdmin.stickers);
+            }
+        } catch (e) {
+            console.error("Error al cargar admin2:", e);
+        }
+    }
+
+    function renderSocios(lista) {
+        const container = document.getElementById('socios-container');
+        if (lista.length === 0) {
+            container.innerHTML = `<p style="color:#555; grid-column:1/-1;">No hay socios registrados.</p>`;
+            return;
+        }
+
+        container.innerHTML = lista.map(s => {
+            const telLimpio = (s.whatsapp || '').replace(/\D/g, '');
+            const lotesHtml = s.lotes && s.lotes.length > 0 
+                ? s.lotes.map(l => `<span class="lote-pill"><i class="fas fa-box"></i> ${l}</span>`).join('') 
+                : `<span style="font-size:0.7rem; color:#555;">Sin lotes</span>`;
+
+            return `
+                <div class="socio-card">
+                    <div class="socio-header">
+                        <div>
+                            <div class="socio-name">${s.nombreCompleto || 'Sin Nombre'}</div>
+                            <div class="socio-user">@${s.username}</div>
+                        </div>
+                        ${telLimpio ? `<a href="https://wa.me/${telLimpio}" target="_blank" style="color:#25d366; font-size:1.2rem;"><i class="fab fa-whatsapp"></i></a>` : ''}
+                    </div>
+
+                    <div style="font-size:0.75rem; color:#888; margin-bottom:5px;">Lotes asignados:</div>
+                    <div class="lotes-pills">${lotesHtml}</div>
+
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; margin-top:10px;">
+                        <span>Activados Pendientes de Cobro:</span>
+                        <b style="color:var(--success); font-family:monospace;">${s.totalActivados || 0} QRs</b>
+                    </div>
+
+                    <div class="socio-balance-box">
+                        <div>
+                            <div style="font-size:0.6rem; color:#888; text-transform:uppercase;">Saldo a Pagar</div>
+                            <div class="balance-amount">$${(s.saldoPendiente || 0).toLocaleString('es-AR')}</div>
+                        </div>
+                        ${(s.saldoPendiente || 0) > 0 
+                            ? `<button class="btn-pay-action" onclick="abrirModalPagos('${s.username}')"><i class="fas fa-check-double"></i> Gestionar Pagos</button>` 
+                            : `<span style="font-size:0.7rem; color:#444; font-weight:bold;">AL DÍA</span>`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function actualizarMetricas(socios) {
+        let totalS = socios.length;
+        let totalAct = 0;
+        let totalDeuda = 0;
+        let totalCobrado = 0;
+
+        socios.forEach(s => {
+            totalAct += s.totalActivados || 0;
+            totalDeuda += s.saldoPendiente || 0;
+            totalCobrado += s.saldoCobrado || 0;
+        });
+
+        document.getElementById('m-socios').innerText = totalS;
+        document.getElementById('m-activaciones').innerText = totalAct;
+        document.getElementById('m-deuda').innerText = `$${totalDeuda.toLocaleString('es-AR')}`;
+        document.getElementById('m-pagado').innerText = `$${totalCobrado.toLocaleString('es-AR')}`;
+    }
+
+    function poblarSelectSocios(socios) {
+        const select = document.getElementById('select-socio');
+        select.innerHTML = `<option value="">Seleccione un socio...</option>` + 
+            socios.map(s => `<option value="${s.username}">${s.nombreCompleto} (@${s.username})</option>`).join('');
+    }
+
+    function poblarSelectLotes(stickers) {
+        const select = document.getElementById('select-lote');
+        const lotesUnicos = [...new Set(stickers.map(s => s.lote_id))].filter(Boolean);
+        select.innerHTML = `<option value="">Seleccione un lote...</option>` + 
+            lotesUnicos.map(l => `<option value="${l}">${l}</option>`).join('');
+    }
+
+    function filtrarSocios() {
+        const q = document.getElementById('bus-socio').value.toLowerCase();
+        const filtrados = sociosGlobal.filter(s => 
+            (s.nombreCompleto && s.nombreCompleto.toLowerCase().includes(q)) ||
+            (s.username && s.username.toLowerCase().includes(q))
+        );
+        renderSocios(filtrados);
+    }
+
+    async function crearSocio() {
+        const datos = {
+            nombreCompleto: document.getElementById('s-nombre').value.trim(),
+            username: document.getElementById('s-user').value.trim(),
+            password: document.getElementById('s-pass').value.trim(),
+            whatsapp: document.getElementById('s-wa').value.trim()
+        };
+
+        if (!datos.username || !datos.password) return alert("⚠️ Usuario y contraseña obligatorios.");
+
+        const res = await fetch('/api/admin/crear-vendedor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        const r = await res.json();
+        if (r.success) {
+            alert("✅ Socio registrado con éxito.");
+            document.getElementById('s-nombre').value = "";
+            document.getElementById('s-user').value = "";
+            document.getElementById('s-pass').value = "";
+            document.getElementById('s-wa').value = "";
+            cargarTodo();
+        } else {
+            alert("❌ Error: " + r.error);
+        }
+    }
+
+    async function asignarLote() {
+        const username = document.getElementById('select-socio').value;
+        const lote_id = document.getElementById('select-lote').value;
+
+        if (!username || !lote_id) return alert("⚠️ Selecciona socio y lote.");
+
+        const res = await fetch('/api/admin/asignar-lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, lote_id })
+        });
+        const r = await res.json();
+        if (r.success) {
+            alert(`✅ Lote asignado correctamente.`);
+            cargarTodo();
+        }
+    }
+
+    async function abrirModalPagos(username) {
+        socioSeleccionadoModal = username;
+        const socio = sociosGlobal.find(s => s.username === username);
+        if (!socio) return;
+
+        document.getElementById('modal-titulo').innerText = `Pagos para: @${socio.username}`;
+        
+        // Consultar los stickers activos de sus lotes para permitir marcar individuales
+        const resData = await fetch('/api/admin/data');
+        const dataAdmin = await resData.json();
+        
+        const stickersDelSocio = dataAdmin.stickers.filter(st => socio.lotes.includes(st.lote_id) && st.activado);
+        
+        const listaDiv = document.getElementById('modal-lista-stickers');
+        if (stickersDelSocio.length === 0) {
+            listaDiv.innerHTML = `<p style="color:#555; text-align:center; padding:10px;">No hay activaciones registradas.</p>`;
+        } else {
+            listaDiv.innerHTML = stickersDelSocio.map(st => `
+                <label style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #111; cursor:pointer; font-size:0.8rem;">
+                    <div>
+                        <input type="checkbox" class="chk-sticker" value="${st.id_qr}" onchange="calcularTotalParcial()" ${st.pago_socio ? 'checked disabled' : ''}>
+                        <span style="font-family:monospace; color:var(--primary); margin-left:8px;">${st.id_qr}</span>
+                    </div>
+                    <span style="color:${st.pago_socio ? 'var(--gold)' : 'var(--success)'}; font-size:0.75rem;">
+                        ${st.pago_socio ? 'YA PAGADO' : 'PENDIENTE ($2.500)'}
+                    </span>
+                </label>
+            `).join('');
+        }
+
+        calcularTotalParcial();
+        document.getElementById('modal-pago').style.display = 'flex';
+    }
+
+    function calcularTotalParcial() {
+        const checkboxes = document.querySelectorAll('.chk-sticker:checked:not(:disabled)');
+        const total = checkboxes.length * 2500;
+        document.getElementById('modal-total-parcial').innerText = `$${total.toLocaleString('es-AR')}`;
+    }
+
+    async function marcarStickersPagados() {
+        const checkboxes = document.querySelectorAll('.chk-sticker:checked:not(:disabled)');
+        const idsPagados = Array.from(checkboxes).map(chk => chk.value);
+
+        if (idsPagados.length === 0) return alert("⚠️ Selecciona al menos un sticker para pagar.");
+
+        const res = await fetch('/api/admin/pagar-stickers-socio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: socioSeleccionadoModal, ids: idsPagados })
+        });
+        const r = await res.json();
+
+        if (r.success) {
+            cerrarModal();
+            alert("✅ Pagos registrados y descontados correctamente.");
+            cargarTodo();
+        } else {
+            alert("❌ Error al registrar pagos.");
+        }
+    }
+
+    function cerrarModal() {
+        document.getElementById('modal-pago').style.display = 'none';
+    }
+
+    cargarTodo();
+</script>
+</body>
+</html>
