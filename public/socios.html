@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Socios & Distribuidores | Central Santua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4facfe;
+            --accent: #00f2fe;
+            --bg: #050505;
+            --card: #0d0d0d;
+            --card-border: #1e1e1e;
+            --text: #ffffff;
+            --text-dim: #888888;
+            --success: #00ff88;
+            --danger: #ff3333;
+            --warning: #ffcc00;
+            --border: rgba(79, 172, 254, 0.3);
+            --gold: #f39c12;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #050505 url('bandera.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .overlay {
+            background: radial-gradient(circle, rgba(5,5,5,0.85) 0%, rgba(0,0,0,0.98) 100%);
+            min-height: 100vh;
+            padding: 25px;
+            backdrop-filter: blur(12px);
+        }
+
+        /* --- PANTALLA DE LOGIN --- */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 85vh;
+        }
+        .login-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 35px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        .login-card h2 {
+            margin-bottom: 20px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        /* --- DASHBOARD SOCIO --- */
+        #dashboard-screen {
+            display: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand h1 {
+            font-weight: 900;
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+        }
+        .brand span.sub {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+        }
+        .metric-card.success::before { background: var(--success); }
+        .metric-card.warning::before { background: var(--warning); }
+        .metric-card.gold::before { background: var(--gold); }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .panel-box {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            color: var(--primary);
+            font-size: 0.95rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+            text-align: left;
+        }
+        .form-group label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .form-group input {
+            background: #000;
+            border: 1px solid #2a2a2a;
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: #000;
+            font-weight: 900;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .btn-main:hover { filter: brightness(1.2); }
+
+        /* TABLA DE STICKERS ASIGNADOS */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        th {
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.02);
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge.activo { background: rgba(0,255,136,0.15); color: var(--success); border: 1px solid rgba(0,255,136,0.3); }
+        .badge.inactivo { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid #333; }
+        .badge.pagado { background: rgba(243,156,18,0.15); color: var(--gold); border: 1px solid rgba(243,156,18,0.3); }
+    </style>
+</head>
+<body>
+
+<div class="overlay">
+    
+    <!-- 1. PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h1 style="font-size: 1.4rem; margin-bottom: 5px;">CENTRAL<span style="color:var(--primary)">SANTUA</span></h1>
+            <p style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 25px;">Portal Exclusivo de Socios</p>
+            
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="log-user" placeholder="Ingresá tu usuario">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="log-pass" placeholder="Ingresá tu contraseña">
+            </div>
+            <button class="btn-main" onclick="loginSocio()" style="margin-top: 10px;">
+                <i class="fas fa-sign-in-alt"></i> Ingresar a mi Panel
+            </button>
+            <div id="login-error" style="color:var(--danger); font-size:0.75rem; margin-top:15px; display:none;"></div>
+        </div>
+    </div>
+
+    <!-- 2. PANTALLA DEL PANEL DEL SOCIO (DASHBOARD) -->
+    <div id="dashboard-screen">
+        <header>
+            <div class="brand">
+                <h1>CENTRAL<span style="color:var(--primary)">SANTUA</span></h1>
+                <span class="sub"><i class="fas fa-user-circle"></i> Bienvenido, <span id="lbl-nombre" style="color:#fff;">Socio</span> (@<span id="lbl-username"></span>)</span>
+            </div>
+            <div class="header-actions">
+                <button onclick="cerrarSesion()" class="btn-main" style="background:transparent; border:1px solid var(--danger); color:var(--danger); padding:8px 15px; font-size:0.7rem;">
+                    <i class="fas fa-power-off"></i> Salir
+                </button>
+            </div>
+        </header>
+
+        <!-- MÉTRICAS PERSONALES -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">Stickers Asignados</span>
+                <div class="metric-value" id="m-total-stickers" style="color:var(--primary)">0</div>
+            </div>
+            <div class="metric-card success">
+                <span class="metric-label">QRs Activados</span>
+                <div class="metric-value" id="m-activados" style="color:var(--success)">0</div>
+            </div>
+            <div class="metric-card warning">
+                <span class="metric-label">Saldo Pendiente de Cobro</span>
+                <div class="metric-value" id="m-saldo" style="color:var(--warning)">$0</div>
+            </div>
+            <div class="metric-card gold">
+                <span class="metric-label">Comisiones Cobradas (Histórico)</span>
+                <div class="metric-value" id="m-cobrado" style="color:var(--gold)">$0</div>
+            </div>
+        </div>
+
+        <!-- DETALLE DE LOTES Y STICKERS -->
+        <div class="panel-box">
+            <div class="panel-title">
+                <i class="fas fa-box-open"></i> Mis Lotes y Estado de Stickers ($2.500 c/u por activación)
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID del Sticker (QR)</th>
+                            <th>Lote de Origen</th>
+                            <th>Estado de Activación</th>
+                            <th>Estado de Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-stickers-socio">
+                        <tr><td colspan="4" style="text-align:center; color:#555;">Cargando tus datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Al cargar la página, verificamos si ya inició sesión en esta pestaña
+    window.onload = () => {
+        const guardado = sessionStorage.getItem('socio_auth');
+        if (guardado) {
+            const data = JSON.parse(guardado);
+            cargarDashboard(data.username, data.password);
+        }
+    };
+
+    async function loginSocio() {
+        const username = document.getElementById('log-user').value.trim();
+        const password = document.getElementById('log-pass').value.trim();
+        const errDiv = document.getElementById('login-error');
+
+        if (!username || !password) {
+            errDiv.innerText = "Completá usuario y contraseña.";
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/vendedor/dashboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const r = await res.json();
+
+            if (r.success) {
+                // Guardamos credenciales en la sesión del navegador
+                sessionStorage.setItem('socio_auth', JSON.stringify({ username, password }));
+                cargarDashboardConDatos(r, username);
+            } else {
+                errDiv.innerText = r.message || "Usuario o contraseña incorrectos.";
+                errDiv.style.display = 'block';
+            }
+        } catch (e) {
+            errDiv.innerText = "Error de conexión con el servidor.";
+            errDiv.style.display = 'block';
+        }
+    }
+
+    async function cargarDashboard(username, password) {
+        try {
+            const res = await fetch('/api/vendedor/dashboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const r = await res.json();
+            if (r.success) {
+                cargarDashboardConDatos(r, username);
+            } else {
+                cerrarSesion();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function cargarDashboardConDatos(data, username) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard-screen').style.display = 'block';
+
+        document.getElementById('lbl-nombre').innerText = data.nombreCompleto || 'Socio';
+        document.getElementById('lbl-username').innerText = username;
+
+        document.getElementById('m-total-stickers').innerText = data.stats.totalStickers;
+        document.getElementById('m-activados').innerText = data.stats.activados;
+        document.getElementById('m-saldo').innerText = `$${(data.stats.saldoDisponible || 0).toLocaleString('es-AR')}`;
+        document.getElementById('m-cobrado').innerText = `$${(data.saldoCobrado || 0).toLocaleString('es-AR')}`;
+
+        const tbody = document.getElementById('tabla-stickers-socio');
+        if (!data.stickers || data.stickers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#555;">No tenés lotes o stickers asignados todavía.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.stickers.map(st => `
+            <tr>
+                <td style="font-family:monospace; color:var(--primary); font-weight:bold;">${st.id_qr}</td>
+                <td style="color:#aaa;">${st.lote_id || 'Lote Directo'}</td>
+                <td>
+                    ${st.activado 
+                        ? '<span class="badge activo"><i class="fas fa-check-circle"></i> Activado</span>' 
+                        : '<span class="badge inactivo"><i class="fas fa-clock"></i> En Stock / Sin Activar</span>'
+                    }
+                </td>
+                <td>
+                    ${st.pago_socio 
+                        ? '<span class="badge pagado"><i class="fas fa-dollar-sign"></i> Liquidado</span>' 
+                        : (st.activado ? '<span class="badge activo">Pendiente de Cobro</span>' : '<span class="badge inactivo">-</span>')
+                    }
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function cerrarSesion() {
+        sessionStorage.removeItem('socio_auth');
+        document.getElementById('dashboard-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('log-user').value = "";
+        document.getElementById('log-pass').value = "";
+    }
+</script>
+</body>
+</html>
