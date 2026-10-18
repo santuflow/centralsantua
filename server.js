@@ -190,25 +190,6 @@ app.get('/admin.html', (req, res) => {
 
     return res.sendFile(__dirname + '/public/admin.html');
 });
-app.use(express.static('public'));
-
-
-// 1. IMPORTANTE: Agregá esto justo antes de la sesión para que Render (el proxy) pase las cookies correctamente
-app.set('trust proxy', 1); 
-
-// 2. CONFIGURACIÓN DE SESIÓN PROFESIONAL
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'santua_secreto_777', 
-    resave: true, // Cambialo a true para forzar el guardado
-    saveUninitialized: false,
-    name: 'santua_session',
-    cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 365,
-        httpOnly: true,
-        secure: false, // Ponelo en false hasta que tengas SSL/HTTPS funcionando perfecto
-        sameSite: 'lax' // Más estable para navegadores móviles
-    }
-}));
 
 // 🔐 ACCESO INDEPENDIENTE A ADMIN2.HTML (Panel de Vendedores)
 app.get('/admin2.html', (req, res) => {
@@ -259,6 +240,27 @@ app.get('/admin2.html', (req, res) => {
 
     return res.sendFile(__dirname + '/public/admin2.html');
 });
+
+app.use(express.static('public'));
+
+
+// 1. IMPORTANTE: Agregá esto justo antes de la sesión para que Render (el proxy) pase las cookies correctamente
+app.set('trust proxy', 1); 
+
+// 2. CONFIGURACIÓN DE SESIÓN PROFESIONAL
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'santua_secreto_777', 
+    resave: true, // Cambialo a true para forzar el guardado
+    saveUninitialized: false,
+    name: 'santua_session',
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+        httpOnly: true,
+        secure: false, // Ponelo en false hasta que tengas SSL/HTTPS funcionando perfecto
+        sameSite: 'lax' // Más estable para navegadores móviles
+    }
+}));
+
 
 app.use(passport.initialize());
 app.use(passport.session());
