@@ -906,3 +906,95 @@ footer {
         margin-top: 0px !important;
     }
 }
+
+
+
+/* --- CORRECCIÓN DEFINITIVA DE DISEÑO (PC Y CELULAR) --- */
+
+/* Contenedor principal de la página */
+main.container {
+    max-width: 600px !important;
+    margin: 0 auto !important;
+    padding: 15px 15px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+/* Sección del título y bajada */
+.hero-section {
+    text-align: center !important;
+    margin-bottom: 5px !important;
+}
+
+.hero-section h2 {
+    font-size: 1.4rem !important;
+    margin-bottom: 6px !important;
+}
+
+.hero-section p {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Alineación y tamaño prolijo para los botones principales en PC y celular */
+.button-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+    margin: 0 !important;
+}
+
+.button-group .btn,
+.btn-info-main {
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Reducción de espacios excesivos en las tarjetas informativas */
+.extra-info {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+}
+
+.info-card {
+    padding: 15px !important;
+    margin: 0 !important;
+}
+
+.info-card h3 {
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+}
+
+.info-card p {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+}
+
+/* Adaptación automática para pantallas de PC (Escritorio) */
+@media (min-width: 768px) {
+    main.container {
+        max-width: 750px !important;
+        padding: 25px !important;
+        gap: 15px !important;
+    }
+
+    .extra-info {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .hero-section h2 {
+        font-size: 1.8rem !important;
+    }
+}
