@@ -42,117 +42,116 @@
     <a href="javascript:void(0)" onclick="cerrarSesionTotal()" style="color: #ff4d4d; font-weight: bold;">Cerrar Sesión</a>
 </div>
 
-<main class="container">
-    <section class="hero-section">
+<main class="container" style="max-width: 650px; margin: 0 auto; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+    <section class="hero-section" style="text-align: center; width: 100%; margin-bottom: 0;">
         <h2>Tu tranquilidad, a un escaneo de distancia</h2>
         <p>La red directa para la recuperación de patentes. Gestión segura, privada y en pocos segundos.</p>
     </section>
         
-
-
-    <div class="stat-divider"></div>
-
-<div class="button-group">
-    <button class="btn btn-activar-negro" onclick="verificarAccesoActivacion()" style="grid-column: 1 / -1; margin-bottom: 10px;">
-    <span class="icon">✨</span>
-    <div class="btn-content">
-        <span class="text">ACTIVAR STICKER QR</span>
-    </div>
-    <span class="icon">✨</span>
-</button>
-
-                <button class="btn-info-main" onclick="abrirGuia()">
-            <span class="icon">💡</span> LEER: ¿CÓMO FUNCIONA EL SISTEMA?
+    <div class="button-group" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 0;">
+        <button class="btn btn-activar-negro" onclick="verificarAccesoActivacion()" style="width: 100%; max-width: 440px; margin: 0 auto;">
+            <span class="icon">✨</span>
+            <div class="btn-content">
+                <span class="text">ACTIVAR STICKER QR</span>
+            </div>
+            <span class="icon">✨</span>
         </button>
 
-        <section class="extra-info">
-            <div class="info-card">
-                <h3>Protección de Patentes</h3>
-                <p>Diseñado específicamente para autos, motos y camiones. Tu patente queda conectada a vos ante cualquier imprevisto.</p>
-            </div>
-            <div class="info-card">
-                <h3>Contacto Directo</h3>
-                <p>Quien encuentre tu patente extraviada solo debe escanear el código QR para comunicarse con vos de forma rápida y segura.</p>
-            </div>
-            <div class="info-card">
-                <h3>Garantía de Reposición</h3>
-                <p>Si perdés la patente y no lográs recuperarla, te entregamos un nuevo sticker con su activación completamente sin cargo.</p>
-            </div>
-        </section>
-    </main>
-
-    <div id="modal-guia" class="modal-guia-overlay">
-        <div class="modal-guia-content">
-            <button class="cerrar-modal" onclick="cerrarGuia()">×</button>
-            
-            <div class="modal-header">
-                <h2>¿Cómo funciona Central Santua?</h2>
-                <p>Guía de activación y protección de patentes</p>
-            </div>
-
-            <div class="guia-pasos">
-                
-                <div class="paso-box especial">
-                    <span class="nro">⚡</span>
-                    <div class="txt">
-                        <h4>Objetivo del Sistema</h4>
-                        <p>Nuestros stickers QR se adhieren en la parte trasera de la patente vehicular. Si llegás a perderla, la persona que la encuentre podrá escanear el código y comunicarse directamente con vos de forma fácil y ágil.</p>
-                    </div>
-                </div>
-
-                <div class="paso-box">
-                    <span class="nro">1</span>
-                    <div class="txt">
-                        <h4>Paso 1: Registro previo</h4>
-                        <p>Al adquirir tu kit de stickers de Central Santua, el primer paso es registrarte en nuestra plataforma web.</p>
-                    </div>
-                </div>
-
-                <div class="paso-box">
-                    <span class="nro">2</span>
-                    <div class="txt">
-                        <h4>Paso 2: Activación del QR</h4>
-                        <p>Escaneás el código de tu sticker para iniciar la activación, la cual cuenta con un costo único de <strong>$5.000 ARS</strong>. Este valor se destina a costear la distribución de las etiquetas, el mantenimiento tecnológico de la web y el desarrollo de nuestra futura aplicación móvil.</p>
-                    </div>
-                </div>
-
-                <div class="paso-box">
-                    <span class="nro">3</span>
-                    <div class="txt">
-                        <h4>Paso 3: Configuración de tu Perfil</h4>
-                        <p>Tras completar el pago, el sistema te redirigirá automáticamente a tu panel de usuario. Allí podrás configurar tu código QR con tus datos de contacto para que, al ser escaneado, el hallador pueda avisarte de inmediato.</p>
-                    </div>
-                </div>
-
-                <div class="paso-box">
-                    <span class="nro">4</span>
-                    <div class="txt">
-                        <h4>Paso 4: Garantía de Reposición</h4>
-                        <p>En caso de que extravíes la patente y no logres recuperarla, tenés la posibilidad de solicitar un nuevo sticker totalmente gratis, incluyendo su activación. <em>Recomendación importante: si pasados 1 o 2 días máximos no recibís novedades, te sugerimos iniciar el trámite correspondiente para la obtención de una nueva patente en el registro.</em></p>
-                    </div>
-                </div>
-
-            </div>
-
-            <p style="text-align: center; color: var(--accent); font-weight: bold; margin: 20px 0 10px 0; font-size: 0.95rem;">¡Gracias por elegirnos y formar parte de nuestra comunidad!</p>
-
-            <button class="btn-cerrar-final" onclick="cerrarGuia()">ENTENDIDO, VOLVER AL INICIO</button>
-        </div>
+        <button class="btn-info-main" onclick="abrirGuia()" style="width: 100%; max-width: 440px; margin: 0 auto; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">
+            <span class="icon">💡</span> LEER: ¿CÓMO FUNCIONA EL SISTEMA?
+        </button>
     </div>
 
-    <div id="modal-terminos" class="modal-guia-overlay" style="display: none;">
+    <section class="extra-info" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 5px;">
+        <div class="info-card" style="margin: 0;">
+            <h3>Protección de Patentes</h3>
+            <p>Diseñado específicamente para autos, motos y camiones. Tu patente queda conectada a vos ante cualquier imprevisto.</p>
+        </div>
+        <div class="info-card" style="margin: 0;">
+            <h3>Contacto Directo</h3>
+            <p>Quien encuentre tu patente extraviada solo debe escanear el código QR para comunicarse con vos de forma rápida y segura.</p>
+        </div>
+        <div class="info-card" style="margin: 0;">
+            <h3>Garantía de Reposición</h3>
+            <p>Si perdés la patente y no lográs recuperarla, te entregamos un nuevo sticker con su activación completamente sin cargo.</p>
+        </div>
+    </section>
+</main>
+
+<div id="modal-guia" class="modal-guia-overlay">
+    <div class="modal-guia-content">
+        <button class="cerrar-modal" onclick="cerrarGuia()">×</button>
+        
+        <div class="modal-header">
+            <h2>¿Cómo funciona Central Santua?</h2>
+            <p>Guía de activación y protección de patentes</p>
+        </div>
+
+        <div class="guia-pasos">
+            
+            <div class="paso-box especial">
+                <span class="nro">⚡</span>
+                <div class="txt">
+                    <h4>Objetivo del Sistema</h4>
+                    <p>Nuestros stickers QR se adhieren en la parte trasera de la patente vehicular. Si llegás a perderla, la persona que la encuentre podrá escanear el código y comunicarse directamente con vos de forma fácil y ágil.</p>
+                </div>
+            </div>
+
+            <div class="paso-box">
+                <span class="nro">1</span>
+                <div class="txt">
+                    <h4>Paso 1: Registro previo</h4>
+                    <p>Al adquirir tu kit de stickers de Central Santua, el primer paso es registrarte en nuestra plataforma web.</p>
+                </div>
+            </div>
+
+            <div class="paso-box">
+                <span class="nro">2</span>
+                <div class="txt">
+                    <h4>Paso 2: Activación del QR</h4>
+                    <p>Escaneás el código de tu sticker para iniciar la activación, la cual cuenta con un costo único de <strong>$5.000 ARS</strong>. Este valor se destina a costear la distribución de las etiquetas, el mantenimiento tecnológico de la web y el desarrollo de nuestra futura aplicación móvil.</p>
+                </div>
+            </div>
+
+            <div class="paso-box">
+                <span class="nro">3</span>
+                <div class="txt">
+                    <h4>Paso 3: Configuración de tu Perfil</h4>
+                    <p>Tras completar el pago, el sistema te redirigirá automáticamente a tu panel de usuario. Allí podrás configurar tu código QR con tus datos de contacto para que, al ser escaneado, el hallador pueda avisarte de inmediato.</p>
+                </div>
+            </div>
+
+            <div class="paso-box">
+                <span class="nro">4</span>
+                <div class="txt">
+                    <h4>Paso 4: Garantía de Reposición</h4>
+                    <p>En caso de que extravíes la patente y no logres recuperarla, tenés la posibilidad de solicitar un nuevo sticker totalmente gratis, incluyendo su activación. <em>Recomendación importante: si pasados 1 o 2 días máximos no recibís novedades, te sugerimos iniciar el trámite correspondiente para la obtención de una nueva patente en el registro.</em></p>
+                </div>
+            </div>
+
+        </div>
+
+        <p style="text-align: center; color: var(--accent); font-weight: bold; margin: 20px 0 10px 0; font-size: 0.95rem;">¡Gracias por elegirnos y formar parte de nuestra comunidad!</p>
+
+        <button class="btn-cerrar-final" onclick="cerrarGuia()">ENTENDIDO, VOLVER AL INICIO</button>
+    </div>
+</div>
+
+<div id="modal-terminos" class="modal-guia-overlay" style="display: none;">
     <div class="modal-guia-content">
         <button class="cerrar-modal" onclick="cerrarModalTerminos()">×</button>
         <h2 style="color: #4facfe;">Términos y Condiciones</h2>
-        <p style="color: #ccc; margin-top: 20px;"><p><strong>1. Rol de la Plataforma:</strong> Central Santua actúa únicamente como un nexo digital entre hallazgos y búsquedas. No somos responsables por el estado de los objetos ni por las acciones de terceros.</p>
+        <div style="color: #ccc; margin-top: 20px; font-size: 0.9rem; line-height: 1.6;">
+            <p><strong>1. Rol de la Plataforma:</strong> Central Santua actúa únicamente como un nexo digital entre hallazgos y búsquedas. No somos responsables por el estado de los objetos ni por las acciones de terceros.</p>
             
-            <p><strong>2. Veracidad de Datos:</strong> El usuario garantiza que la información proporcionada es veraz. El uso de datos falsos o reportes malintencionados resultará en el bloqueo permanente de acceso.</p>
+            <p style="margin-top: 10px;"><strong>2. Veracidad de Datos:</strong> El usuario garantiza que la información proporcionada es veraz. El uso de datos falsos o reportes malintencionados resultará en el bloqueo permanente de acceso.</p>
             
-            <p><strong>3. Privacidad y Seguridad:</strong> Los números de documento y patentes se procesan solo para detectar coincidencias (Match). Tu WhatsApp no se hace público; solo se utiliza para gestionar la devolución una vez confirmado el Match.</p>
+            <p style="margin-top: 10px;"><strong>3. Privacidad y Seguridad:</strong> Los números de documento y patentes se procesan solo para detectar coincidencias (Match). Tu WhatsApp no se hace público; solo se utiliza para gestionar la devolución una vez confirmado el Match.</p>
             
-            <p><strong>4. Devolución Segura:</strong> Recomendamos realizar las entregas en lugares públicos (comisarías, estaciones, plazas). Central Santua no participa en el intercambio físico del objeto.</p>
+            <p style="margin-top: 10px;"><strong>4. Devolución Segura:</strong> Recomendamos realizar las entregas en lugares públicos (comisarías, estaciones, plazas). Central Santua no participa en el intercambio físico del objeto.</p>
             
-            <p><strong>5. Compromiso Social:</strong> Al usar este sistema, te comprometés a actuar de buena fe para que los documentos vuelvan a sus dueños legítimos sin condiciones económicas previas.</p></p>
+            <p style="margin-top: 10px;"><strong>5. Compromiso Social:</strong> Al usar este sistema, te comprometés a actuar de buena fe para que los documentos vuelvan a sus dueños legítimos sin condiciones económicas previas.</p>
+        </div>
         <button class="btn-cerrar-final" onclick="cerrarModalTerminos()">ENTENDIDO</button>
     </div>
 </div>
