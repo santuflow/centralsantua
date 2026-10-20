@@ -33,8 +33,6 @@
 <div id="side-menu" class="menu-lateral">
     <a href="javascript:void(0)" class="cerrar-btn" onclick="toggleMenu()">&times;</a>
     <a href="index.html">Inicio</a>
-    <a href="encontre.html">Encontre algo</a>
-    <a href="perdi.html">Perdi algo</a>
     <a href="perfil.html">Administrar Codigos QR</a>
     <a href="comprar_sticker.html">Conseguir mi Sticker</a>
     <a href="puntos_venta.html">Puntos de venta</a>
@@ -47,30 +45,13 @@
 <main class="container">
     <section class="hero-section">
         <h2>Tu tranquilidad, a un escaneo de distancia</h2>
-        <p>La red directa para la recuperación de documentos y patentes. Gestión segura, privada y en pocos segundos.</p>
+        <p>La red directa para la recuperación de patentes. Gestión segura, privada y en pocos segundos.</p>
     </section>
         
-        <div class="stats-container">
-    <div class="stat-box">
-        <span class="stat-number" id="count-hallazgos">0</span>
-        <span class="stat-label">Stock Hallazgos</span>
-        <div class="tooltip-container">
-            <span class="help-tooltip">?</span>
-            <span class="tooltip-text">Objetos encontrados que esperan a su dueño.</span>
-        </div>
-    </div>
+
 
     <div class="stat-divider"></div>
 
-    <div class="stat-box">
-        <span class="stat-number" id="count-busquedas">0</span>
-        <span class="stat-label">Alertas Activas</span>
-        <div class="tooltip-container">
-            <span class="help-tooltip">?</span>
-            <span class="tooltip-text">Personas que reportaron una pérdida recientemente.</span>
-        </div>
-    </div>
-</div>
 <div class="button-group">
     <button class="btn btn-activar-negro" onclick="verificarAccesoActivacion()" style="grid-column: 1 / -1; margin-bottom: 10px;">
     <span class="icon">✨</span>
@@ -80,36 +61,22 @@
     <span class="icon">✨</span>
 </button>
 
-    <a href="encontre.html" class="btn btn-encontre">
-        <span class="icon">🔍</span>
-        <div class="btn-content">
-            <span class="text">ENCONTRÉ ALGO</span>
-        </div>
-    </a>
-
-    <a href="perdi.html" class="btn btn-perdi">
-        <span class="icon">🛡️</span>
-        <div class="btn-content">
-            <span class="text">PERDÍ ALGO</span>
-        </div>
-    </a>
-</div>
                 <button class="btn-info-main" onclick="abrirGuia()">
             <span class="icon">💡</span> LEER: ¿CÓMO FUNCIONA EL SISTEMA?
         </button>
 
         <section class="extra-info">
             <div class="info-card">
-                <h3>Base Activa 24/7</h3>
-                <p>Nuestra base de datos no descansa. Si hoy no hay coincidencia, el sistema sigue rastreando tu objeto hasta encontrarlo.</p>
+                <h3>Protección de Patentes</h3>
+                <p>Diseñado específicamente para autos, motos y camiones. Tu patente queda conectada a vos ante cualquier imprevisto.</p>
             </div>
             <div class="info-card">
-                <h3>Protocolo Seguro</h3>
-                <p>Validamos cada entrega mediante un sistema de preguntas de seguridad para garantizar que el objeto vuelva a su dueño legítimo.</p>
+                <h3>Contacto Directo</h3>
+                <p>Quien encuentre tu patente extraviada solo debe escanear el código QR para comunicarse con vos de forma rápida y segura.</p>
             </div>
             <div class="info-card">
-                <h3>Sin Intermediarios</h3>
-                <p>Facilitamos el nexo directo a través de nuestra central de WhatsApp una vez que el "Match" es confirmado.</p>
+                <h3>Garantía de Reposición</h3>
+                <p>Si perdés la patente y no lográs recuperarla, te entregamos un nuevo sticker con su activación completamente sin cargo.</p>
             </div>
         </section>
     </main>
@@ -119,8 +86,8 @@
             <button class="cerrar-modal" onclick="cerrarGuia()">×</button>
             
             <div class="modal-header">
-                <h2>Guía Operativa Central Santua</h2>
-                <p>Entendé cómo protegemos y recuperamos tus pertenencias</p>
+                <h2>¿Cómo funciona Central Santua?</h2>
+                <p>Guía de activación y protección de patentes</p>
             </div>
 
             <div class="guia-pasos">
@@ -128,51 +95,46 @@
                 <div class="paso-box especial">
                     <span class="nro">⚡</span>
                     <div class="txt">
-                        <h4>Sistema de Memoria Activa</h4>
-                        <p>Esta es nuestra mayor ventaja: **Nada se pierde**. Si reportás algo que perdiste y aún no fue encontrado, tu dato queda en "Guardia Permanente". En el instante en que alguien lo reporte, el sistema los vincula automáticamente. **No necesitás buscar todos los días, nosotros lo hacemos por vos.**</p>
+                        <h4>Objetivo del Sistema</h4>
+                        <p>Nuestros stickers QR se adhieren en la parte trasera de la patente vehicular. Si llegás a perderla, la persona que la encuentre podrá escanear el código y comunicarse directamente con vos de forma fácil y ágil.</p>
                     </div>
                 </div>
 
                 <div class="paso-box">
                     <span class="nro">1</span>
                     <div class="txt">
-                        <h4>Carga de Datos Estandarizada</h4>
-                        <p>Para evitar errores de lectura, el sistema solo acepta formatos limpios. Ingresá DNI, Patentes o Cédulas **SIN PUNTOS, GUIONES NI ESPACIOS**. Esto permite que el algoritmo compare millones de datos en milisegundos.</p>
+                        <h4>Paso 1: Registro previo</h4>
+                        <p>Al adquirir tu kit de stickers de Central Santua, el primer paso es registrarte en nuestra plataforma web.</p>
                     </div>
                 </div>
 
                 <div class="paso-box">
                     <span class="nro">2</span>
                     <div class="txt">
-                        <h4>Detección de Coincidencias (Match)</h4>
-                        <p>Cuando un número de documento reportado como "Perdido" coincide con uno reportado como "Encontrado", el sistema genera un **Match de Seguridad**. Solo en ese momento se habilitan los canales de contacto.</p>
+                        <h4>Paso 2: Activación del QR</h4>
+                        <p>Escaneás el código de tu sticker para iniciar la activación, la cual cuenta con un costo único de <strong>$5.000 ARS</strong>. Este valor se destina a costear la distribución de las etiquetas, el mantenimiento tecnológico de la web y el desarrollo de nuestra futura aplicación móvil.</p>
                     </div>
                 </div>
 
                 <div class="paso-box">
                     <span class="nro">3</span>
                     <div class="txt">
-                        <h4>Contacto vía Central de WhatsApp</h4>
-                        <p>Si hay coincidencia, aparecerá un botón directo a nuestra central. Allí, un operador gestionará el nexo para la devolución. Nunca publicamos tus datos personales ni tu teléfono en la web.</p>
+                        <h4>Paso 3: Configuración de tu Perfil</h4>
+                        <p>Tras completar el pago, el sistema te redirigirá automáticamente a tu panel de usuario. Allí podrás configurar tu código QR con tus datos de contacto para que, al ser escaneado, el hallador pueda avisarte de inmediato.</p>
                     </div>
                 </div>
 
                 <div class="paso-box">
                     <span class="nro">4</span>
                     <div class="txt">
-                        <h4>Validación Sin Exponer Tu Privacidad</h4>
-                        <p>Entendemos tu seguridad. En lugar de pedirte fotos de documentos, realizamos un **Cotejo de Información Privada**. Te haremos preguntas sobre datos que figuran en el objeto (como una dirección, un segundo nombre o un detalle específico) para verificar que sos el dueño real sin invadir tu privacidad digital.</p>
+                        <h4>Paso 4: Garantía de Reposición</h4>
+                        <p>En caso de que extravíes la patente y no logres recuperarla, tenés la posibilidad de solicitar un nuevo sticker totalmente gratis, incluyendo su activación. <em>Recomendación importante: si pasados 1 o 2 días máximos no recibís novedades, te sugerimos iniciar el trámite correspondiente para la obtención de una nueva patente en el registro.</em></p>
                     </div>
                 </div>
 
-                <div class="paso-box">
-                    <span class="nro">5</span>
-                    <div class="txt">
-                        <h4>Compromiso de Devolución</h4>
-                        <p>Central Santua es una comunidad. Si encontraste algo, tu reporte es la única esperanza de alguien para recuperar su documentación. Fomentamos la honestidad y la rapidez en cada entrega.</p>
-                    </div>
-                </div>
             </div>
+
+            <p style="text-align: center; color: var(--accent); font-weight: bold; margin: 20px 0 10px 0; font-size: 0.95rem;">¡Gracias por elegirnos y formar parte de nuestra comunidad!</p>
 
             <button class="btn-cerrar-final" onclick="cerrarGuia()">ENTENDIDO, VOLVER AL INICIO</button>
         </div>
