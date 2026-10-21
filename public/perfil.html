@@ -178,7 +178,7 @@ input:checked + .slider:before { transform: translateX(20px); }
         }
         .btn-config:hover { transform: scale(1.05); background: var(--accent); }
 
-        /* Modal Ultra Moderno */
+        
         .modal {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; 
@@ -279,9 +279,12 @@ input:checked + .slider:before { transform: translateX(20px); }
         </div>
 
         <div class="field" id="wrapper-tel">
-            <label>WhatsApp (con código de país)</label>
-            <input type="tel" id="edit-tel" placeholder="5491133334444">
-        </div>
+    <label>WhatsApp (ej: 1123456789 - Sin 0 ni 15)</label>
+    <div style="display: flex; align-items: center; background: #000; border: 1px solid #222; border-radius: 15px; overflow: hidden;">
+        <span style="background: #111; color: var(--accent); padding: 16px 12px; font-weight: bold; border-right: 1px solid #222; font-size: 1rem;">+54 9</span>
+        <input type="tel" id="edit-tel" placeholder="1123456789" style="border: none !important; border-radius: 0 !important; box-shadow: none !important; width: 100%;">
+    </div>
+</div>
 
         <div class="field">
             <label>Mensaje para el hallador</label>
@@ -401,10 +404,19 @@ function abrirGestion(id) {
 
     idEditando = id;
     
-    // 1. Llenar textos
+   // 1. Llenar textos
     document.getElementById('modal-titulo').innerText = "Editar " + (s.alias || "Objeto");
     document.getElementById('edit-alias').value = s.alias || "";
-    document.getElementById('edit-tel').value = s.telefono || "";
+    
+    // Limpiamos el prefijo +549 para que en el input solo se vea el número local del usuario
+    let telBD = s.telefono || "";
+    if (telBD.startsWith("+549")) {
+        telBD = telBD.replace("+549", "");
+    } else if (telBD.startsWith("549")) {
+        telBD = telBD.replace("549", "");
+    }
+    document.getElementById('edit-tel').value = telBD;
+
     document.getElementById('edit-msg').value = s.mensaje || "";
     
     // 2. Configurar el Switch (reemplaza al viejo select)
@@ -459,11 +471,22 @@ function validarBotonGuardar() {
 async function guardarCambiosGestion() {
     const btn = document.getElementById('btn-save-main');
     const originalText = btn.innerText;
-    const telValue = document.getElementById('edit-tel').value.trim();
-if (!telValue) {
-    showToast("⚠️ El teléfono es obligatorio");
-    return;
-}
+    let telInput = document.getElementById('edit-tel').value.trim();
+
+    if (!telInput) {
+        showToast("⚠️ El teléfono es obligatorio");
+        return;
+    }
+
+    // Limpiamos espacios, guiones u otros caracteres no numéricos
+    telInput = telInput.replace(/\D/g, '');
+
+    // Si el usuario puso un 0 o un 15 por costumbre, los quitamos automáticamente
+    if (telInput.startsWith('0')) telInput = telInput.substring(1);
+    if (telInput.startsWith('15') && telInput.length > 10) telInput = telInput.substring(2);
+
+    // Anteponemos automáticamente el +549 obligatorio para toda la Argentina
+    const telefonoFinal = "+549" + telInput;
 
     let listaActual = JSON.parse(localStorage.getItem('mis_stickers_santua')) || [];
     const index = listaActual.findIndex(s => s.id === idEditando);
@@ -475,7 +498,7 @@ if (!telValue) {
         alias: document.getElementById('edit-alias').value.trim(),
         // LEER DESDE EL SWITCH
         tipo: document.getElementById('edit-tipo-switch').checked ? 'directo' : 'intermediario',
-        telefono: document.getElementById('edit-tel').value.trim(),
+        telefono: telefonoFinal,
         mensaje: document.getElementById('edit-msg').value.trim()
     };
 
