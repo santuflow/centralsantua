@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Activación de Servicio | Central Santua</title>
+    <title>Activación de Sticker | Central Santua</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,6 +12,7 @@
             --success: #00ff88;
             --bg: #0a0a0a;
             --card-bg: #141414;
+            --warning: #ffcc00;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,17 +24,17 @@
             line-height: 1.6;
         }
 
-        /* Header Simple */
         .navbar {
             padding: 20px 5%;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; }
+        .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
         .logo span { color: var(--primary); }
 
-        /* Contenedor Principal */
         .container {
             padding: 20px;
             display: flex;
@@ -42,7 +43,7 @@
             min-height: calc(100vh - 80px);
         }
 
-        .pago-card {
+        .card {
             width: 100%;
             max-width: 480px;
             background: var(--card-bg);
@@ -52,7 +53,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
-        /* Badge del ID */
         .id-badge {
             background: rgba(79, 172, 254, 0.1);
             border: 1px solid rgba(79, 172, 254, 0.3);
@@ -61,202 +61,218 @@
             border-radius: 8px;
             font-size: 0.85rem;
             font-weight: 700;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: inline-block;
             width: 100%;
             text-align: center;
         }
 
-        h2 { font-size: 1.5rem; margin-bottom: 10px; font-weight: 700; color: #fff; }
-        .desc { color: #888; font-size: 0.95rem; margin-bottom: 30px; }
+        h2 { font-size: 1.4rem; margin-bottom: 8px; font-weight: 700; color: #fff; }
+        .desc { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
 
-        /* Lista de Beneficios */
-        .features {
-            text-align: left;
-            margin-bottom: 30px;
-        }
-
-        .feature-item {
-            display: flex;
-            gap: 15px;
+        /* Alerta de Sesión Requerida */
+        .auth-alert {
+            background: rgba(255, 204, 0, 0.1);
+            border: 1px solid rgba(255, 204, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            text-align: center;
+        }
+        .auth-alert p { color: var(--warning); font-size: 0.85rem; margin-bottom: 10px; font-weight: bold; }
+        .btn-auth-link {
+            display: inline-block;
+            background: var(--warning);
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 2px;
         }
 
-        .feature-item i {
+        /* Input de Código */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
             color: var(--primary);
-            font-size: 1.1rem;
-            margin-top: 3px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
         }
-
-        .feature-item h4 { font-size: 0.95rem; color: #eee; margin-bottom: 2px; }
-        .feature-item p { font-size: 0.85rem; color: #777; line-height: 1.4; }
-
-        /* Precio */
-        .price-container {
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .price-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .price-value { font-size: 2.2rem; font-weight: 800; display: block; color: #fff; }
-
-        /* Botón Mercado Pago */
-        .btn-pay {
+        .input-group input {
             width: 100%;
-            background: #009ee3;
-            color: #fff;
-            border: none;
-            padding: 18px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-pay:hover { background: #008ad0; transform: translateY(-1px); }
-        .btn-pay:active { transform: translateY(0); }
-
-        /* Footer de Seguridad */
-        .security-info {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            font-size: 0.65rem;
-            color: #555;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--success);
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-family: 'Space Mono', monospace;
+            text-align: center;
+            letter-spacing: 3px;
+            outline: none;
+            font-weight: bold;
             text-transform: uppercase;
         }
+        .input-group input:focus { border-color: var(--primary); }
 
-        /* Ajustes para Celulares */
+        /* Botón de Activación */
+        .btn-action {
+            width: 100%;
+            background: var(--success);
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-action:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+
+        /* Gracias */
+        .thank-you {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
         @media (max-width: 480px) {
-            .pago-card { padding: 20px; border-radius: 15px; border: none; background: transparent; box-shadow: none; }
-            h2 { font-size: 1.3rem; }
-            .price-value { font-size: 1.8rem; }
-            .navbar { padding: 15px 5%; }
+            .card { padding: 20px; border: none; background: transparent; box-shadow: none; }
         }
     </style>
 </head>
 <body>
 
     <header class="navbar">
-        <h1 class="logo">CENTRAL<span>SANTUA</span></h1>
+        <a href="index.html" class="logo">CENTRAL<span>SANTUA</span></a>
     </header>
 
     <main class="container">
-        <div class="pago-card">
+        <div class="card">
             <div class="id-badge">
-                <i class="fas fa-tag"></i> ID: <span id="id-sticker">Cargando...</span>
+                <i class="fas fa-qrcode"></i> ID DE STICKER: <span id="id-sticker">Cargando...</span>
             </div>
             
-            <h2>Confirmar Activación</h2>
-            <p class="desc">Al activar este servicio, habilitas el canal de comunicación directa para tu objeto.</p>
+            <h2>Activación por Código</h2>
+            <p class="desc">Ingresá el código alfanumérico de 5 dígitos que recibiste con la compra de tu sticker para activarlo de forma inmediata.</p>
 
-            <div class="features">
-                <div class="feature-item">
-                    <i class="fas fa-user-lock"></i>
-                    <div>
-                        <h4>Gestión de Privacidad</h4>
-                        <p>Tus datos permanecen ocultos hasta que el sticker es escaneado.</p>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-comments"></i>
-                    <div>
-                        <h4>Contacto Directo</h4>
-                        <p>Habilita un botón de enlace directo a tu WhatsApp personal.</p>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-calendar-check"></i>
-                    <div>
-                        <h4>Suscripción Vitalicia</h4>
-                        <p>Pago único por la vida útil del sticker. Sin renovaciones.</p>
-                    </div>
-                </div>
+            <!-- CONTENEDOR DE SESIÓN (Se oculta o muestra dinámicamente) -->
+            <div id="auth-box" class="auth-alert" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Debes iniciar sesión para vincular y configurar este sticker en tu perfil.</p>
+                <a href="login.html" class="btn-auth-link"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</a>
+                <a href="register.html" class="btn-auth-link"><i class="fas fa-user-plus"></i> Registrarse</a>
             </div>
 
-            <div class="price-container">
-                <span class="price-label">Costo de activación única</span>
-                <span class="price-value">$7.000</span>
+            <!-- FORMULARIO DE CÓDIGO -->
+            <div class="input-group">
+                <label><i class="fas fa-key"></i> Código de Activación</label>
+                <input type="text" id="codigo-input" placeholder="Ej: A3K9X" maxlength="5" autocomplete="off">
             </div>
 
-            <button class="btn-pay" onclick="procesarPago()" id="btn-texto">
-                <i class="fas fa-check-circle"></i> CONTINUAR AL PAGO
+            <button class="btn-action" id="btn-activar" onclick="activarSticker()" disabled>
+                <i class="fas fa-check-circle"></i> ACTIVAR STICKER AHORA
             </button>
-            
-            <div class="security-info">
-                <span><i class="fas fa-lock"></i> Encriptación SSL</span>
-                <span><i class="fas fa-shield-alt"></i> Mercado Pago</span>
+
+            <div class="thank-you">
+                <p>¡Muchas gracias por elegirnos para proteger lo tuyo!</p>
             </div>
         </div>
     </main>
 
     <script>
-    // 1. PRIORIDAD ABSOLUTA: Leer el ID desde la URL (lo que el QR acaba de mandar)
-    const urlParams = new URLSearchParams(window.location.search);
-    let stickerID = urlParams.get('id');
+        let stickerID = null;
+        let usuarioLogueado = false;
 
-    // 2. Si no viene en la URL, intentamos recuperarlo de la memoria (fallback)
-    if (!stickerID) {
-        stickerID = localStorage.getItem("qr_escaneado_pendiente");
-    }
+        async function inicializarPagina() {
+            // 1. Obtener ID del sticker de la URL o Memoria
+            const urlParams = new URLSearchParams(window.location.search);
+            stickerID = urlParams.get('id') || localStorage.getItem("qr_escaneado_pendiente");
 
-    // 3. Si lo encontramos (por URL o Memoria), lo normalizamos y guardamos para asegurar consistencia
-    if (stickerID) {
-        stickerID = stickerID.toUpperCase().trim();
-        document.getElementById("id-sticker").innerText = stickerID;
-        // Actualizamos la memoria con el ID más reciente
-        localStorage.setItem("qr_escaneado_pendiente", stickerID);
-    } else {
-        // Si después de todo no hay ID, volvemos al inicio
-        alert("No se detectó un identificador de objeto válido.");
-        window.location.href = "index.html";
-    }
-
-    async function procesarPago() {
-        const btn = document.getElementById('btn-texto');
-        const originalContent = btn.innerHTML;
-
-        // Feedback visual
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-        btn.style.opacity = '0.7';
-        btn.style.pointerEvents = 'none';
-
-        try {
-            // Usamos el stickerID que validamos al inicio (el más fresco)
-            const response = await fetch('/crear-preferencia', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_qr: stickerID })
-            });
-
-            const data = await response.json();
-
-            if (data.id) {
-                // ANTES de ir a Mercado Pago, limpiamos la memoria vieja
-                // para que el próximo escaneo empiece de cero
-                localStorage.removeItem("qr_escaneado_pendiente");
-                
-                window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
-            } else {
-                throw new Error("Error en la respuesta");
+            if (!stickerID) {
+                alert("No se detectó un identificador de objeto válido.");
+                window.location.href = "index.html";
+                return;
             }
-        } catch (error) {
-            console.error(error);
-            alert("Error al conectar con la plataforma de pagos.");
-            btn.innerHTML = originalContent;
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'all';
+
+            stickerID = stickerID.toUpperCase().trim();
+            document.getElementById("id-sticker").innerText = stickerID;
+            localStorage.setItem("qr_escaneado_pendiente", stickerID);
+
+            // 2. Verificar estado de sesión del usuario
+            try {
+                const res = await fetch('/api/usuario_actual');
+                const data = await res.json();
+
+                if (data.logueado && data.user) {
+                    usuarioLogueado = true;
+                    document.getElementById('auth-box').style.display = 'none';
+                    document.getElementById('btn-activar').disabled = false;
+                } else {
+                    usuarioLogueado = false;
+                    document.getElementById('auth-box').style.display = 'block';
+                    document.getElementById('btn-activar').disabled = true;
+                }
+            } catch (e) {
+                console.error("Error al verificar sesión:", e);
+            }
         }
-    }
-</script>
+
+        async function activarSticker() {
+            if (!usuarioLogueado) {
+                alert("Por favor, inicia sesión antes de activar el sticker.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const codigo = document.getElementById('codigo-input').value.trim();
+            if (codigo.length < 5) {
+                alert("⚠️ Ingresa un código de activación válido de 5 dígitos.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-activar');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDANDO CÓDIGO...';
+
+            try {
+                const response = await fetch('/api/activar-con-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_qr: stickerID, codigo: codigo })
+                });
+
+                const resultado = await response.json();
+
+                if (resultado.success) {
+                    localStorage.removeItem("qr_escaneado_pendiente");
+                    alert("✅ ¡Sticker activado con éxito! Redirigiendo a tu perfil...");
+                    window.location.href = "perfil.html";
+                } else {
+                    throw new Error(resultado.message || "Código inválido o ya utilizado.");
+                }
+            } catch (error) {
+                alert("❌ Error: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // Ejecutar al cargar
+        window.onload = inicializarPagina;
+    </script>
 </body>
 </html>
