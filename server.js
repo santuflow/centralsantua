@@ -1322,6 +1322,118 @@ app.post('/api/vendedor/dashboard', async (req, res) => {
 });
 
 
+// =========================================
+// MÓDULO DE CÓDIGOS DE ACTIVACIÓN (VOUCHERS)
+// =========================================
+const codigoSchema = new mongoose.Schema({
+    codigo: { type: String, unique: true, index: true },
+    usado: { type: Boolean, default: false },
+    usado_en_qr: { type: String, default: null },
+    fecha_creacion: { type: Date, default: Date.now },
+    fecha_uso: { type: Date, default: null }
+});
+const CodigoActivacion = mongoose.models.CodigoActivacion || mongoose.model('CodigoActivacion', codigoSchema);
+
+// 1. Ruta para generar lote de códigos al azar
+app.post('/api/admin/generar-codigos', async (req, res) => {
+    try {
+        const { cantidad } = req.body;
+        const cant = parseInt(cantidad);
+        if (!cant || cant <= 0) return res.status(400).json({ success: false, error: "Cantidad inválida" });
+
+        const crypto = require('crypto');
+        const nuevosCodigos = [];
+        const documentosParaGuardar = [];
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Caracteres limpios sin confusiones (sin O, 0, I, 1)
+
+        while (nuevosCodigos.length < cant) {
+            let codigo = '';
+            const randomBytes = crypto.randomBytes(5);
+            for (let i = 0; i < 5; i++) {
+                codigo += chars[randomBytes[i] % chars.length];
+            }
+
+            if (!nuevosCodigos.includes(codigo)) {
+                nuevosCodigos.push(codigo);
+                documentosParaGuardar.push({ codigo, usado: false });
+            }
+        }
+
+        try {
+            await CodigoActivacion.insertMany(documentosParaGuardar, { ordered: false });
+        } catch (e) {
+            // Manejo silencioso si ocurre alguna colisión de índice único
+        }
+
+        console.log(`🎫 Generados y guardados ${cant} códigos de activación.`);
+        res.json({ success: true, codigos: nuevosCodigos });
+    } catch (error) {
+        console.error("Error generando códigos:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 2. Ruta para canjear un código y activar cualquier sticker
+app.post('/api/activar-con-codigo', async (req, res) => {
+    try {
+        const { id_qr, codigo } = req.body;
+        if (!id_qr || !codigo) {
+            return res.status(400).json({ success: false, message: "Faltan datos obligatorios." });
+        }
+
+        const codigoLimpio = codigo.toUpperCase().trim();
+        const qrLimpio = id_qr.toUpperCase().trim();
+
+        // Verificar código
+        const codigoDoc = await CodigoActivacion.findOne({ codigo: codigoLimpio });
+        if (!codigoDoc) {
+            return res.status(400).json({ success: false, message: "El código ingresado no existe." });
+        }
+        if (codigoDoc.usado) {
+            return res.status(400).json({ success: false, message: "Este código ya fue utilizado anteriormente." });
+        }
+
+        // Verificar sticker
+        const stickerDB = await Sticker.findOne({ id_qr: qrLimpio });
+        if (!stickerDB) {
+            return res.status(404).json({ success: false, message: "El ID de QR no existe en la base de datos." });
+        }
+        if (stickerDB.activado) {
+            return res.status(400).json({ success: false, message: "Este sticker ya se encuentra activado." });
+        }
+
+        // Quemar/Marcar código como usado
+        codigoDoc.usado = true;
+        codigoDoc.usado_en_qr = qrLimpio;
+        codigoDoc.fecha_uso = new Date();
+        await codigoDoc.save();
+
+        // Activar sticker
+        const emailUsuario = (req.user && req.user.email) || (req.session.user && req.session.user.email) || "Sin Correo";
+        stickerDB.activado = true;
+        stickerDB.pago_confirmado = true;
+        stickerDB.emailDuenio = emailUsuario;
+        await stickerDB.save();
+
+        // Sincronizar memoria local
+        if (typeof baseDeDatosSimulada !== 'undefined') {
+            const index = baseDeDatosSimulada.findIndex(s => s.id_qr === qrLimpio);
+            if (index !== -1) {
+                baseDeDatosSimulada[index].activado = true;
+                baseDeDatosSimulada[index].pago_confirmado = true;
+                baseDeDatosSimulada[index].emailDuenio = emailUsuario;
+            }
+        }
+
+        console.log(`✅ VOUCHER CANJEADO: Código [${codigoLimpio}] activó el QR [${qrLimpio}]`);
+        res.json({ success: true, message: "¡Sticker activado con éxito!" });
+
+    } catch (error) {
+        console.error("Error al activar con código:", error);
+        res.status(500).json({ success: false, message: "Error interno del servidor." });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVIDOR CENTRAL SANTUA ACTIVO EN PUERTO ${PORT}`);

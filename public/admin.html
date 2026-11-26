@@ -310,6 +310,24 @@
         </button>
     </div>
 
+    <div class="stat-box" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.8); border: 1px solid var(--accent); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <span class="stat-label" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
+        <i class="fas fa-ticket-alt"></i> Generador de Códigos de Activación (Vouchers)
+    </span>
+    
+    <div style="display: flex; gap: 15px; align-items: flex-end; margin-top: 15px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 0.75rem; color: #888;">CANTIDAD</label>
+            <input type="number" id="cant-codigos" value="50" placeholder="Ej: 100" 
+                   style="background: #000; border: 1px solid #444; color: var(--accent); padding: 10px; border-radius: 6px; width: 120px; font-weight: bold;">
+        </div>
+
+        <button class="btn-cmd" style="border-color: var(--accent); color: var(--accent); height: 42px; padding: 0 20px; font-weight: bold; transition: all 0.3s;" onclick="generarYDescargarCodigos()">
+            <i class="fas fa-file-download"></i> GENERAR Y DESCARGAR PLANCHA
+        </button>
+    </div>
+</div>
+
     <div style="margin-top: 20px;">
         <div style="position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 15px; top: 12px; color: #666;"></i>
@@ -939,6 +957,90 @@ async function guardarPDV() {
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
+    }
+}
+
+async function generarYDescargarCodigos() {
+    const cantInput = document.getElementById('cant-codigos');
+    const cantidad = parseInt(cantInput.value);
+    
+    if (!cantidad || cantidad <= 0) return alert("Ingrese una cantidad válida.");
+
+    const btn = document.querySelector('button[onclick="generarYDescargarCodigos()"]');
+    const originalText = btn.innerHTML;
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO EN NUBE...';
+
+        const res = await fetch('/api/admin/generar-codigos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cantidad })
+        });
+
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Error al generar códigos");
+
+        btn.innerHTML = '<i class="fas fa-cog fa-spin"></i> ARMANDO PLANCHA...';
+
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.left = '-10000px';
+        tempDiv.style.top = '0';
+        tempDiv.style.width = '210mm';
+        tempDiv.style.background = '#fff';
+        tempDiv.style.padding = '10mm';
+        tempDiv.style.boxSizing = 'border-box';
+
+        let htmlCodes = `
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Space+Mono:wght@700&display=swap');
+                .sheet-container { width: 100%; background: #fff; font-family: 'Inter', sans-serif; }
+                .sheet-title { text-align: center; font-size: 16pt; font-weight: 900; margin-bottom: 5mm; color: #000; letter-spacing: 1px; }
+                .codes-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+                .code-box { border: 2px dashed #333; padding: 4mm; text-align: center; background: #f9f9f9; border-radius: 4px; }
+                .code-header { font-size: 7pt; font-weight: 900; color: #e60000; margin-bottom: 2mm; text-transform: uppercase; }
+                .code-value { font-family: 'Space Mono', monospace; font-size: 16pt; font-weight: 700; color: #000; background: #fff; padding: 2mm; border: 1px solid #000; border-radius: 2px; }
+                .code-footer { font-size: 6pt; color: #666; margin-top: 2mm; }
+            </style>
+            <div class="sheet-container">
+                <div class="sheet-title">CENTRAL SANTUA — CÓDIGOS DE ACTIVACIÓN</div>
+                <div class="codes-grid">
+        `;
+
+        data.codigos.forEach(cod => {
+            htmlCodes += `
+                <div class="code-box">
+                    <div class="code-header">CÓDIGO DE ACTIVACIÓN</div>
+                    <div class="code-value">${cod}</div>
+                    <div class="code-footer">centralsantua.com.ar</div>
+                </div>
+            `;
+        });
+
+        htmlCodes += `</div></div>`;
+        tempDiv.innerHTML = htmlCodes;
+        document.body.appendChild(tempDiv);
+
+        const canvas = await html2canvas(tempDiv, { scale: 2, useCORS: true });
+        const imageURL = canvas.toDataURL('image/png');
+        
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = `SANTUA_CODIGOS_${cantidad}_UNIDADES.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        document.body.removeChild(tempDiv);
+
+        alert(`✅ ¡Plancha con ${cantidad} códigos generada y descargada con éxito!`);
+
+    } catch (err) {
+        alert("Error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
